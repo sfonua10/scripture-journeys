@@ -2,6 +2,9 @@
 // own voice, never published): a
 // card with a recording goes on by itself when it has been read, a press still goes on at once, and with the
 // reading off the card waits.   CHROME=... node tools/narration-check.mjs   (after npm run build; needs ffmpeg, say)
+// It goes on with the first journey from its second act, whose first card comes up by itself (what Nephi says there,
+// in the story's own words, "from 1 Nephi 3:22": its recording is 1-nephi-3-22-said-gather.mp3): the journey's own
+// first card is not come to until Nephi has walked to his father.
 import { execFileSync } from 'node:child_process';
 import { createReadStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -18,10 +21,10 @@ const kept = existsSync(manifest) ? readFileSync(manifest, 'utf8') : null;
 const real = !!kept && kept.trim() !== '{}';
 if (!real) {
   mkdirSync(dir, { recursive: true });
-  execFileSync('say', ['-o', join(dir, 'x.aiff'), 'I will go and do.']);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(dir, 'x.aiff'), '-ac', '1', '-b:a', '64k', join(dir, '1-nephi-3-7.mp3')]);
+  execFileSync('say', ['-o', join(dir, 'x.aiff'), 'And it came to pass that we went down to the land of our inheritance.']);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(dir, 'x.aiff'), '-ac', '1', '-b:a', '64k', join(dir, '1-nephi-3-22-said-gather.mp3')]);
   rmSync(join(dir, 'x.aiff'));
-  writeFileSync(manifest, '{"1-nephi-3-7":"test"}');
+  writeFileSync(manifest, '{"1-nephi-3-22-said-gather":"test"}');
 }
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.jpg': 'image/jpeg', '.png': 'image/png', '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.glb': 'model/gltf-binary' };
@@ -45,6 +48,11 @@ const check = (ok, what) => {
 };
 try {
   const context = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  // (a place kept in the second act, so that "Continue" goes on from there)
+  await context.addInitScript(() => {
+    localStorage.setItem('bom-journeys:plates-of-brass:beat', 'a2');
+    localStorage.setItem('bom-journeys:plates-of-brass:label', 'Act Two');
+  });
   const page = await context.newPage();
   const problems = [];
   page.on('pageerror', (e) => problems.push(e.message));
@@ -52,7 +60,7 @@ try {
   const run = (seconds, until) =>
     page.evaluate(
       async ([s, want]) => {
-        const card = () => document.querySelector('#g-card.on .ref')?.textContent ?? (document.querySelector('#g-card.on') ? '(a card)' : '');
+        const card = () => document.querySelector('#g-card.on .ref, #g-card.on .from')?.textContent ?? (document.querySelector('#g-card.on') ? '(a card)' : '');
         const t0 = performance.now();
         let last = t0;
         while (performance.now() - t0 < s * 1000) {
@@ -61,14 +69,14 @@ try {
           window.__tg.tick((now - last) / 1000);
           last = now;
           if (want === 'card' && card()) break;
-          if (want === 'gone' && !card().includes('3:7')) break;
+          if (want === 'gone' && !card().includes('3:22')) break;
         }
         return { card: card(), took: (performance.now() - t0) / 1000 };
       },
       [seconds, until],
     );
   const open = async () => {
-    await page.goto(`http://127.0.0.1:${server.address().port}/?step&dpr=1`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?step&dpr=1&all`);
     await page.waitForFunction(() => window.__tg?.ready, null, { timeout: 120000 });
     await page.waitForSelector('#n-voice.has', { state: 'attached', timeout: 10000 });
     await page.tap('#g-title button[data-id="plates-of-brass"][data-go]');
@@ -76,18 +84,18 @@ try {
   };
 
   let s = await open();
-  check(s.card.includes('3:7'), `the first card is the one with a recording (${s.card})`);
+  check(s.card.includes('3:22'), `the first card is the one with a recording (${s.card})`);
   check(await page.evaluate(() => window.__tg.sounds.context?.state === 'running'), 'the sound is running');
   s = await run(40, 'gone');
-  check(!s.card.includes('3:7') && s.took > 1, `read to its end, the card goes on by itself (after ${s.took.toFixed(1)} s)`);
+  check(!s.card.includes('3:22') && s.took > 1, `read to its end, the card goes on by itself (after ${s.took.toFixed(1)} s)`);
 
   s = await open();
   await run(0.7);
   await page.touchscreen.tap(600, 60);
   s = await run(0.6, 'gone');
-  check(!s.card.includes('3:7'), 'a tap goes on at once, without waiting for the reading');
+  check(!s.card.includes('3:22'), 'a tap goes on at once, without waiting for the reading');
 
-  await page.goto(`http://127.0.0.1:${server.address().port}/?step&dpr=1`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/?step&dpr=1&all`);
   await page.waitForFunction(() => window.__tg?.ready, null, { timeout: 120000 });
   await page.tap('#g-title button[data-id="plates-of-brass"][data-go]');
   await run(20, 'card');
@@ -99,12 +107,12 @@ try {
   await run(20, 'card');
   check((await page.textContent('#n-voice')) === 'Voice off', 'and it is remembered');
   s = await run(6, 'gone');
-  check(s.card.includes('3:7'), 'with the reading off, the card waits to be tapped');
+  check(s.card.includes('3:22'), 'with the reading off, the card waits to be tapped');
   await page.screenshot({ path: join(here, 'shots', 'touch', '6-voice.png') });
   if (problems.length) fails.push(...problems), console.log(problems.join('\n'));
 } finally {
   if (!real) {
-    rmSync(join(dir, '1-nephi-3-7.mp3'), { force: true });
+    rmSync(join(dir, '1-nephi-3-22-said-gather.mp3'), { force: true });
     writeFileSync(manifest, kept ?? '{}\n');
   }
   await browser.close();

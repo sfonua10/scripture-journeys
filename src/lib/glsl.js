@@ -42,6 +42,7 @@ uniform vec4 uFloor;
 uniform float uFloorInv;
 uniform float uCloudShade;   // how dark a cloud's shadow is, 0 for none
 uniform vec4 uWalker;        // someone walking in the open: x, z, how dark their shadow, how long (0 for nobody)
+uniform vec4 uCave;          // a hollow under rock: x, z, how far from its middle it reaches (0 for none), how high the rock over it is
 uniform vec4 uLamp;          // a flame carried through the field: where it is, how bright (0 for none)
 uniform float uLand;         // 0 the hill country round Jerusalem; 1 the river plain of Babylon (its colours)
 
@@ -107,7 +108,13 @@ float gustAt(vec2 xz) {
   return smoothstep(0.26, 0.78, g);
 }
 
-// 1 in the open, less under a cloud or a tree. The clouds drift with the wind, slowly.
+// 1 under the rock of a hollow (the cavity the brothers hide in), 0 outside it, soft towards its mouth.
+float caveAt(vec2 xz) {
+  if (uCave.z <= 0.0) return 0.0;
+  return 1.0 - smoothstep(uCave.z * 0.7, uCave.z, distance(xz, uCave.xy));
+}
+
+// 1 in the open, less under a cloud or a tree, or under rock. The clouds drift with the wind, slowly.
 float openAt(vec2 xz) {
   // (summer cumulus: shadows the size of fields, crossing the valley at the wind's pace)
   vec2 p = (xz - uWindScroll * 2.6) / 3400.0;
@@ -121,7 +128,7 @@ float openAt(vec2 xz) {
     float spot = mix(smoothstep(0.53, 0.66, s1 * 0.62 + s2 * 0.38), 0.3, smoothstep(50.0, 150.0, distance(xz, uCamPos.xz)));
     open *= 1.0 - tree * (0.88 - 0.8 * spot);
   }
-  return open;
+  return open * (1.0 - 0.92 * caveAt(xz));
 }
 
 // The shadow of someone walking: a body's width, lying away from the sun as long as the hour makes it, with the

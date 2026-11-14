@@ -1,6 +1,6 @@
 // Jerusalem, and the other buildings of the story: the city walls with their towers and gate, its flat-roofed houses
 // in blocks between streets, Laban's house with its court, his treasury; outside, Lehi's house in the land of their
-// inheritance and the brothers' tents. Painted like the valley's village (village.js): each face in the light or in
+// inheritance; and, as a set of its own, the tents in the valley of Lemuel. Painted like the valley's village (village.js): each face in the light or in
 // shade with a clean turn between, brush dabs on the plaster, stone in courses on the walls. At night the windows
 // that have a lamp behind them glow.
 //
@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { COMMON } from '../lib/index.js';
 import { fromValley, heightAt, HERO } from '../valley/world.js';
-import { CAMP, CITY, IN_CITY, LEHI_HOUSE } from './places.js';
+import { CITY, IN_CITY, LEHI_HOUSE, LEMUEL } from './places.js';
 import { GLAZE_CELLS, glazeTexture } from './glaze.js';
 
 /** (a city with no glazed brick reads none) */
@@ -658,8 +658,8 @@ function buildLehiHouse(b, random) {
 /** How high the top of the table in Lehi's house is. */
 export const LEHI_TABLE = 0.55;
 
-/** A goat-hair tent: a long low ridge on poles, open at its front. */
-function tent(b, u, v, len, wide, tall, turn) {
+/** A goat-hair tent: a long low ridge on poles, open at its front (which looks along +u, turned by `turn`). */
+export function tent(b, u, v, len, wide, tall, turn) {
   const c = Math.cos(turn);
   const s = Math.sin(turn);
   const at = (x, y, z) => [u + x * c - z * s, y, v + x * s + z * c];
@@ -682,16 +682,57 @@ function tent(b, u, v, len, wide, tall, turn) {
   b.solids.push([u - Math.max(hl, hw), u + Math.max(hl, hw), v - Math.max(hl, hw) * 0.7, v + Math.max(hl, hw) * 0.7, y0, y1]);
 }
 
-function buildCamp(b) {
-  const [u, v] = CAMP;
-  tent(b, u - 9, v + 14, 5.5, 4.2, 2.3, 0.4);
-  tent(b, u + 4, v + 19, 4.6, 3.6, 2.0, -0.2);
-  tent(b, u - 16, v + 4, 4.8, 3.8, 2.1, 1.1);
+/**
+ * Where things stand in the valley of Lemuel, in metres from LEMUEL.at: [towards the river (+u), along the valley (v)].
+ * Lehi's tent opens towards the river; the altar of stones (2:7) is down the valley from it, by the water.
+ */
+export const IN_LEMUEL = {
+  tent: [-9, 0],
+  altar: [7.5, -33],
+  tents: [
+    [-10.5, -15, 0.3],
+    [-13, -27, 0.7],
+    [-12, 15.5, -0.35],
+  ],
+};
+
+/**
+ * The camp in the valley of Lemuel, as a set (createSet): their father's tent and three more, an altar of stones,
+ * and a few things of a household that dwells in tents. "And my father dwelt in a tent" (2:15).
+ */
+export function lemuelCamp(b, random) {
+  const [cu, cv] = LEMUEL.at;
+  const [tu, tv] = IN_LEMUEL.tent;
+  tent(b, cu + tu, cv + tv, 7.4, 5.6, 2.9, 0);
+  for (const [du, dv, turn] of IN_LEMUEL.tents) tent(b, cu + du, cv + dv, 5.2, 4.0, 2.2, turn);
+  // a woven cloth laid before their father's tent, and jars of water and of grain beside it
+  const base = ground(cu + tu + 5.4, cv + tv);
+  b.box(cu + tu + 4.2, cu + tu + 6.6, cv + tv - 1.5, cv + tv + 1.5, base - 0.2, base + 0.06, { part: PART.CLOTH, colour: [0.5, 0.3, 0.2], seed: 0.59, base, solid: false, roofPart: PART.CLOTH, roofColour: [0.56, 0.34, 0.22] });
+  for (const [du, dv, r, h] of [[3.6, 3.4, 0.3, 0.95], [4.3, 3.9, 0.24, 0.72], [3.5, -3.5, 0.28, 0.85]]) {
+    const y = ground(cu + tu + du, cv + tv + dv);
+    b.turned(cu + tu + du, cv + tv + dv, y - 0.1, [[r * 0.55, 0], [r, h * 0.45], [r * 0.9, h * 0.8], [r * 0.5, h], [r * 0.62, h + 0.08]], 8, PART.PLASTER, [0.62, 0.4, 0.26], 0.3 + random() * 0.4);
+  }
+  // the altar of stones: unhewn stones laid up in courses, rough, about as high as a man's waist
+  const [au, av] = [cu + IN_LEMUEL.altar[0], cv + IN_LEMUEL.altar[1]];
+  const ay = ground(au, av);
+  const stone = (u0, u1, v0, v1, y0, y1, solid = false) => b.box(u0, u1, v0, v1, y0, y1, { part: PART.STONE, colour: [0.62 + random() * 0.12, 0.57 + random() * 0.1, 0.48 + random() * 0.08], seed: random(), base: ay, solid, roofPart: PART.STONE, roofColour: [0.7, 0.65, 0.55] });
+  stone(au - 1.25, au + 1.25, av - 0.95, av + 0.95, ay - 0.5, ay + 0.34, true);
+  for (let course = 0; course < 2; course++) {
+    const y0 = ay + 0.34 + course * 0.32;
+    const inset = 0.12 + course * 0.14;
+    // (each course a few stones of unequal length, their joints not in line)
+    let u = au - 1.25 + inset;
+    while (u < au + 1.25 - inset - 0.05) {
+      const len = Math.min(au + 1.25 - inset - u, 0.5 + random() * 0.5);
+      stone(u + 0.03, u + len - 0.03, av - 0.95 + inset + random() * 0.06, av + 0.95 - inset - random() * 0.06, y0, y0 + 0.3 + random() * 0.06);
+      u += len;
+    }
+  }
 }
 
 /**
  * Jerusalem as the first journey has it: pale gold stone, Laban's house and treasury within, and outside the walls
- * Lehi's house and the brothers' tents. Its rooms: the treasury (by night) and Lehi's house (by day, where the roof
+ * Lehi's house. Its rooms: the treasury (by night) and Lehi's house (by day, where the roof
  * keeps the sun off).
  */
 export const JERUSALEM = {
@@ -701,7 +742,6 @@ export const JERUSALEM = {
   inside: labanAndTreasury,
   outside(b, random) {
     buildLehiHouse(b, random);
-    buildCamp(b);
   },
   rooms: {
     treasury: (() => {
@@ -757,6 +797,22 @@ export function createCity(field, look = JERUSALEM) {
   return { mesh, uniforms, solids, light, look };
 }
 
+/**
+ * A set of a story's own, built as the city is and painted with its paint: `fill(b, random)` builds it with the same
+ * boxes, in (u, v). Returns its mesh and the boxes that block the walk, as createCity gives them.
+ */
+export function createSet(city, fill) {
+  const b = builder();
+  fill(b, mulberry(2011));
+  const mesh = new THREE.Mesh(b.build(), city.mesh.material);
+  mesh.frustumCulled = false;
+  const solids = b.solids.map(([u0, u1, v0, v1, y0, y1]) => {
+    const [x, z] = fromValley((u0 + u1) / 2, (v0 + v1) / 2);
+    return { at: [x, (y0 + y1) / 2, z], half: [(u1 - u0) / 2, (y1 - y0) / 2, (v1 - v0) / 2] };
+  });
+  return { mesh, solids };
+}
+
 /** Adds a collider for each of the city's solids to a Rapier world. */
 export function addCityColliders(RAPIER, physics, solids) {
   const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), TURN);
@@ -770,7 +826,7 @@ export function addCityColliders(RAPIER, physics, solids) {
 }
 
 /** The riches and the plates: small things made the city's way, each its own mesh, put where the story wants them. */
-export function createProps(city, heightAt) {
+export function createProps(city, heightAt, extra = null) {
   const GOLD = [1.0, 0.76, 0.28];
   const SILVER = [0.86, 0.88, 0.92];
   const BRASS = [0.92, 0.66, 0.3];
@@ -844,6 +900,8 @@ export function createProps(city, heightAt) {
       for (const u of [-0.9, 0.9]) b.box(u - 0.16, u + 0.16, 1.94, 2.26, 0.5, 0.6, { colour: [0.62, 0.36, 0.26], seed: 0.68, solid: false, roofPart: PART.PLASTER, roofColour: [0.66, 0.38, 0.27] });
     }),
   };
+  // (and a journey's own small things: stories.js, `props`: { name: (b) => builds it about (0, 0), on the ground })
+  for (const [name, fill] of Object.entries(extra ?? {})) kinds[name] = make(fill);
   const group = new THREE.Group();
   for (const m of Object.values(kinds)) group.add(m);
   const carried = new Map();

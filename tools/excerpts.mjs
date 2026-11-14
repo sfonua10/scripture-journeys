@@ -3,14 +3,19 @@
 // back, is an excerpt of its verse too. A card under a speaker's name (`who`) need not mark with "…" what it leaves
 // off, the name standing in its place: for each of those, the words left off are listed, to be read over. The
 // verses set side by side at the end of the Daniel 6 journey (PAIRS: Daniel 6 beside the Gospels) are checked the
-// same way, each against its own verse. Fails if one is not the verse's words.
+// same way, each against its own verse. Fails if one is not the verse's words. Each book of cards is checked in
+// its turn (1 Nephi, Daniel, Jonah).
 //   node tools/excerpts.mjs
-import { BLANKS, EXCERPTS, GOSPELS, PAIRS, SAID, SPEAKERS, VERSES as DANIEL } from '../src/game/scripture-daniel.js';
-
-// (every verse a card may quote: Daniel's by chapter and verse, the Gospels' by book as well)
-const VERSES = { ...DANIEL, ...GOSPELS };
+import * as nephi from '../src/game/scripture.js';
+import * as daniel from '../src/game/scripture-daniel.js';
+import * as jonah from '../src/game/scripture-jonah.js';
 
 let bad = 0;
+// each book of cards in its turn: 1 Nephi's, Daniel's (with the Gospels' verses its end sets beside it), then Jonah's
+for (const [book, { BLANKS, EXCERPTS, GOSPELS = {}, PAIRS = [], SAID, SPEAKERS, VERSES: OWN }] of [['1 Nephi', nephi], ['Daniel', daniel], ['Jonah', jonah]]) {
+console.log(`---- ${book} ----`);
+// (every verse a card may quote: the book's by chapter and verse, the Gospels' by book as well)
+const VERSES = { ...OWN, ...GOSPELS };
 const names = new Set(Object.values(SPEAKERS));
 /** Whether `text` is the verse's own words in order, with "…" where any are left out (or, under a name, without). */
 function check(name, verse, text, who = '') {
@@ -64,5 +69,6 @@ PAIRS.forEach(([a, b], i) => {
 });
 // (a verse shown whole under a name is nothing but the verse)
 for (const [verse, who] of Object.entries(SAID)) check(`${verse} (whole)`, verse, VERSES[verse] ?? '', who);
+}
 console.log(bad ? `${bad} wrong` : 'all are the scripture as written');
 process.exit(bad ? 1 : 0);

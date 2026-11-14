@@ -33,7 +33,7 @@ const page = await context.newPage();
 const problems = [];
 page.on('console', (m) => (m.type() === 'error' ? problems.push(m.text().slice(0, 600)) : null));
 page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
-await page.goto(`http://127.0.0.1:${server.address().port}/?step&nosound&dpr=1`);
+await page.goto(`http://127.0.0.1:${server.address().port}/?step&nosound&dpr=1&all`);
 await page.waitForFunction(() => window.__tg?.ready, null, { timeout: 120000 });
 const cdp = await context.newCDPSession(page);
 const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map(([x, y], id) => ({ x, y, id })) });
@@ -58,22 +58,8 @@ const check = (ok, what) => {
 check((await state()).touch, 'the page knows it is played by touch');
 await page.screenshot({ path: join(out, '1-journeys.png') });
 await page.tap('#g-title button[data-id="plates-of-brass"][data-go]');
-await ticks(60);
-// tap through the cards the journey opens with
-let read = 0;
-for (let i = 0; i < 120; i++) {
-  const s = await state();
-  if (read && !s.frozen && !s.card) break;
-  if (s.card) {
-    if (read === 0) await page.screenshot({ path: join(out, '2-card.png') });
-    await ticks(20);
-    // (on the card, then off it: either goes on)
-    await page.touchscreen.tap(read % 2 ? width * 0.7 : width * 0.5, read % 2 ? height * 0.3 : height * 0.8);
-    read++;
-  }
-  await ticks(20);
-}
-check(read > 0, `cards go on at a tap (${read} read)`);
+// (the journey opens on its title and then on a walk: to his father, at his tent)
+await ticks(230);
 const a = await state();
 check(!a.frozen, 'the story hands over to the player');
 check(!a.locked, 'the mouse is not asked for');
@@ -118,6 +104,22 @@ check((await state()).sprint === false, 'and off again');
     check((await state()).frozen, 'a tap on the prompt acts');
   }
 }
+
+// tap through the cards that follow: what his father says
+let read = 0;
+for (let i = 0; i < 120; i++) {
+  const s = await state();
+  if (read && !s.frozen && !s.card) break;
+  if (s.card) {
+    if (read === 0) await page.screenshot({ path: join(out, '2-card.png') });
+    await ticks(20);
+    // (on the card, then off it: either goes on)
+    await page.touchscreen.tap(read % 2 ? width * 0.7 : width * 0.5, read % 2 ? height * 0.3 : height * 0.8);
+    read++;
+  }
+  await ticks(20);
+}
+check(read > 0, `cards go on at a tap (${read} read)`);
 
 // the questions about Zoram, in the treasury: an answer is tapped to take it
 await page.goto(`http://127.0.0.1:${server.address().port}/?step&nosound&dpr=1&beat=a3-treasury`);

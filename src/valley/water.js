@@ -104,3 +104,23 @@ export function createRiver(field, sky, level, extent) {
   mesh.frustumCulled = false;
   return mesh;
 }
+
+/**
+ * A river in the hills, of one place: a sheet of water at its level, seen where the ground has been cut down below
+ * it (world.js) and nowhere outside an oval about that place, so that low ground elsewhere stays dry.
+ * @param at its middle, [x, z]; @param level the water's height, metres
+ * @param across, along the oval's half-lengths, metres: across the valley's line, and along it
+ */
+export function createStream(field, sky, { at, level, across, along }) {
+  const side = Math.max(across, along) * 2.8;
+  const geometry = new THREE.PlaneGeometry(side, side, 1, 1);
+  geometry.rotateX(-Math.PI / 2);
+  const u = sky.uniforms;
+  const uniforms = { ...field.uniforms, uZenith: u.uZenith, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, tClouds: u.tClouds, uTarn: { value: new THREE.Vector4(at[0], at[1], across / 1.32, along / 1.32) }, uAlong: { value: new THREE.Vector2(HERO[0], HERO[1]) }, uMud: { value: 0.2 } };
+  const material = new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: vertex, fragmentShader: fragment, uniforms, transparent: true, depthWrite: false });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(at[0], level, at[1]);
+  mesh.renderOrder = 5;
+  mesh.frustumCulled = false;
+  return mesh;
+}

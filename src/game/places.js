@@ -12,7 +12,10 @@ export function chooseLand(name) {
   LAND = name === 'plain' ? 'plain' : 'hills';
 }
 
-/** The brothers' tents, outside the city, where the walk starts (1 Nephi 3:9–10). */
+/**
+ * Where the brothers come up into the land of Jerusalem and consult one with another (1 Nephi 3:10): open ground on
+ * the hill across from the city, where the walk to it starts. No tents are pitched there: they are on their way.
+ */
 export const CAMP = [0, 0];
 
 /** Jerusalem: a walled city on its own rise. Half-sizes in u and v. */
@@ -27,6 +30,32 @@ export const LEHI_HOUSE = [150, -250];
 /** The cavity of a rock where the brothers hide (3:27). */
 export const ROCK = [125, 205];
 
+/**
+ * That cavity: a hollow under great stones, on the hillside, its mouth towards the city (+u, down the hill). The
+ * middle of its floor and its mouth, (u, v); how far from the middle the floor is made level, and where the hill is
+ * itself again; and how high the rock is overhead, metres from the floor.
+ */
+export const CAVE = { at: [ROCK[0] - 1, ROCK[1]], mouth: [ROCK[0] + 4.5, ROCK[1]], floor: 5.5, ease: 12, roof: 2.6 };
+
+/**
+ * The valley of Lemuel, where their father dwelt in a tent (2:6–15): "he pitched his tent in a valley by the side of
+ * a river of water". It was three days in the wilderness from Jerusalem and is nowhere near it; in this land it lies
+ * in the hollow behind the camp's hill, out of sight of the city, and runs across the valley's line (along v).
+ */
+export const LEMUEL = {
+  /** The middle of the camp, before Lehi's tent. */
+  at: [-350, 0],
+  /** How far its level floor reaches along it, either way, before it runs out into the hills. */
+  reach: 150,
+  /** The river (2:8): how far towards the camp's hill (+u) of the tents it runs, its half-width, how deep its bed is cut, and how far below the floor its water lies. */
+  river: { off: 15, half: 2.6, deep: 0.85, water: 0.34 },
+};
+/** Where the river of the valley of Lemuel runs: its middle's u, at v. It wanders a little. */
+export function lemuelRiver(v) {
+  const dv = v - LEMUEL.at[1];
+  return LEMUEL.at[0] + LEMUEL.river.off + 4.5 * Math.sin(dv / 27 + 0.6) + 1.6 * Math.sin(dv / 11 + 2);
+}
+
 /** Inside the city, in metres from its middle (cu, cv): */
 export const IN_CITY = {
   /** Laban's house: a big house with a walled court. [cu0, cv0, cu1, cv1] */
@@ -36,7 +65,7 @@ export const IN_CITY = {
   /** The treasury: a stone storehouse beside the main street. */
   treasury: [36, -24, 56, -8],
   /** Where Laban lies in the street, near his house (4:7). */
-  fallen: [17, 26],
+  fallen: [19.4, 26.5],
   /** The treasury's door (on its north face, onto the main street). */
   treasuryDoor: [46, -7.5],
   /** The table at the back of the treasury where the plates are kept, and how high its top is. */
@@ -55,6 +84,8 @@ export const PATHS = [
   [[LEHI_HOUSE[0], LEHI_HOUSE[1] + 11], [LEHI_HOUSE[0] + 6, LEHI_HOUSE[1] + 30], [175, -190], [190, -110], [205, -40], [225, -2]],
   // a track off towards the rocks
   [[150, 4], [140, 80], [130, 150], [ROCK[0] + 6, ROCK[1] - 14]],
+  // and in at the mouth of the rock, to the middle of its floor (it wanders, as they all do: this one is short)
+  [[ROCK[0] + 6, ROCK[1] - 14], [ROCK[0] + 12, ROCK[1] - 4], [CAVE.mouth[0] + 3, CAVE.mouth[1]], CAVE.at],
 ];
 
 /** 0 outside the city walls, 1 inside (soft at the wall's foot), for (u, v). */
@@ -79,6 +110,9 @@ export const KEEP_CLEAR = [
   [LEHI_HOUSE[0], LEHI_HOUSE[1], 30],
   [ROCK[0], ROCK[1], 16],
   [GATE[0] - 18, 0, 26],
+  // the valley of Lemuel: the tents, and the way down the valley from them
+  [LEMUEL.at[0], LEMUEL.at[1], 44],
+  [LEMUEL.at[0] + 4, LEMUEL.at[1] - 52, 34],
 ];
 
 /** Whether a tree, bush or stone at (u, v) would stand somewhere the story needs open: the city and the places. */
@@ -128,15 +162,26 @@ export function riverMiddle(u) {
 }
 
 /**
- * The rock the brothers hide in (3:27): big boulders round a hollow, open on the side towards the city.
- * [du, dv, size, tall] from ROCK.
+ * The rock the brothers hide in (3:27): great stones close round a hollow, shut at the back and the sides, with a
+ * narrow mouth on the side towards the city and a slab of rock lying over all of it.
+ * [du, dv, size, tall, { turn, kind, lean, lift }] from ROCK: `turn` (radians), `kind` (0 to 2, which of the three
+ * shapes of stone) and `lean` choose the stone, so that it is the same each time; one with `lift` does not stand on
+ * the ground but lies that many metres above the cave's floor, on the others, and stops no one.
  */
 export const ROCK_STONES = [
-  [-6.5, 2.5, 4.6, 1.15],
-  [-4.2, -4.8, 3.9, 1.0],
-  [1.5, -7.0, 4.2, 0.95],
-  [-3.0, 7.5, 3.6, 1.1],
-  [3.5, 7.0, 3.0, 0.9],
-  [-9.5, -1.0, 3.2, 0.85],
-  [6.0, -10.5, 2.4, 0.8],
+  // the back, up the hill
+  [-8.4, 0.4, 4.4, 1.25, { turn: 0.4, kind: 0, lean: 0.04 }],
+  [-5.8, -5.6, 4.0, 1.2, { turn: 2.1, kind: 1, lean: -0.05 }],
+  [-5.8, 5.8, 4.0, 1.2, { turn: 3.7, kind: 2, lean: 0.05 }],
+  // the sides
+  [-0.4, -6.9, 3.8, 1.2, { turn: 5.2, kind: 0, lean: 0.03 }],
+  [-0.2, 7.0, 3.8, 1.2, { turn: 1.3, kind: 1, lean: -0.03 }],
+  // either side of the mouth
+  [4.4, -5.0, 3.0, 1.25, { turn: 4.4, kind: 2, lean: 0.06 }],
+  [4.4, 5.2, 3.0, 1.25, { turn: 0.9, kind: 0, lean: -0.06 }],
+  // the rock overhead
+  [-2.2, 0.2, 8.2, 0.34, { turn: 2.6, kind: 1, lean: 0.02, lift: CAVE.roof }],
+  // fallen from it, before the mouth and behind
+  [8.6, -8.4, 1.9, 0.8, { turn: 3.1, kind: 1, lean: 0.1 }],
+  [-11.5, -5.5, 2.6, 0.85, { turn: 5.9, kind: 2, lean: -0.08 }],
 ];

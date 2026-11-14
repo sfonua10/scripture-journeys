@@ -82,9 +82,10 @@ export class Player {
     let speed;
     if (mag < 0.05) speed = 0;
     else if (input.walk) speed = S.walk * Math.min(1, mag * 1.4);
-    else if (input.device === 'pad' && mag < 0.6) speed = S.walk * (mag / 0.6);
+    // (one who flees, `hurry`, runs however little the stick is tilted: a thumb on a phone's glass has no feel for it)
+    else if (input.device === 'pad' && mag < 0.6 && !this.hurry) speed = S.walk * (mag / 0.6);
     else if (input.sprint && !input.strafe) speed = S.sprint;
-    else speed = input.device === 'pad' ? THREE.MathUtils.lerp(S.walk, S.run, (mag - 0.6) / 0.4) : S.run;
+    else speed = input.device === 'pad' && !this.hurry ? THREE.MathUtils.lerp(S.walk, S.run, (mag - 0.6) / 0.4) : S.run;
     // (one who carries something heavy goes no faster than `cap`)
     if (this.cap) speed = Math.min(speed, this.cap);
     return { dir, mag, speed, dirYaw: Math.atan2(dir.x, dir.z) };

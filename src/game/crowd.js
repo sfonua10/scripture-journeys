@@ -111,6 +111,7 @@ const fragment = /* glsl */ `
 ${COMMON}
 layout(location = 0) out vec4 outC;
 uniform sampler2D tFigures;
+uniform float uSack;   // how many of them have put on sackcloth, 0 to 1 (Jonah 3:5)
 in vec2 vUv;
 in vec3 vWorld;
 in float vTint;
@@ -125,7 +126,12 @@ void main() {
   int r = int(floor(fract(vTint * 7.31) * 6.999));
   int hd = int(floor(fract(vTint * 3.17) * 3.999));
   vec3 robe = ROBES[r];
-  vec3 col = what > 0.75 ? vec3(0.17, 0.11, 0.08) : what > 0.25 ? HEADS[hd] : robe;
+  vec3 head = HEADS[hd];
+  // (sackcloth: coarse, dark, of goats' hair; each puts it on in his own moment, and what is on his head is put off)
+  float sack = step(fract(vTint * 5.71) + 0.001, uSack);
+  robe = mix(robe, vec3(0.27, 0.22, 0.18) * (0.85 + 0.3 * fract(vTint * 9.3)), sack);
+  head = mix(head, vec3(0.17, 0.11, 0.08), sack);
+  vec3 col = what > 0.75 ? vec3(0.17, 0.11, 0.08) : what > 0.25 ? head : robe;
   col *= mix(0.55, 1.08, tone);
   // in the light, as the cast are (two tones: the card is seen in the sun)
   float open = smoothstep(0.35, 0.6, openAt(vWorld.xz));
@@ -151,7 +157,7 @@ export function createCrowd(scene, field, heightAt) {
   quad.setAttribute('aAt', at);
   quad.setAttribute('aLook', look);
   quad.instanceCount = 0;
-  const uniforms = { ...field.uniforms, tFigures: { value: figures() }, uSince: { value: -1 } };
+  const uniforms = { ...field.uniforms, tFigures: { value: figures() }, uSince: { value: -1 }, uSack: { value: 0 } };
   const material = new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: vertex, fragmentShader: fragment, uniforms, side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(quad, material);
   mesh.frustumCulled = false;
@@ -186,6 +192,10 @@ export function createCrowd(scene, field, heightAt) {
     fall(now) {
       fell = now;
       uniforms.uSince.value = now == null ? -1 : 0;
+    },
+    /** How many of them wear sackcloth, 0 (none) to 1 (all). */
+    sackcloth(k) {
+      uniforms.uSack.value = k;
     },
     update(now) {
       uniforms.uSince.value = fell == null ? -1 : now - fell;

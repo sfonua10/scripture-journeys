@@ -79,6 +79,8 @@ void main() {
   float glow = texture(tGlow, suv).g + lampAt(vWorld) * mix(1.0, 0.35, standing);
   float shade = mix(1.0, 0.3, standing);
   vec3 c = albedo * (uSunColor * cloud * max(dot(N, uSunDir), 0.0) * shade + mix(uBounceColor, uSkyColor, N.y * 0.5 + 0.5) * mix(1.0, 0.4, standing));
+  // (under the rock of a hollow little of the sky's light comes in either)
+  c *= 1.0 - 0.6 * caveAt(vWorld.xz);
   c += albedo * uFireColor * glow;
   // embers left in the ash, and the ground lit from just above while it burns
   // a few points of it still glow, each round, each breathing in its own time
