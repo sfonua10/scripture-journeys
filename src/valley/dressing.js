@@ -2,7 +2,7 @@
 // wind made visible, as seed fluff and petals carried past on the gusts.
 import * as THREE from 'three';
 import { COMMON } from '../lib/index.js';
-import { CAVE, keepClear, ROCK, ROCK_STONES } from '../game/places.js';
+import { CAVE, keepClear, ROCK, ROCK_STONES, WILD } from '../game/places.js';
 import { fromValley, heightAt, LAND, pathDistance, tarnDistance, toValley } from './world.js';
 
 const TAU = Math.PI * 2;
@@ -154,6 +154,12 @@ export function createStones(field) {
   const stones = [];
   // (the river plain is silt: not a stone on it, and no rock to hide in)
   const hills = LAND !== 'plain';
+  // (the wilderness is stonier: more about the wadi, and scree along the trail and round the mountain's top)
+  if (LAND === 'wild') {
+    groups.push([150, -196], [214, -140], [196, -30], [160, 60], [186, 136], [120, -40], [70, -10], [110, 70]);
+    for (const [u, v] of WILD.trail) groups.push([u + 9, v + 7], [u - 8, v - 10]);
+    for (let k = 0; k < 9; k++) groups.push([WILD.mountain.at[0] + 46 * Math.cos(k * 0.7), WILD.mountain.at[1] + 46 * Math.sin(k * 0.7)]);
+  }
   for (const [u, v] of hills ? groups : []) {
     const n = 3 + Math.floor(random() * 7);
     const spread = 4 + random() * 7;
@@ -161,7 +167,7 @@ export function createStones(field) {
       const a = random() * TAU;
       const d = spread * Math.sqrt(random());
       const [x, z] = fromValley(u + Math.cos(a) * d, v + Math.sin(a) * d);
-      if (pathDistance(x, z) < 1.7 || tarnDistance(x, z) < 1.12 || keepClear(...toValley(x, z))) continue;
+      if (pathDistance(x, z) < (LAND === 'wild' ? 3.6 : 1.7) || tarnDistance(x, z) < 1.12 || keepClear(...toValley(x, z))) continue;
       // one or two big ones to a group, the rest small
       const size = i < 2 ? 0.7 + 0.9 * random() : 0.2 + 0.45 * random();
       stones.push([x, z, size, random() * TAU, Math.floor(random() * 3), 0.7 + 0.5 * random(), (random() - 0.5) * 0.3]);
@@ -170,7 +176,8 @@ export function createStones(field) {
   // the rock the brothers hide in: great boulders round a hollow
   // (each is chosen, not left to chance: which stone, how it is turned, how it leans; and one may lie on the others)
   const floor = heightAt(...fromValley(...CAVE.at));
-  for (const [du, dv, size, tall, { turn = 0, kind = 0, lean = 0, lift = null } = {}] of hills ? ROCK_STONES : []) {
+  // (only in the hill country round Jerusalem: the wilderness has no such rock)
+  for (const [du, dv, size, tall, { turn = 0, kind = 0, lean = 0, lift = null } = {}] of LAND === 'hills' ? ROCK_STONES : []) {
     const [x, z] = fromValley(ROCK[0] + du, ROCK[1] + dv);
     // (one that lies over the hollow: its flat underside `lift` above the floor)
     stones.push([x, z, size, turn, kind, tall, lean, lift == null ? null : floor + lift + 0.3 * size * tall, true]);

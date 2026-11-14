@@ -142,10 +142,8 @@ const CSS = /* css */ `
 .g-screen button.plain { background: transparent; color: var(--ink); border: 1px solid var(--line); }
 .g-screen button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .g-screen a { color: var(--gold); }
-.g-screen blockquote { margin: 18px auto; font-style: italic; font-size: 18px; line-height: 1.55; }
-.g-screen blockquote cite { display: block; font-style: normal; margin-top: 6px; color: var(--gold); font-size: 14px; font-variant: small-caps; }
 .g-screen { overflow-y: auto; }
-/* at a journey's end, under the ways on: one question to tap an answer to, and a box for a parent's note */
+/* at a journey's end, under the ways on, where plays are counted: one question to tap an answer to, and a box for a parent's note */
 .g-screen .heard { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 15px; }
 .g-screen .heard .enjoyed { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; }
 .g-screen .heard button { font-size: 15px; padding: 7px 16px; margin: 0 4px; }
@@ -162,15 +160,37 @@ const CSS = /* css */ `
 .g-screen .heard .note button { justify-self: start; margin: 8px 0 0; }
 .g-screen .heard .said { opacity: 0.85; }
 .g-screen .heard .quiet { font-size: 12px; opacity: 0.55; margin: 18px 0 0; }
-/* two verses set side by side at a journey's end (one under the other on a narrow screen) */
-.g-screen .beside { margin: 26px 0 6px; padding-top: 18px; border-top: 1px solid var(--line); }
-.g-screen .beside h2 { font-weight: normal; font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin: 0 0 12px; }
-.g-screen .beside .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; text-align: left; padding: 12px 0; border-top: 1px solid rgba(244, 234, 214, 0.12); }
-.g-screen .beside .pair:first-of-type { border-top: 0; }
-.g-screen .beside blockquote { margin: 0; font-size: 16px; }
-.g-screen .beside .ask { font-style: italic; margin: 10px 0 0; }
-@media (max-width: 640px) {
-  .g-screen .beside .pair { grid-template-columns: 1fr; gap: 10px; }
+/* a journey's end: its name, the verse it is from, one thing to talk about, and the two ways on (which, on a
+   narrow screen, lie at its foot) */
+/* (the painting behind it dimmed almost away; and laid from the top, the box being as tall as the screen, so that
+   on a screen too short for it the top can still be scrolled to) */
+#g-end { background: rgba(10, 8, 6, 0.96); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); place-items: start center; }
+#g-end .box {
+  width: min(520px, calc(100vw - 32px)); min-height: 100vh; min-height: 100dvh; box-sizing: border-box;
+  display: flex; flex-direction: column; justify-content: center; padding: 28px 0 max(28px, env(safe-area-inset-bottom));
+}
+#g-end h1 { font-size: clamp(32px, 6vw, 52px); margin: 0; text-wrap: balance; }
+#g-end .cite { margin-top: 8px; color: var(--gold); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; }
+#g-end .label { margin-top: 34px; color: var(--gold); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; }
+#g-end .ask { margin: 8px 0 0; font-style: normal; opacity: 1; color: #fff; font-size: clamp(20px, 2.6vw, 24px); line-height: 1.35; text-wrap: balance; }
+#g-end .ways { margin-top: 44px; display: grid; justify-items: center; gap: 14px; }
+#g-end .ways button { margin: 0; }
+#g-end .ways button[data-go="back"] { width: min(100%, 360px); padding: 13px 26px; border-radius: 8px; }
+#g-end .ways button.link { background: none; border: 0; padding: 4px 8px; color: var(--gold); font-size: 15px; letter-spacing: 0.02em; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 600px) {
+  #g-end .said { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  #g-end .ways { margin-top: 24px; }
+  #g-end .ways button[data-go="back"] { width: 100%; }
+}
+/* a phone on its side: everything a little smaller and closer, to be seen without scrolling */
+@media (max-height: 500px) {
+  #g-end .box { padding: 14px 0 max(14px, env(safe-area-inset-bottom)); }
+  #g-end h1 { font-size: 30px; }
+  #g-end .cite { margin-top: 4px; }
+  #g-end .label { margin-top: 16px; }
+  #g-end .ask { margin-top: 4px; font-size: 19px; }
+  #g-end .ways { margin-top: 18px; gap: 8px; }
+  #g-end .ways button[data-go="back"] { padding: 10px 26px; }
 }
 .g-screen .box { padding: 24px 0; }
 /* the list of journeys: plain, over the painting dimmed right down, so that the rows are what is looked at */
@@ -254,7 +274,6 @@ const CSS = /* css */ `
   .g-screen .leaf .about { font-size: 15px; }
   .g-screen .journeys .go { justify-items: start; grid-auto-flow: column; justify-content: start; align-items: center; }
 }
-.g-screen .next { font-size: 15px; opacity: 0.75; }
 @media (max-width: 600px) {
   #g-card .text { font-size: 17px; }
   #g-card { padding: 16px 18px 12px; }
@@ -509,30 +528,18 @@ export function createUI({ touch = false } = {}) {
       title.classList.remove('on');
     },
     /**
-     * The end of a journey: what was read, where to read more, something to talk about. `copy` is the story's own
-     * (stories.js, end): { heading, quote, cite, talk, links: [[name, url]] }. It may also set verses side by side
-     * (`pairs`: [[{ text, cite }, { text, cite }]], under `pairsHeading`, with a question after them, `pairsAsk`).
+     * The end of a journey: its name, the verse it is from, one thing to talk about together, and the ways on.
+     * `copy` is the story's own (stories.js, end): { heading, cite, ask }.
      */
     end({ copy, onAgain, onBack, onEnjoyed = null, onNote = null, counted = false }) {
-      const links = copy.links.map(([name, url]) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>`);
-      const listed = links.length > 1 ? `${links.slice(0, -1).join(', ')} and ${links.at(-1)}` : links.join('');
       end.innerHTML = `<div class="box">
-        <div class="sub">The end of the journey</div>
-        <h1>${esc(copy.heading)}</h1>
-        <blockquote>${esc(copy.quote)}<cite>${esc(copy.cite)}</cite></blockquote>
-        <p>To talk about together: ${esc(copy.talk)}</p>
-        ${
-          copy.pairs?.length
-            ? `<div class="beside">
-          ${copy.pairsHeading ? `<h2>${esc(copy.pairsHeading)}</h2>` : ''}
-          ${copy.pairs.map((pair) => `<div class="pair">${pair.map((v) => `<blockquote>${esc(v.text)}<cite>${esc(v.cite)}</cite></blockquote>`).join('')}</div>`).join('')}
-          ${copy.pairsAsk ? `<p class="ask">${esc(copy.pairsAsk)}</p>` : ''}
-        </div>`
-            : ''
-        }
-        ${listed ? `<p>Read the whole account in ${listed}.</p>` : ''}
-        <p class="next">The next journey arrives next week.</p>
-        <button data-go="back">Back to journeys</button><button data-go="again" class="plain">Play again</button>
+        <div class="said">
+          <h1>${esc(copy.heading)}</h1>
+          <div class="cite">${esc(copy.cite)}</div>
+          <div class="label">Talk about it together</div>
+          <p class="ask">${esc(copy.ask)}</p>
+        </div>
+        <div class="ways"><button data-go="back">Back to journeys</button><button data-go="again" class="link">Play again</button></div>
         ${
           onEnjoyed || onNote
             ? `<div class="heard">

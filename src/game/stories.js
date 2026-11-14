@@ -12,8 +12,10 @@ import * as furnace from './daniel.js';
 import * as jonah from './jonah.js';
 import * as den from './lions-den.js';
 import { nephi } from './scripture.js';
-import { daniel, PAIRS } from './scripture-daniel.js';
+import { daniel } from './scripture-daniel.js';
 import { jonah as bookOfJonah } from './scripture-jonah.js';
+import { nephi16 } from './scripture-nephi16.js';
+import * as small from './small-means.js';
 import { CLOTHES, NAMES, PEOPLE, story } from './story.js';
 
 export const GAME = {
@@ -80,14 +82,34 @@ export const STORIES = [
     oldSave: 'nephi-plates:beat',
     end: {
       heading: 'The Lord Prepared a Way',
-      quote: '“I know that the Lord giveth no commandments unto the children of men, save he shall prepare a way for them that they may accomplish the thing which he commandeth them.”',
       cite: '1 Nephi 3:7',
-      talk: 'Nephi and his brothers tried three times. What did Nephi know about the Lord that helped him keep going? When has the Lord prepared a way for you?',
-      links: [
-        ['1 Nephi 3', 'https://www.churchofjesuschrist.org/study/scriptures/bofm/1-ne/3?lang=eng'],
-        ['1 Nephi 4', 'https://www.churchofjesuschrist.org/study/scriptures/bofm/1-ne/4?lang=eng'],
-        ['1 Nephi 5', 'https://www.churchofjesuschrist.org/study/scriptures/bofm/1-ne/5?lang=eng'],
-      ],
+      ask: 'When has the Lord prepared a way for you?',
+    },
+  },
+  {
+    id: 'by-small-means',
+    wip: true,
+    work: 'bom',
+    book: '1-nephi',
+    number: 2,
+    title: 'By Small Means',
+    ref: '1 Nephi 16',
+    blurb: 'A ball of curious workmanship points the way; Nephi breaks his bow of fine steel, makes one of wood, and asks his father where to go.',
+    released: true,
+    first: 'a1',
+    beats: small.story,
+    people: small.PEOPLE,
+    names: small.NAMES,
+    clothes: small.CLOTHES,
+    scripture: nephi16,
+    /** No city at all: the wilderness by the Red Sea (world.js, 'wild'), with the valley of Lemuel at its edge. */
+    look: small.LOOK,
+    land: 'wild',
+    town: small.town,
+    end: {
+      heading: 'By Small Means',
+      cite: '1 Nephi 16:29',
+      ask: 'What small things has the Lord given you to give heed to?',
     },
   },
   // the teaser: what comes next week (with no `book`, it is listed under its work's books, without a number)
@@ -115,15 +137,9 @@ export const STORIES = [
     town: furnace.town,
     end: {
       heading: 'But If Not',
-      quote: '“… our God whom we serve is able to deliver us from the burning fiery furnace, and he will deliver us out of thine hand, O king. But if not, be it known unto thee, O king, that we will not serve thy gods …”',
       cite: 'Daniel 3:17–18',
-      // (as this week's Come, Follow Me asks: about trusting the Lord when faith is tried, and about choices that
-      // lead others to Him; and, for children, that Jesus will help them do what is right when it is hard)
-      talk: 'They did not know whether they would be delivered, and they trusted the Lord all the same. When have you been asked to do something you knew was wrong? What if faith does not bring the miracle we hope for? How did their choice lead a king to bless God, and whom might your choices help? Jesus will help you do what is right, even when it is hard: “whosoever shall put their trust in God shall be supported in their trials” (Alma 36:3).',
-      links: [
-        ['Daniel 3', 'https://www.churchofjesuschrist.org/study/scriptures/ot/dan/3?lang=eng'],
-        ['this week’s Come, Follow Me', 'https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/46?lang=eng'],
-      ],
+      // (one of the things this week's Come, Follow Me asks: about trusting the Lord when faith is tried)
+      ask: 'What if faith does not bring the miracle we hope for?',
     },
   },
   {
@@ -150,23 +166,9 @@ export const STORIES = [
     town: den.town,
     end: {
       heading: 'He Delivereth and Rescueth',
-      quote: '“… for he is the living God, and stedfast for ever, and his kingdom that which shall not be destroyed, and his dominion shall be even unto the end. He delivereth and rescueth …”',
       cite: 'Daniel 6:26–27',
-      // (as this week's Come, Follow Me asks: about trusting the Lord when faith is tried; and, for children, that
-      // Heavenly Father wants us to pray often, and that Jesus will help us do what is right when it is hard)
-      talk: 'Daniel knew the writing was signed, and he prayed as he had before. Why was praying to Heavenly Father so important to him? When have you felt pressed to do something you knew was wrong, or to leave off something you knew was right? Heavenly Father wants you to pray often, and Jesus will help you do what is right, even when it is hard.',
-      // Four things told of Daniel, each beside one told of Jesus Christ: the verses' own words, and nothing said of
-      // them (scripture-daniel.js, PAIRS; tools/excerpts.mjs checks each against its verse)
-      pairs: PAIRS.map(([a, b]) => [
-        { text: a.text, cite: `Daniel ${a.verse}` },
-        { text: b.text, cite: b.verse },
-      ]),
-      pairsHeading: 'Daniel, and the Saviour',
-      pairsAsk: 'What do you see of Jesus Christ in what happened to Daniel?',
-      links: [
-        ['Daniel 6', 'https://www.churchofjesuschrist.org/study/scriptures/ot/dan/6?lang=eng'],
-        ['this week’s Come, Follow Me', 'https://www.churchofjesuschrist.org/study/manual/come-follow-me-for-home-and-church-old-testament-2026/46?lang=eng'],
-      ],
+      // (this week's Come, Follow Me, for children: Heavenly Father wants us to pray often)
+      ask: 'Why was praying to Heavenly Father so important to Daniel?',
     },
   },
   {
@@ -194,16 +196,10 @@ export const STORIES = [
     props: jonah.PROPS,
     end: {
       heading: 'Should Not I Spare Nineveh?',
-      quote: '“… for I knew that thou art a gracious God, and merciful, slow to anger, and of great kindness …”',
       cite: 'Jonah 4:2',
-      // (the book ends on the LORD's question, and gives no answer of Jonah's: so the family is asked it)
-      talk: 'The book ends with the Lord’s question, and Jonah’s answer is not written. How would you answer it? Jonah was shown mercy in the deep, and was angry when Nineveh was shown it too. Why is it sometimes hard to be glad when someone else is forgiven? Whom does Heavenly Father want you to have pity on?',
-      links: [
-        ['Jonah 1', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/1?lang=eng'],
-        ['Jonah 2', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/2?lang=eng'],
-        ['Jonah 3', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/3?lang=eng'],
-        ['Jonah 4', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/4?lang=eng'],
-      ],
+      // (the book ends on the LORD's question, and gives no answer of Jonah's: the journey's name asks it, and this
+      // asks what lies under it)
+      ask: 'Why is it sometimes hard to be glad when someone else is forgiven?',
     },
   },
 ];

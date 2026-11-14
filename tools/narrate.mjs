@@ -88,6 +88,25 @@ const STORIES = {
       'An angel of the Lord': 'JBFqnCBsd6RMkjVDRZzb', // George: a man, grave and warm
     },
   },
+  // The same family some months on, in the same voices. The voice of the Lord (16:26) is given no voice of its own:
+  // it is read by the narrator, as what the Spirit says is in the first journey. NOT TO BE MADE until its spoken
+  // lines (src/game/spoken-nephi16.js) have been read over.
+  'by-small-means': {
+    file: 'src/game/small-means.js',
+    scripture: ['src/game/scripture-nephi16.js', 'nephi16'],
+    spoken: ['src/game/spoken-nephi16.js', 'SPOKEN'],
+    key: ['16:10-a', '16:10-b', '16:18-a', '16:20-b', '16:23-said', '16:25', '16:26-said', '16:27', '16:29-a', '16:29-b', '16:31', '16:32-a', '16:32-b'],
+    names: { Nephi: 'Nee-fye', Lehi: 'Lee-hi', Laman: 'Lay-men', Lemuel: 'Lem-yool', Sariah: 'Suh-rye-uh' },
+    teller: 'Nephi',
+    cast: {
+      Nephi: 'TX3LPaxmHKxFdv7VOQHJ',
+      Lehi: 'pqHfZKP75CvOlQylNhV4',
+      Sariah: 'XrExE9yKIg1WjnnlVkGX',
+      Laman: 'CwhRBWXzGAHq8TQ4Fs17',
+      Lemuel: 'cjVigY5qzO86Huf0OWal',
+      Sam: 'bIHbv24MWmeRgasZH58o',
+    },
+  },
   'fiery-furnace': {
     file: 'src/game/daniel.js',
     scripture: ['src/game/scripture-daniel.js', 'daniel'],
@@ -251,7 +270,9 @@ try {
     // ones it will never read. (Put back by moving them and their lines of unused.json back.)
     const book = slug(reference(Object.keys(scriptureFile.VERSES)[0]).replace(/\s\d+:\d+.*$/, ''));
     const used = new Set(cards.map((c) => c.key));
-    const stale = Object.keys(manifest).filter((k) => k.startsWith(`${book}-`) && !used.has(k));
+    // (of its own chapters only: another journey may be told from the same book, and its recordings are its own)
+    const chapters = new Set(Object.keys(scriptureFile.VERSES).map((k) => k.split(':')[0]));
+    const stale = Object.keys(manifest).filter((k) => k.startsWith(`${book}-`) && chapters.has(k.slice(book.length + 1).split('-')[0]) && !used.has(k));
     const away = path.join(here, 'shots/narration/unused');
     console.log(`${stale.length} recordings of ${book} that the journey no longer reads${stale.length ? `: ${stale.join(', ')}` : '.'}`);
     if (has('dry') || !stale.length) process.exit(0);

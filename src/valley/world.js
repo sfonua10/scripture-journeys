@@ -5,7 +5,7 @@
 //
 // Or, for the journeys told in Babylon, the river plain there (setLand('plain')): level silt with no hill anywhere,
 // the Euphrates going by the city, canals off it and fields along them. The same functions answer for either.
-import { CAVE, chooseLand, CITY, cityDistance, LAND, LEHI_HOUSE, LEMUEL, lemuelRiver, PATHS, PLAIN, riverMiddle } from '../game/places.js';
+import { CAVE, chooseLand, CITY, cityDistance, LAND, LEHI_HOUSE, LEMUEL, lemuelRiver, PATHS, PLAIN, riverMiddle, WILD } from '../game/places.js';
 
 export { LAND };
 
@@ -19,6 +19,8 @@ export function setLand(name) {
   lehiLevel = null;
   caveLevel = null;
   lemuelLevel = null;
+  campLevel = null;
+  trailLevels = null;
 }
 
 /** The way the valley runs from the start, a unit vector (x, z). */
@@ -139,7 +141,8 @@ export function riverDistance(x, z) {
 
 /** 0 to 1: how much of the far land at (x, z) is ploughed and hedged, the fields round the hamlet. */
 export function fieldsAt(x, z) {
-  if (LAND === 'plain') return 0;
+  // (no ploughland on the river plain's far side, and none in the wilderness)
+  if (LAND !== 'hills') return 0;
   const u = x * DX + z * DZ;
   const v = -x * DZ + z * DX;
   const d = Math.hypot((u - 1350) / 1000, (v + 60) / 820) + (fbm(x / 600 + 4, z / 600 + 8, 2, 83) - 0.5) * 0.4;
@@ -158,6 +161,8 @@ export function forestAt(x, z) {
   f *= smooth(820, 1500, r) * smooth(30, 170, riverDistance(x, z)) * (1 - fieldsAt(x, z));
   // (the hill country is open: woods only in the folds of the hills)
   f *= 0.55 * smooth(0.5, 0.7, fbm(x / 1100 + 9.1, z / 1100 + 1.7, 2, 107));
+  // (and the wilderness barer still)
+  if (LAND === 'wild') f *= 0.3;
   return f;
 }
 
@@ -203,6 +208,8 @@ function land(x, z) {
   const across = u - LEMUEL.at[0];
   const along = Math.abs(v - LEMUEL.at[1]);
   if (along < LEMUEL.reach + 90 && Math.abs(across) < 230) return lemuelLand(h, x, z, u, v, across, along);
+  // the wilderness: no city, no house, no rock; a camp, and the mountain
+  if (LAND === 'wild') return wilderness(h, x, z, u, v);
   // inside the walls the ground is made level for building, and it eases back into the hill outside them
   const d = cityDistance(u, v);
   if (d <= 40) {
@@ -225,6 +232,74 @@ function land(x, z) {
   return h + (lehiLevel - h) * (1 - smooth(0, 28, l));
 }
 
+/** The level of the camp in the wilderness (WILD.camp), and of each point of the trail up the mountain. */
+let campLevel = null;
+let trailLevels = null;
+
+/** The mountain alone: how high it stands at (u, v) above the land it is on, with its crags. */
+function mountainAt(x, z, u, v) {
+  const { at, high, top, foot } = WILD.mountain;
+  const d0 = Math.hypot(u - at[0], v - at[1]);
+  if (d0 > foot * 1.3) return 0;
+  // (its outline is not a circle: spurs and coves)
+  const d = d0 * (1 + 0.36 * (fbm(x / 150 + 6.1, z / 150 + 2.3, 2, 201) - 0.5));
+  if (d >= foot) return 0;
+  // a top that is nearly level, and a flank that steepens and then eases to its foot
+  const dome = 5;
+  const p = d < top ? high - dome * (d / top) ** 2 : (high - dome) * (0.5 + 0.5 * Math.cos((Math.PI * (d - top)) / (foot - top)));
+  // crags on its flank: none on its top, where the beasts are, nor at its foot
+  const k = p / high;
+  const flank = smooth(0.06, 0.35, k) * (1 - smooth(0.78, 0.95, k));
+  return p + flank * ((ridged(x / 44 + 1.9, z / 44 + 7.3, 3, 211) - 0.3) * 6.5 + (fbm(x / 13 + 2.2, z / 13 + 5.1, 2, 213) - 0.5) * 1.6);
+}
+
+/** The wilderness of 1 Nephi 16 (places.js, WILD): `h` is the wild land at (x, z). */
+function wilderness(h, x, z, u, v) {
+  h += mountainAt(x, z, u, v);
+  // the camp: a level place on the slope, eased back into it
+  const { at, floor, ease } = WILD.camp;
+  const c = Math.hypot(u - at[0], v - at[1]);
+  if (c < ease) {
+    campLevel ??= wildLand(...fromValley(at[0], at[1]));
+    return h + (campLevel - h) * (1 - smooth(floor, ease, c));
+  }
+  // the trail up the mountain: cut into the flank, level across, rising evenly from point to point
+  const m = Math.hypot(u - WILD.mountain.at[0], v - WILD.mountain.at[1]);
+  if (m < WILD.mountain.foot + 30) {
+    // (and the ways that leave it, cut the same: each line's own levels, taken from the flank as it was)
+    const lines = [WILD.trail, ...WILD.spurs];
+    trailLevels ??= lines.map((line) =>
+      line.map(([tu, tv]) => {
+        const [tx, tz] = fromValley(tu, tv);
+        return wildLand(tx, tz) + mountainAt(tx, tz, tu, tv);
+      }),
+    );
+    // (its level at a place is that of the way nearest it; where two legs of it lie near each other, at a turn, between
+    // the two: so that the inside of a turn is a slope from the lower leg to the upper, and not a wall)
+    let best = 1e9;
+    let sum = 0;
+    let weight = 0;
+    lines.forEach((line, n) => {
+      for (let i = 0; i + 1 < line.length; i++) {
+        const [au, av] = line[i];
+        const [bu, bv] = line[i + 1];
+        const du = bu - au;
+        const dv = bv - av;
+        const t = Math.min(1, Math.max(0, ((u - au) * du + (v - av) * dv) / (du * du + dv * dv)));
+        const d = Math.hypot(u - au - du * t, v - av - dv * t);
+        if (d > 40) continue;
+        const w = 1 / (d * d * d * d + 1);
+        sum += w * (trailLevels[n][i] + (trailLevels[n][i + 1] - trailLevels[n][i]) * t);
+        weight += w;
+        best = Math.min(best, d);
+      }
+    });
+    const level = weight ? sum / weight : 0;
+    if (best < WILD.trailEase) h += (level - h) * (1 - smooth(WILD.trailHalf, WILD.trailEase, best));
+  }
+  return h;
+}
+
 function wildLand(x, z) {
   const u = x * DX + z * DZ;
   const v = -x * DZ + z * DX;
@@ -242,12 +317,13 @@ function wildLand(x, z) {
   h += roll;
   // the hill you start on, a long shoulder
   h += 54 * Math.exp(-((u + 30) ** 2) / (2 * 185 ** 2) - (v * v) / (2 * 330 ** 2));
-  // Jerusalem's hill
-  h += 24 * Math.exp(-((u - CITY.at[0]) ** 2 + (v - CITY.at[1]) ** 2) / (2 * 120 ** 2));
+  // Jerusalem's hill (in the wilderness there is none: the mountain is added to the land there, see wilderness)
+  if (LAND !== 'wild') h += 24 * Math.exp(-((u - CITY.at[0]) ** 2 + (v - CITY.at[1]) ** 2) / (2 * 120 ** 2));
   // a dip between the camp's hill and the city's, so the city stands up across it
+  // (in the wilderness it is the wadi at the mountain's foot)
   h -= 7 * Math.exp(-((u - 190) ** 2) / (2 * 60 ** 2) - (v * v) / (2 * 260 ** 2));
   // the land of inheritance: a gentle shelf
-  h -= 6 * Math.exp(-((u - LEHI_HOUSE[0]) ** 2 + (v - LEHI_HOUSE[1]) ** 2) / (2 * 70 ** 2));
+  if (LAND !== 'wild') h -= 6 * Math.exp(-((u - LEHI_HOUSE[0]) ** 2 + (v - LEHI_HOUSE[1]) ** 2) / (2 * 70 ** 2));
   // wooded hills to either side, and behind
   const side = Math.abs(v) + 160 * (fbm(u / 520 + 5, v / 520, 2, 31) - 0.5);
   h += 120 * smooth(430, 1500, side) * (0.6 + 0.8 * fbm(x / 800 + 2, z / 800 + 9, 3, 37));
@@ -333,6 +409,17 @@ export function pathDistance(x, z) {
   const v = -x * DZ + z * DX;
   // (on the plain, the one road out of the gate: straight, and broad)
   if (LAND === 'plain') return Math.max(0, lineDistance(u, v, PLAIN.road) - PLAIN.roadHalf);
+  // (in the wilderness: the way down from the camp, and the trail up the mountain, which keeps to where it was cut)
+  if (LAND === 'wild') {
+    let best = lineDistance(u, v, WILD.trail);
+    for (const line of WILD.paths) best = Math.min(best, lineDistance(u, v, line));
+    // (the ways that leave the trail are worn as it is, and are lost towards their ends)
+    for (const line of WILD.spurs) {
+      const end = line[line.length - 1];
+      best = Math.min(best, lineDistance(u, v, line) + 2.4 * (1 - smooth(4, 26, Math.hypot(u - end[0], v - end[1]))));
+    }
+    return Math.max(0, best - 0.7);
+  }
   // (each path wanders a little off its straight lines)
   const wander = 2.2 * Math.sin(u / 23 + v / 31) + 1.4 * Math.sin(u / 9.7 - v / 13);
   let best = 1e3;
@@ -421,10 +508,57 @@ function plainPaint(x, z) {
   return { dry: dry * (1 - wet), growth, wet, flowers: 0 };
 }
 
+/** How green the wilderness is at (u, v), 0 to 1: its fertile parts (WILD.green), ragged at their edges. */
+export function fertileAt(x, z) {
+  const u = x * DX + z * DZ;
+  const v = -x * DZ + z * DX;
+  const ragged = (fbm(x / 17 + 4.4, z / 17 + 1.2, 2, 221) - 0.5) * 16;
+  let best = 0;
+  for (const [line, half] of WILD.green) best = Math.max(best, 1 - smooth(half * 0.55, half * 1.25, lineDistance(u, v, line) + ragged));
+  // (and a little on the mountain's top, where the beasts are)
+  const top = Math.hypot(u - WILD.mountain.at[0], v - WILD.mountain.at[1]);
+  best = Math.max(best, 0.7 * (1 - smooth(WILD.mountain.top * 0.5, WILD.mountain.top * 1.1, top + ragged)));
+  return best;
+}
+
+/**
+ * What grows in the wilderness: little. Stony earth with thin straw on it; along the fertile parts, green; on the
+ * mountain's flank, bare rock and scree. The valley of Lemuel is as it is in the hill country.
+ */
+function wildPaint(x, z, u, v) {
+  const clumps = fbm(x / 9 + 1.3, z / 9 - 4.1, 3, 41) * 0.65 + fbm(x / 60 - 3.3, z / 60 + 2.7, 2, 43) * 0.35;
+  let growth = 0.05 + 0.5 * smooth(0.42, 0.7, clumps);
+  let dry = 0.9 + 0.1 * smooth(0.4, 0.66, fbm(x / 90 + 2.2, z / 90 + 8.1, 3, 21));
+  let wet = 0;
+  const green = fertileAt(x, z);
+  growth = Math.max(growth, green * (0.72 + 0.28 * clumps));
+  dry *= 1 - 0.8 * green;
+  wet = green * 0.55;
+  // the mountain's flank: rock, with a little on its ledges
+  const m = Math.hypot(u - WILD.mountain.at[0], v - WILD.mountain.at[1]);
+  const flank = smooth(WILD.mountain.foot * 0.95, WILD.mountain.foot * 0.6, m) * smooth(WILD.mountain.top * 0.9, WILD.mountain.top * 1.5, m);
+  growth *= 1 - 0.8 * flank * smooth(0.3, 0.6, fbm(x / 21 + 7.7, z / 21 + 3.9, 2, 223));
+  // (straw along the edges of the ways cut into it, where the earth was turned: so that a way is seen as one)
+  const way = pathDistance(x, z);
+  growth = Math.max(growth, flank * smooth(1.0, 2.4, way) * (1 - smooth(4.2, 7.5, way)) * (0.42 + 0.3 * clumps));
+  // the mountain's top: a high pasture, where the wild beasts feed
+  const crown = 1 - smooth(WILD.mountain.top * 0.75, WILD.mountain.top * 1.3, m);
+  growth = Math.max(growth, crown * (0.5 + 0.4 * clumps));
+  wet = Math.max(wet, crown * 0.3);
+  dry *= 1 - 0.35 * crown;
+  // paths worn to earth, and the camp trodden bare
+  growth = Math.min(growth, smooth(0.5, 1.9, pathDistance(x, z) + (fbm(x / 2.7, z / 2.7, 2, 61) - 0.5) * 0.9));
+  growth *= smooth(9, 24, Math.hypot(u - WILD.camp.at[0], v - WILD.camp.at[1]) + (fbm(x / 5.3, z / 5.3, 2, 67) - 0.5) * 8);
+  const flowers = green * smooth(0.5, 0.7, fbm(x / 38 - 6, z / 38 + 3, 2, 55)) * 0.3;
+  return { dry: dry * (1 - wet), growth, wet, flowers };
+}
+
 export function paint(x, z) {
   if (LAND === 'plain') return plainPaint(x, z);
   const u = x * DX + z * DZ;
   const v = -x * DZ + z * DX;
+  // (the wilderness, but for the valley of Lemuel, which is painted as it is in the hill country)
+  if (LAND === 'wild' && !(Math.abs(v - LEMUEL.at[1]) < LEMUEL.reach + 60 && Math.abs(u - LEMUEL.at[0]) < 150)) return wildPaint(x, z, u, v);
   // dry nearly everywhere: grass gone to straw, sage and thorn in the hollows
   let dry = 0.62 + 0.36 * smooth(0.4, 0.66, fbm(x / 90 + 2.2, z / 90 + 8.1, 3, 21));
   let wet = smooth(0.7, 0.78, fbm(x / 47 + 5.5, z / 47 + 9.9, 2, 33)) * 0.35;
@@ -434,11 +568,13 @@ export function paint(x, z) {
   // a footpath worn to earth, its edges ragged
   const path = pathDistance(x, z);
   growth = Math.min(growth, smooth(0.6, 1.8, path + (fbm(x / 2.7, z / 2.7, 2, 61) - 0.5) * 0.9));
-  // nothing grows in the city's streets or in the trodden ground round its walls or the house
-  growth *= smooth(-2, 12, cityDistance(u, v));
-  growth *= smooth(16, 30, Math.hypot(u - LEHI_HOUSE[0], v - LEHI_HOUSE[1]));
-  // nor under the rock, where no sun comes
-  growth *= smooth(CAVE.floor - 1.5, CAVE.floor + 1.5, Math.hypot(u - CAVE.at[0], v - CAVE.at[1]));
+  if (LAND !== 'wild') {
+    // nothing grows in the city's streets or in the trodden ground round its walls or the house
+    growth *= smooth(-2, 12, cityDistance(u, v));
+    growth *= smooth(16, 30, Math.hypot(u - LEHI_HOUSE[0], v - LEHI_HOUSE[1]));
+    // nor under the rock, where no sun comes
+    growth *= smooth(CAVE.floor - 1.5, CAVE.floor + 1.5, Math.hypot(u - CAVE.at[0], v - CAVE.at[1]));
+  }
   // the valley of Lemuel: trodden earth round the tents, green along the river's banks, and gravel in its bed
   if (Math.abs(v - LEMUEL.at[1]) < LEMUEL.reach && Math.abs(u - LEMUEL.at[0]) < 70) {
     const ragged = (fbm(x / 5.3, z / 5.3, 2, 67) - 0.5) * 9;

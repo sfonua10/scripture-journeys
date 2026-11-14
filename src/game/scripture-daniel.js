@@ -189,8 +189,8 @@ export const BLANKS = {
 };
 
 /**
- * Verses of the Gospels, for the end of the Daniel 6 journey, where four things told of Daniel are set beside four
- * told of Jesus Christ. From the same text (tools/verses.mjs, with --book), and quoted as exactly.
+ * Verses of the Gospels, for four things told of Daniel set beside four told of Jesus Christ (PAIRS). From the same
+ * text (tools/verses.mjs, with --book), and quoted as exactly.
  */
 export const GOSPELS = {
   'Luke 23:4': "Then said Pilate to the chief priests and to the people, I find no fault in this man.",
@@ -202,7 +202,8 @@ export const GOSPELS = {
 /**
  * Daniel 6 beside the Gospels: [a part of a verse of Daniel 6, a part of a verse of the Gospels], each the verse's
  * own words with "…" where any are left out. Nothing is said of them but the two verses; tools/excerpts.mjs checks
- * both against their verses.
+ * both against their verses. (Kept, and checked, but shown nowhere at present: a journey's end is now only its
+ * name, its verse and one question.)
  */
 export const PAIRS = [
   [

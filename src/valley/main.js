@@ -293,6 +293,8 @@ let treasuryDoor = null;
 let guidance = null;
 /** A fixed view the story asks for ({ position, target }), or null for the eye behind Nephi. */
 let cinematic = null;
+/** How the eye behind him stood before it was drawn in to aim (g.eye.aim), or null. */
+let aimFrom = null;
 /** What the story's weather does to him and to the eye (g.shove, g.sway): a deck that heaves under him, at sea. */
 const shove = { x: 0, z: 0 };
 const sway = { roll: 0, heave: 0 };
@@ -568,6 +570,16 @@ function updateWanderer(dt) {
     // (nor does he look about him as one who stands idle does)
     walker.idleTime = 0;
   }
+  // One who stands to a thing and faces it (g.player.face, a yaw: an archer to his mark) does not walk, and turns to it.
+  const facing = director ? g.player.face : null;
+  if (facing != null && !director.frozen) {
+    inp.move = { x: 0, y: 0 };
+    inp.jump = false;
+    inp.sprint = false;
+    walker.idleTime = 0;
+    const turn = Math.atan2(Math.sin(facing - walker.yaw), Math.cos(facing - walker.yaw));
+    walker.yaw = walker.lastYaw = walker.yaw + turn * Math.min(1, dt * 9);
+  }
   held.copy(walker.feet);
   const bodyWas = walker.body.translation();
   walker.update(dt, inp, follow.yaw);
@@ -613,6 +625,14 @@ function updateWanderer(dt) {
     if (carryK > 0 && carryPose) {
       animator.object.updateMatrixWorld(true);
       holdArms(animator.bones, animator.object, walker.yaw, carryPose, carryK);
+    }
+  }
+  // and what the story itself does with his arms (g.player.pose: an archer's, drawing his bow)
+  {
+    const pose = director ? g.player.pose : null;
+    if (pose) {
+      animator.object.updateMatrixWorld(true);
+      pose(animator.bones, animator.object, walker.yaw, dt);
     }
   }
   if (walker.mode === 'move' && !walker.strafe) animator.leanInto(dt, walker.turnRate, walker.speed, walker.accelF);
@@ -914,7 +934,7 @@ mark('warm');
 
 // ---- the story -----------------------------------------------------------------------------------------------
 const ui = createUI({ touch });
-const narration = createNarration(sounds, { note, book: journey.scripture.book });
+const narration = createNarration(sounds, { note, book: journey.scripture.book, chapters: journey.scripture.chapters ?? null });
 // (the list of recordings is asked for once the sounds are ready, since they are played through them)
 Promise.resolve(soundsReady).then(() => narration.load());
 if (touch) createTouch({ canvas, input, ui, press: () => director?.press(), tap: () => director?.tap(), hold: (on) => director?.hold(on), wake: () => sounds.start(), mouse: params.has('touch') });
@@ -968,6 +988,18 @@ const g = {
     seated: 0,
     /** Borne up `up` metres and leant (`lean`, `roll`, radians): in deep water; or laid down, asleep. Null: on his feet. */
     afloat: null,
+    /** A yaw he stands facing, and does not walk from (an archer to his mark); null for none. */
+    face: null,
+    /** `pose(bones, object, yaw, dt)`: called each frame once his clip is set, to put his arms where the story has them. */
+    pose: null,
+    /** How fast he is going over the ground, m/s. */
+    get speed() {
+      return Math.hypot(player.vx, player.vz);
+    },
+  },
+  /** The one you walk as: his bones, and the figure they move (to hang a bow in his hand). */
+  get figure() {
+    return { bones: animator.bones, object: wanderer.man.object };
   },
   /** Asks for `fn(dt)` to be called every frame from now on, on the game's own clock (which a test steps). */
   each(fn) {
@@ -1136,7 +1168,22 @@ const g = {
     },
     turn(yaw, pitch = follow.pitch) {
       follow.yaw = yaw;
-      follow.pitch = pitch;
+      follow.pitch = Math.min(1.2, Math.max(-0.75, pitch));
+    },
+    /**
+     * Draws the eye in over his shoulder and narrows what it sees, `k` of the way (0: as it was): an archer's view
+     * along his arrow.
+     */
+    aim(k) {
+      if (k > 0 && aimFrom == null) aimFrom = { want: follow.want, side: follow.side, lift: follow.lift };
+      if (aimFrom == null) return;
+      // (the eye's side and lift are measured at its full distance, and come in with it: camera.js)
+      follow.want = aimFrom.want + (2.7 - aimFrom.want) * k;
+      follow.side = aimFrom.side + (1.95 - aimFrom.side) * k;
+      follow.lift = aimFrom.lift + (1.25 - aimFrom.lift) * k;
+      camera.fov = 52 + (42 - 52) * k;
+      camera.updateProjectionMatrix();
+      if (k <= 0) aimFrom = null;
     },
   },
 };

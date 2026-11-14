@@ -16,6 +16,53 @@ A short painted walking game through **1 Nephi 3–4**: Nephi and his brothers g
 
 > "I will go and do the things which the Lord hath commanded, for I know that the Lord giveth no commandments unto the children of men, save he shall prepare a way for them that they may accomplish the thing which he commandeth them." (1 Nephi 3:7)
 
+## Book of Mormon, Journey 2: By Small Means (being made)
+
+**1 Nephi 16:9–32**: the ball found at the tent door, the bow of fine steel that broke, a bow made out of wood, and food from the top of the mountain. You are Nephi. It is not yet on the list of journeys: it opens with `?story=by-small-means` (or `?all`), its lines are not yet read over, and nothing in it is recorded.
+
+> "And thus we see that by small means the Lord can bring about great things." (1 Nephi 16:29)
+
+It is not played as the first journey is. **There is no way-marker in it.** The family has the ball, and so have you: it sits at the top right of the picture, and one of its spindles points the way to go (tap it, or Q, to look upon it). The only thing ever marked on the land is your own arrow where it fell. And most of it is done, not read:
+
+- **The bow** (`src/game/bow.js`) is drawn by holding (E, or a finger on the prompt) and loosed by letting go. The arrow truly flies and falls; the ring on the picture is how wide it may go, and it draws in as you hold steady. A bow of steel throws far and true, a bow of wood a short way, and a bow that has lost its spring hardly at all.
+- **The wild beasts** (`src/game/beasts.js`, `src/game/hunt.js`) keep a watch: every few seconds one lifts its head. Move while it looks ("Be still") and they take alarm, and are gone to other ground, where they must be come up with again.
+- **The ball** (`src/game/liahona.js`) leads while they are faithful, hangs loose while they murmur, and after 16:28 works by the heed you give it: go as it points and it stays true; go your own way and it stops, until you look upon it again. It is read by its top: the bright spindle is an arrow, the mark at the top of the rim is the way you are looking, and the ball is ringed with light when the spindle stands under the mark. Look another way and you are told under it which hand to turn to.
+
+| Act | Verses | What you do |
+|---|---|---|
+| One: A Round Ball of Curious Workmanship | 16:9–12 | In the valley of Lemuel your father calls you to his tent door. Take up the ball; fill in "within the ball were two ___". Gather the provisions and the seed, and follow the spindle across the river. |
+| Two: The More Fertile Parts | 16:13–17 | Follow the ball along the green way by the Red Sea. Come up softly with the beasts feeding there, draw your bow of steel and loose; take up what you have slain and bear it back to your brethren. |
+| Three: My Bow, Which Was Made of Fine Steel | 16:17–22 | From the camp, go where the ball points and hunt again. At its first full draw your bow breaks. Try your brother's bow, which has lost its spring. Return to the tents with nothing, at evening; the ball's spindles hang loose. Your father sits apart (16:20, the verse's words and none of his). Speak to your brethren. |
+| Four: Out of Wood a Bow | 16:23–29 | In the morning, go with Sam to the edge of the wood. Bend three young boughs to find one that springs; take a straight stick and stones. By the fire, shape the bow (three things done by holding); fill in "I, Nephi, did make out of ___ a bow". Ask your father whither you shall go. He inquires of the Lord (16:24–26, the voice of the Lord in the verse's words only). Look upon the ball: it is written upon, and it works again; fill in "faith and diligence and ___". |
+| Five: Into the Top of the Mountain | 16:30–32 | Go up the mountain as the ball directs. Where the trail turns, another way goes on and is lost; nothing says which is which but the ball. On the top, with a bow of wood and one arrow, come near enough to two beasts, taking up your arrow between. Bear them home on your shoulders. At the fire they come round you; kneel with them and give thanks. Fill in "by ___ means the Lord can bring about great things". |
+
+Four times a verse is shown with a word left out; a wrong answer costs nothing. What happens is fixed, as it is written: the steel bow breaks whatever you aim at, a herd that flees is found again, an arrow that misses is taken up again. There is no score and no other ending. What its people say in the story's own words is in `src/game/spoken-nephi16.js`, each line with the verse it retells; those marked `tone` add a manner or a detail the verse does not have, and may be struck.
+
+What is shown, and what is not:
+
+- Of the hunt: an arrow in the air, and a beast lying where it fell. Nothing more.
+- What was written on the ball (16:26–27, 29) is not given in the account, and none is made up: it is shown as marks of light that are no letters.
+- The voice of the Lord (16:25–26) is never retold: it is the verse.
+- Their father's murmuring (16:20) is the verse's words; the story gives him none. He is seen sitting apart, and afterwards kneeling (16:24–25).
+
+**Not in the text, and the game's own** (nothing in it goes against the account):
+
+- That the beasts keep a watch, and must be come up with softly. The account says only that they slew food "with our bows and our arrows and our stones and our slings" (16:15).
+- That Nephi tries his brother's bow. The account says their bows "having lost their springs" (16:21).
+- That the ball's spindles hang loose while they murmur. The account says that the pointers "did work according to the faith and diligence and heed which we did give unto them" (16:28); the story shows that from the evening of the broken bow.
+- That Sam shows him the wood, and that he tries three boughs. The account says "I, Nephi, did make out of wood a bow, and out of a straight stick, an arrow" (16:23).
+- That there were two beasts. The account says "wild beasts" (16:31) and "the beasts which I had slain" (16:32).
+- The ways that part on the mountain. The account says he went "according to the directions which were given upon the ball" (16:30).
+- That they kneel about the fire. The account says "they did humble themselves before the Lord, and did give thanks unto him" (16:32).
+
+### The wilderness, and how sure we are of it
+
+A land of its own (`land: 'wild'`: `WILD` in `src/game/places.js`, `src/valley/world.js`): the valley of Lemuel as in the first journey, a green way, a camp of tents, a wood, and a mountain with a trail.
+
+- **From the text**: that they went "south-southeast" four days and pitched their tents at a place they called Shazer (16:13); that they kept "in the most fertile parts of the wilderness, which were in the borders near the Red Sea" (16:14); that they pitched their tents again "that we might again rest ourselves and obtain food for our families" (16:17); that there was a mountain, and beasts in the top of it (16:30–31).
+- **Not known**: where any of it was; what the mountain was; what the wild beasts were. They are drawn as the wild goats of that country, on a mountain of its kind.
+- **A guess**: how the ball looked beyond "a round ball of curious workmanship; and it was of fine brass. And within the ball were two spindles" (16:10).
+
 ## Old Testament, Journey 1: But If Not
 
 **Daniel 3**, in the King James Version: Shadrach, Meshach and Abed-nego before the image of gold, before the king, and in the burning fiery furnace. You are one of the three. It follows that week's *Come, Follow Me* ("I can trust in the Lord when my faith is tried"), and its end asks what the lesson asks.
@@ -69,7 +116,7 @@ What is shown, and what is not:
 - What was done to those who accused him, "them, their children, and their wives" (6:24), is read whole, in the dark, and not seen, as the men slain by the flame are in the Daniel 3 journey.
 - The lions (`src/game/lions.js`) are made in code, of a few solid parts, and painted as the people are. They walk, look, open and shut their mouths, and lie down. Nothing shows a lion harming anyone.
 
-**The end of it** sets four things told of Daniel beside four told of Jesus Christ, each the verse's own words and nothing said of them (the Gospel verses are from the same King James text, and `tools/excerpts.mjs` checks them too), and then asks one question: no fault found in him (6:4, Luke 23:4); a ruler who sought to deliver him (6:14, John 19:12); a stone laid and sealed (6:17, Matthew 27:66); very early in the morning (6:19, Mark 16:2). This is a long-held reading of the chapter among Christians; it is not in that week's *Come, Follow Me*, which is why it is set apart under its own heading, after the lesson's questions.
+**The end of it** asks one question, about prayer. (Four things told of Daniel set beside four told of Jesus Christ, each the verse's own words, are kept in `src/game/scripture-daniel.js` as `PAIRS`, and `tools/excerpts.mjs` still checks them against their verses; the end screen showed them once, and no longer does.)
 
 ### Babylon in the days of Darius, and how sure we are of it
 
@@ -99,7 +146,7 @@ It is told as the Daniel journeys are (a card under the speaker's name for what 
 | Four: That Great City | 3 | On the dry land the word comes the second time, and the way is marked as it was before. Enter Nineveh and cry against it in three places, deeper into the city each time as the day goes on; each place does a part of 3:5 (they believe; they proclaim a fast and put on sackcloth; from the greatest to the least). Go to the king's seat: he rises from his throne, lays his robe from him, and sits in ashes. Fill in "the people of Nineveh ___ God". |
 | Five: The Gourd | 4 | Fill in "slow to ___". Go out of the city to its east side; bring four boughs and make a booth, and sit in its shadow. The gourd comes up over you; the worm; the east wind and the sun. Then you are asked to look upon the city, and as you do the LORD's question is read. |
 
-The book ends on that question, with no answer of Jonah's, and so does the journey: the end screen asks the family how they would answer it. Five times a verse is shown with a word left out; a wrong answer costs nothing. There is no score and no other ending. It has no recorded reading yet (`node tools/narrate.mjs --story jonah --dry` lists what there is to record), and no portrait for its card: the first letter of his name stands in its place until `face` in `src/game/stories.js` is given a `src`.
+The book ends on that question, with no answer of Jonah's, and so does the journey: the end screen has the question for its name, and asks the family why it is hard to be glad when someone else is forgiven. Five times a verse is shown with a word left out; a wrong answer costs nothing. There is no score and no other ending. It has no recorded reading yet (`node tools/narrate.mjs --story jonah --dry` lists what there is to record), and no portrait for its card: the first letter of his name stands in its place until `face` in `src/game/stories.js` is given a `src`.
 
 What you do that the text does not say Jonah did (said plainly, because the cards beside it are scripture):
 
@@ -140,7 +187,7 @@ It is a remix of Patch's [Painted valley](https://patch.gg/blendi/painted-valley
 | One: Up to Jerusalem | 3:1–21 | Afternoon | In the valley of Lemuel, go to your father at his tent. He tells you what the Lord has commanded; Laman, from their tents, says it is a hard thing, and your father answers him. Answer your father: fill in "I will go and ___" (3:7). Call your brothers to the journey and go down the valley, Lemuel murmuring as you go. Then, in the land of Jerusalem, cast lots with your brothers (the lot falls upon Laman) and walk to the gate. You wait without it as Laman goes in; Laban's words to him are heard (3:13), and he runs out. You answer your brothers (3:15). |
 | Two: Our Gold and Our Silver | 3:22–4:4 | Golden hour | Go into Lehi's house by its door and gather the gold, the silver and the precious things, in any order: a list at the top left ticks each off, and Laman, Lemuel and you carry them out. Carry them to Laban. Before you flee you are asked for a word of a verse Nephi has said; remember it and you are strengthened for the first moments of the chase. Flee his servants: what you carry slows you, and they gain on you until you leave the property behind (3:26). If they overtake you the chase begins again. Hide in the rock. The angel speaks (3:29). You answer your brothers again (4:1). |
 | Three: Led by the Spirit | 4:5–38 | Night | No marker and no objective. Stand still and a soft light gathers in the air the way you should go, with a soft tone (4:6). Take a wrong turning and there is no light until you stand still again. Find Laban, drunken in the street. You may obey at once, or shrink as Nephi did (4:10): step back or wait, and the Spirit speaks again (4:11, 4:12–13). Then speak to Zoram in the voice of Laban, go with him into the treasury, and choose how you answer him three times. Go back to your brothers outside the walls, hold Zoram, and make the oath. |
-| The tent of their father | 5:2–10, 3:7 | Evening | The return to the valley of Lemuel: their mother, their father, the plates laid before him; and the end screen with questions to talk about. |
+| The tent of their father | 5:2–10, 3:7 | Evening | The return to the valley of Lemuel: their mother, their father, the plates laid before him; and the end screen, with a question to talk about. |
 
 ### Who tells it, and what is scripture
 
@@ -198,7 +245,7 @@ To know whether the game is played, and where it is left off, a little is counte
 
 - Umami's script (in `index.html`) counts each visit: the page, the site that linked to it, the country, and the kind of device.
 - `src/game/tally.js` counts a journey as it is played: `start` (which journey, begun or gone on with, by touch or keys), each act as it is reached (`act-two`, `act-three`, …), `left` (the beat it was left at, and after how many minutes) if the page is closed before the end, `end` (and how many minutes it took), and `again`. In Umami these are filed under the journey's name as a page (`/scripture-journeys/fiery-furnace`), so one journey's can be told from another's.
-- The end of a journey asks one question, "Did your family enjoy this journey?", answered with a tap (`enjoyed`: yes, somewhat or no).
+- Where plays are counted, the end of a journey asks, under the ways on, "Did your family enjoy this journey?", answered with a tap (`enjoyed`: yes, somewhat or no).
 - A parent may write a note there, and leave an email to hear of new journeys. That goes to a Google Form, not to Umami (which is told only that a note was sent), and the box is shown only once the form is named in `GAME.notes` in `src/game/stories.js`.
 
 Nothing is counted on your own machine or by the tests (the script counts only on the address named in its `data-domains`, which must be changed if the game moves), nor where the browser asks not to be tracked. To leave your own plays on the live game out, run `localStorage.setItem('umami.disabled', 1)` once in that browser's console.
@@ -223,6 +270,7 @@ node tools/story.mjs --query "story=lions-den"                                  
 node tools/story.mjs --query "story=lions-den&wrong"                                 # choosing not to pray once, every word filled in wrongly
 node tools/story.mjs --query "story=jonah"                                           # the Jonah journey, to its end
 node tools/story.mjs --query "story=jonah&wrong"                                     # taking the way to Nineveh in act one, every word filled in wrongly
+node tools/story.mjs --query "story=by-small-means"                                  # the 1 Nephi 16 journey, to its end (it hunts, and makes its bow, by itself)
 node tools/journeys.mjs                                                              # the list of journeys, what is kept, and the end screens
 node tools/excerpts.mjs                                                              # every shortened verse is the verse's own words
 node tools/verses.mjs pg10.txt "The Book of Daniel" --check src/game/scripture-daniel.js VERSES   # the verses are as the King James text has them
@@ -240,6 +288,8 @@ On an Apple M4 at 1080p the game runs at about 56–68 fps at medium with the ca
 - `src/game/places.js`: where everything is (the valley of Lemuel, where the brothers come up into the land of Jerusalem, the city and gate, Lehi's house, the rock) and the paths between them.
 - `src/game/city.js`: the walls and gate, the flat-roofed houses, Laban's house and court, the treasury and Lehi's house; and the camp in the valley of Lemuel (its tents and the altar of stones), a set shown only there. The same boxes are the colliders.
 - `src/game/story.js`: the beats, and who wears what. `src/game/scripture.js`: 1 Nephi 3–5 verse by verse, who speaks, the parts of verses that are quoted, and the verses with a word left out. `src/game/spoken-nephi.js`: what its people say in the story's own words, each with the verse it retells.
+- `src/game/small-means.js`, `src/game/scripture-nephi16.js`, `src/game/spoken-nephi16.js`: the 1 Nephi 16 journey's beats, its camp and small things; 1 Nephi 16:9–32 verse by verse, the shortened verses and those with a word left out; what its people say in the story's own words.
+- `src/game/liahona.js`, `src/game/bow.js`, `src/game/beasts.js`, `src/game/hunt.js`, `src/game/solid.js`: the ball and its spindles; the bow, its arrow and its flight; the wild beasts; the hunt; and the paint for solid things made in code.
 - `src/game/director.js`: runs the beats (cards, places to reach, things to act on), saves checkpoints, and drives the autopilot.
 - `src/game/npc.js`: the brothers, Laban, his servants, Zoram and the angel. They are clones of the one figure that walk paths or follow Nephi's trail.
 - `src/game/guidance.js`: the leading light for the night act.

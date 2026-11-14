@@ -24,7 +24,7 @@ export const slug = (ref) => ref.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
  * @param options.base where the recordings are
  * @param options.note says a word at the top of the screen (main.js, note)
  */
-export function createNarration(sounds, { base = './audio/narration/', note = null, book = null } = {}) {
+export function createNarration(sounds, { base = './audio/narration/', note = null, book = null, chapters = null } = {}) {
   const have = new Set();
   const buffers = new Map(); // slug -> Promise<AudioBuffer | null>
   let on = true;
@@ -137,8 +137,12 @@ export function createNarration(sounds, { base = './audio/narration/', note = nu
     async load() {
       try {
         const list = await (await fetch(`${base}manifest.json`)).json();
-        // (only the recordings of this journey's book, if one is named: a journey with none shows no voice button)
-        for (const key of Object.keys(list)) if (!book || place(key).book === slug(book)) have.add(key);
+        // (only the recordings of this journey's book, if one is named, and of its own chapters, where another
+        // journey is told from the same book: a journey with none shows no voice button)
+        for (const key of Object.keys(list)) {
+          const p = place(key);
+          if ((!book || p.book === slug(book)) && (!chapters || chapters.includes(p.at[0]))) have.add(key);
+        }
         order = [...have].sort((a, b) => {
           const [pa, pb] = [place(a), place(b)];
           return pa.book.localeCompare(pb.book) || pa.at[0] - pb.at[0] || pa.at[1] - pb.at[1];

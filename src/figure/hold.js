@@ -69,3 +69,34 @@ export function holdArms(bones, object, yaw, { out = 0.3, up = 1, wide = 0.2 }, 
     aim(lower, W, T, k);
   }
 }
+
+/**
+ * Brings one hand (`side`: 'l' or 'r') to a point in the world, `k` of the way: the wrist goes to `target`, the
+ * elbow off the line from shoulder to wrist towards `bend` (a direction in the world: down and out, for most things).
+ * `object` is the figure, its matrices up to date.
+ */
+export function reachArm(bones, side, target, bend, k = 1) {
+  if (k <= 0.001) return;
+  const upper = bones[`upperarm_${side}`];
+  const lower = bones[`lowerarm_${side}`];
+  const hand = bones[`hand_${side}`];
+  if (!upper || !lower || !hand) return;
+  upper.getWorldPosition(S);
+  lower.getWorldPosition(E);
+  hand.getWorldPosition(W);
+  const a = S.distanceTo(E);
+  const b = E.distanceTo(W);
+  axis.subVectors(target, S);
+  const d = Math.min(axis.length(), (a + b) * 0.985);
+  axis.normalize();
+  pole.copy(bend);
+  pole.addScaledVector(axis, -pole.dot(axis)).normalize();
+  const along = (a * a + d * d - b * b) / (2 * d);
+  const off = Math.sqrt(Math.max(0, a * a - along * along));
+  elbow.copy(S).addScaledVector(axis, along).addScaledVector(pole, off);
+  T.copy(S).addScaledVector(axis, d);
+  aim(upper, E, elbow, k);
+  lower.getWorldPosition(E);
+  hand.getWorldPosition(W);
+  aim(lower, W, T, k);
+}
