@@ -9,7 +9,7 @@
  */
 export let LAND = 'hills';
 export function chooseLand(name) {
-  LAND = name === 'plain' ? 'plain' : 'hills';
+  LAND = name === 'plain' ? 'plain' : name === 'wild' ? 'wild' : 'hills';
 }
 
 /**
@@ -117,10 +117,65 @@ export const KEEP_CLEAR = [
 
 /** Whether a tree, bush or stone at (u, v) would stand somewhere the story needs open: the city and the places. */
 export function keepClear(u, v, margin = 0) {
-  if (cityDistance(u, v) < 14 + margin) return true;
-  for (const [cu, cv, r] of LAND === 'plain' ? PLAIN.keep : KEEP_CLEAR) if (Math.hypot(u - cu, v - cv) < r + margin) return true;
+  // (the wilderness has no city in it)
+  if (LAND !== 'wild' && cityDistance(u, v) < 14 + margin) return true;
+  for (const [cu, cv, r] of LAND === 'plain' ? PLAIN.keep : LAND === 'wild' ? WILD.keep : KEEP_CLEAR) if (Math.hypot(u - cu, v - cv) < r + margin) return true;
   return false;
 }
+
+/**
+ * The wilderness of 1 Nephi 16, for the journey of the ball and the broken bow (setLand('wild')): the hill country's
+ * ground and paint with no city on it. The valley of Lemuel keeps its place (LEMUEL), for the morning the ball is
+ * found; over the hill from it the land falls to a green wadi ("the more fertile parts of the wilderness", 16:16),
+ * and beyond the wadi stands the mountain (16:30). All in (u, v).
+ */
+export const WILD = {
+  /** Where they pitch their tents "for the space of a time" (16:17): a level place on the slope, facing the mountain. */
+  camp: { at: [96, -18], floor: 26, ease: 60 },
+  /**
+   * The mountain: its middle; how high it stands above the land it is on; how far from its middle its top is nearly
+   * level (where the beasts are); and how far out its foot is.
+   */
+  mountain: { at: [372, 16], high: 92, top: 38, foot: 232 },
+  /** The way up it, from the wadi to the top: a trail cut into its flank, in switchbacks on the side the camp sees. */
+  trail: [[176, -8], [232, -58], [262, 22], [300, -46], [318, 30], [346, -8], [364, 12]],
+  /**
+   * Ways that leave the trail where it turns, and lead nowhere: each goes on round the flank a little and is lost.
+   * Nothing on the land says which is the trail: the ball does (16:30, "according to the directions which were given
+   * upon the ball").
+   */
+  spurs: [
+    [[262, 22], [271, 47], [268, 74]],
+    [[300, -46], [307, -71], [301, -96]],
+    [[318, 30], [327, 53], [323, 77]],
+  ],
+  /** How far either side of the trail's middle the flank is cut level for it, and where the flank is itself again. */
+  trailHalf: 3.1,
+  trailEase: 9.5,
+  /**
+   * The fertile parts: green ground along a line, wandering. The first is the way they come by, hunting as they go
+   * (16:15–16); the second is the wadi at the mountain's foot. [points, half-width]
+   */
+  green: [
+    [[[58, -306], [112, -262], [158, -214], [192, -160], [200, -100], [188, -52], [176, -8], [182, 50], [170, 104], [150, 150]], 20],
+    [[[96, -18], [140, -22], [176, -8]], 7],
+  ],
+  /** Where the beasts graze: by the way they come (16:15), where the bow breaks (16:18), and on the mountain's top. */
+  grounds: { way: [186, -168], north: [168, 118], top: [372, 16] },
+  /** Where the wood is, near the camp: the trees a bow is made from (16:23). */
+  wood: [132, 46],
+  /** Footpaths worn to earth: from the camp down to the wadi; the trail is one too. */
+  paths: [[[104, -17], [140, -22], [176, -8]]],
+  /** Places nothing should be planted on: [u, v, radius]. */
+  keep: [
+    [96, -18, 30],
+    [372, 16, 30],
+    // (the valley of Lemuel, as in the hill country)
+    [LEMUEL.at[0], LEMUEL.at[1], 44],
+    [LEMUEL.at[0] + 4, LEMUEL.at[1] - 52, 34],
+    [LEMUEL.at[0] + 34, LEMUEL.at[1] - 40, 30],
+  ],
+};
 
 /**
  * The plain of Babylon, for the journeys told there. The city keeps the same place (CITY), its gate in the west

@@ -2,17 +2,18 @@
 // (between its "…") are found in the verse, in order; and each verse with a word left out, with the right word put
 // back, is an excerpt of its verse too. A card under a speaker's name (`who`) need not mark with "…" what it leaves
 // off, the name standing in its place: for each of those, the words left off are listed, to be read over. The
-// verses set side by side at the end of the Daniel 6 journey (PAIRS: Daniel 6 beside the Gospels) are checked the
+// verses of Daniel 6 set beside the Gospels (PAIRS; kept, though shown nowhere at present) are checked the
 // same way, each against its own verse. Fails if one is not the verse's words. Each book of cards is checked in
-// its turn (1 Nephi, Daniel, Jonah).
+// its turn (1 Nephi 3–5, 1 Nephi 16, Daniel, Jonah).
 //   node tools/excerpts.mjs
 import * as nephi from '../src/game/scripture.js';
+import * as nephi16 from '../src/game/scripture-nephi16.js';
 import * as daniel from '../src/game/scripture-daniel.js';
 import * as jonah from '../src/game/scripture-jonah.js';
 
 let bad = 0;
-// each book of cards in its turn: 1 Nephi's, Daniel's (with the Gospels' verses its end sets beside it), then Jonah's
-for (const [book, { BLANKS, EXCERPTS, GOSPELS = {}, PAIRS = [], SAID, SPEAKERS, VERSES: OWN }] of [['1 Nephi', nephi], ['Daniel', daniel], ['Jonah', jonah]]) {
+// each book of cards in its turn: 1 Nephi's, Daniel's (with the Gospels' verses set beside it), then Jonah's
+for (const [book, { BLANKS, EXCERPTS, GOSPELS = {}, PAIRS = [], SAID, SPEAKERS, VERSES: OWN }] of [['1 Nephi', nephi], ['1 Nephi 16', nephi16], ['Daniel', daniel], ['Jonah', jonah]]) {
 console.log(`---- ${book} ----`);
 // (every verse a card may quote: the book's by chapter and verse, the Gospels' by book as well)
 const VERSES = { ...OWN, ...GOSPELS };

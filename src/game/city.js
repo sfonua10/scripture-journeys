@@ -767,7 +767,8 @@ export const JERUSALEM = {
 export function createCity(field, look = JERUSALEM) {
   const random = mulberry(1007);
   const b = builder();
-  buildCity(b, random, look);
+  // (a look that is `bare` has no city at all: the wilderness, where only the story's own sets stand)
+  if (!look.bare) buildCity(b, random, look);
   look.outside(b, random);
   const uniforms = { ...field.uniforms, uNight: { value: 0 }, uRoomLamp: { value: new THREE.Vector4(0, 0, 0, 0) }, uRoom: { value: new THREE.Vector4(1, 0, 0, 0) }, uRoomShade: { value: 0 }, uRoomTint: { value: new THREE.Vector3(1.15, 0.66, 0.3) }, tGlaze: { value: look.glaze ? glazeTexture() : NO_GLAZE } };
   const material = new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: vertex, fragmentShader: fragment, uniforms, side: THREE.DoubleSide });

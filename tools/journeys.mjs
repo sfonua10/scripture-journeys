@@ -1,7 +1,7 @@
 // Checks the list of journeys (the first screen), headless, against dist/: that it lists the journeys and the one to
 // come, that a place kept before there were other journeys is brought over and gone on from, that the end of a
-// journey marks it finished and leads back to the list, and that a journey's end shows its verses side by side
-// where it has them (Daniel 6).
+// journey marks it finished and leads back to the list, and that a journey's end shows only its name, its verse,
+// one question and the two ways on.
 //
 //   npm run build && node tools/journeys.mjs [--shots]
 import { createReadStream, existsSync, mkdirSync, statSync } from 'node:fs';
@@ -99,7 +99,7 @@ check(
 );
 check(
   'and a card for each journey, with the face and name of the one it follows',
-  l.items.map((i) => `${i.who}:${i.no}:${i.buttons.join('|')}`).join(', ') === 'Daniel:Chapter 3:Play, Daniel:Chapter 6:Play, Jonah:Chapters 1–4:Play, Nephi:Chapters 3–4:Play',
+  l.items.map((i) => `${i.who}:${i.no}:${i.buttons.join('|')}`).join(', ') === 'Daniel:Chapter 3:Play, Daniel:Chapter 6:Play, Jonah:Chapters 1–4:Play, Nephi:Chapters 3–4:Play, Nephi:Chapter 16:Play',
   l.items,
 );
 // (a rule of the stylesheet that is not read leaves what it hides showing: a stray brace once kept every line up)
@@ -140,11 +140,14 @@ check('the last beat ends', ended);
 const end = await page.evaluate(() => ({
   on: document.querySelector('#g-end')?.classList.contains('on'),
   heading: document.querySelector('#g-end h1')?.textContent,
-  links: document.querySelectorAll('#g-end a').length,
+  cite: document.querySelector('#g-end .cite')?.textContent,
+  ask: [...document.querySelectorAll('#g-end p')].map((p) => p.textContent),
+  more: document.querySelectorAll('#g-end a, #g-end blockquote').length,
   buttons: [...document.querySelectorAll('#g-end button')].map((b) => b.textContent),
 }));
-check("the end screen has the journey's words", end.on && end.heading === 'The Lord Prepared a Way' && end.links === 3, end);
-check('and the ways on', end.buttons.join('|') === 'Back to journeys|Play again', end.buttons);
+check("the end screen has the journey's name and verse", end.on && end.heading === 'The Lord Prepared a Way' && end.cite === '1 Nephi 3:7', end);
+check('one question to talk about, and nothing else to read', end.ask.join('|') === 'When has the Lord prepared a way for you?' && end.more === 0, end);
+check('and the ways on', end.buttons.join('|') === 'Back to journeys|Play again|Share this journey', end.buttons);
 k = await keys();
 check('the journey is marked finished, its place forgotten', k['bom-journeys:plates-of-brass:done'] === '1' && !('bom-journeys:plates-of-brass:beat' in k), k);
 if (shots) await page.screenshot({ path: join(out, '3-end.png') });
@@ -167,7 +170,7 @@ await ticks(5);
 const went = await page.evaluate(() => ({ beat: window.__tg.director.beat, list: document.querySelector('#g-title')?.classList.contains('on') }));
 check('?go=begin begins at once', went.beat === 'a1' && !went.list && !/[?&]go=/.test(page.url()), { ...went, url: page.url() });
 
-// 6. the end of the Daniel 6 journey: its words, and four verses of Daniel each beside one of the Gospels
+// 6. the end of the Daniel 6 journey: the same few things, in its own words
 await open('auto&story=lions-den&beat=a4-up');
 ended = false;
 for (let i = 0; i < 60 && !ended; i++) {
@@ -175,17 +178,14 @@ for (let i = 0; i < 60 && !ended; i++) {
   ended = await page.evaluate(() => window.__tg.director.ended);
 }
 check('the last beat of the Daniel 6 journey ends', ended);
-const beside = await page.evaluate(() => ({
+const den = await page.evaluate(() => ({
   heading: document.querySelector('#g-end h1')?.textContent,
-  pairs: [...document.querySelectorAll('#g-end .beside .pair')].map((p) => [...p.querySelectorAll('cite')].map((c) => c.textContent).join(' | ')),
-  ask: document.querySelector('#g-end .beside .ask')?.textContent ?? '',
+  cite: document.querySelector('#g-end .cite')?.textContent,
+  ask: [...document.querySelectorAll('#g-end p')].map((p) => p.textContent),
+  more: document.querySelectorAll('#g-end a, #g-end blockquote').length,
 }));
-check('its end screen has its words', beside.heading === 'He Delivereth and Rescueth', beside.heading);
-check(
-  'and four verses of Daniel 6, each beside one of the Gospels',
-  beside.pairs.join('; ') === 'Daniel 6:4 | Luke 23:4; Daniel 6:14 | John 19:12; Daniel 6:17 | Matthew 27:66; Daniel 6:19 | Mark 16:2' && beside.ask.length > 0,
-  beside,
-);
+check('its end screen has its name and verse', den.heading === 'He Delivereth and Rescueth' && den.cite === 'Daniel 6:26–27', den);
+check('and one question', den.ask.join('|') === 'Why was praying to Heavenly Father so important to Daniel?' && den.more === 0, den);
 if (shots) await page.screenshot({ path: join(out, '5-daniel-6-end.png'), fullPage: true });
 
 // 7. the page as it is found (without ?all): the journeys still being made are not listed, and with one journey to
@@ -206,7 +206,7 @@ check(
 );
 await open('story=jonah', true);
 l = await list();
-check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 4, { works: l.works, items: l.items.length });
+check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 5, { works: l.works, items: l.items.length });
 await page.evaluate(() => localStorage.clear());
 
 check('no errors on the page', problems.length === 0, problems);

@@ -4,7 +4,7 @@
 // Their shade is baked into a map the grass reads, with moving spots of light let through it.
 import * as THREE from 'three';
 import { COMMON } from '../lib/index.js';
-import { keepClear, PLAIN, riverMiddle } from '../game/places.js';
+import { keepClear, PLAIN, riverMiddle, WILD } from '../game/places.js';
 import { fromValley, heightAt, LAND, pathDistance, riverDistance, TARN, tarnDistance, toValley, TREE } from './world.js';
 
 const TAU = Math.PI * 2;
@@ -595,6 +595,27 @@ function plant() {
     const [x, z] = fromValley(u, v);
     if (clear(x, z, 9)) trees.push([x, z, 1 + Math.floor(random() * 3), 1.9 + 0.5 * random(), random() * TAU]);
   };
+  // The wilderness (1 Nephi 16): few trees, and those where the ground is green. Along the way they come by and in
+  // the wadi; a stand near the camp, where the wood for a bow is; the two woods by the valley of Lemuel, as the hill
+  // country has them; and the rim.
+  if (LAND === 'wild') {
+    copse(...WILD.wood, 6, 10);
+    copse(92, -276, 5, 11);
+    copse(206, -206, 5, 10);
+    copse(216, -92, 4, 9);
+    copse(196, 72, 4, 9);
+    copse(146, 176, 6, 12);
+    copse(-165, 50, 16, 34);
+    copse(-70, -228, 9, 22);
+    lone(60, -64);
+    lone(148, -118);
+    lone(204, 24);
+    for (let k = 0; k < 9; k++) {
+      const a = random() * TAU;
+      copse((470 + 80 * random()) * Math.cos(a), (470 + 80 * random()) * Math.sin(a), 4 + Math.floor(random() * 6), 14 + 12 * random());
+    }
+    return trees;
+  }
   // Trees stand together, and the meadow lies open between them. Copses on the slopes either side and behind the
   // start, a few down on the valley floor round the tarn,
   // (two of them stand either side of the view from the start, dark against the valley, as a painter frames one)

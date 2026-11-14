@@ -290,6 +290,39 @@ export function createMusic(sounds) {
       play(c, string(c, 'D4'), c.currentTime + 0.02, 0.32);
       play(c, string(c, 'A4'), c.currentTime + 0.17, 0.26);
     },
+    /** A bowstring let go: one low string, short, and the hand's slap under it. `loud`: 0 to 1 (a bow with no spring is quiet). */
+    twang(loud = 1) {
+      const c = ctx();
+      if (!c) return;
+      if (!made) make(c);
+      play(c, string(c, 'A2', 'short'), c.currentTime + 0.01, 0.5 * loud);
+      play(c, tek, c.currentTime + 0.01, 0.22 * loud);
+    },
+    /** Steel breaking: struck hard, and two high strings jarred together. */
+    snap() {
+      const c = ctx();
+      if (!c) return;
+      if (!made) make(c);
+      play(c, tek, c.currentTime + 0.01, 0.95);
+      play(c, dum, c.currentTime + 0.03, 0.6);
+      play(c, string(c, 'E5', 'short'), c.currentTime + 0.01, 0.4, { pan: -0.2 });
+      play(c, string(c, 'Fs5', 'short'), c.currentTime + 0.02, 0.4, { pan: 0.2 });
+    },
+    /** An arrow that strikes, or something set down: the drum once, low. */
+    thud(loud = 1) {
+      const c = ctx();
+      if (!c) return;
+      if (!made) make(c);
+      play(c, dum, c.currentTime + 0.01, 0.55 * loud);
+    },
+    /** The ball of brass: two high strings, bright, when its spindle turns to a new way. */
+    chime() {
+      const c = ctx();
+      if (!c) return;
+      if (!made) make(c);
+      play(c, string(c, 'A5', 'bright'), c.currentTime + 0.02, 0.2, { pan: 0.1 });
+      play(c, string(c, 'D6', 'bright'), c.currentTime + 0.16, 0.16, { pan: -0.1 });
+    },
     /**
      * "The sound of the cornet, flute, harp, sackbut, psaltery, dulcimer, and all kinds of musick" (Daniel 3:5): a
      * loud flourish of many strings over the drum, for about `seconds`. (stop() ends it.)

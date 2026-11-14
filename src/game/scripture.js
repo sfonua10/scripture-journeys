@@ -107,6 +107,8 @@ export const VERSES = {
 export function scripture(book, table) {
   return {
     book,
+    /** The chapters its verses are of (a journey reads the recordings of its own chapters: narration.js). */
+    chapters: [...new Set(Object.keys(table).map((k) => Number(k.split(':')[0])))],
     verses(first, last = first) {
       const [ch, a] = first.split(':').map(Number);
       const b = Number(last.split(':')[1]);
