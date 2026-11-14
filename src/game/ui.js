@@ -14,30 +14,43 @@ const CSS = /* css */ `
   inset: 0; opacity: 0; transition: opacity 0.6s;
   background: radial-gradient(ellipse at 50% 55%, transparent 52%, rgba(255, 196, 110, 0.18) 78%, rgba(255, 180, 90, 0.34) 100%);
 }
+/* The card: one dark panel low on the page, its corners round. Who speaks is written over the words; under them, in
+   one line, where the words are from (at the left) and the way on (at the right). */
 #g-card {
-  left: 50%; bottom: max(7vh, 44px); transform: translate(-50%, 12px); width: min(760px, calc(100vw - 32px)); box-sizing: border-box;
-  padding: 22px 28px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  left: 50%; bottom: max(4vh, calc(22px + env(safe-area-inset-bottom, 0px))); transform: translate(-50%, 12px);
+  width: min(720px, calc(100vw - 28px)); box-sizing: border-box;
+  padding: 16px 20px 13px; background: rgba(38, 29, 19, 0.92); border: 1px solid rgba(227, 189, 109, 0.3); border-radius: 14px;
   color: var(--ink); opacity: 0; transition: opacity 0.35s, transform 0.35s; z-index: 9;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
 }
 #g-card.on { opacity: 1; transform: translate(-50%, 0); }
-#g-card .text { font-size: 19px; line-height: 1.55; }
+#g-card .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+#g-card .who { color: var(--gold); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+#g-card .text { font-size: 19px; line-height: 1.5; }
 #g-card.thought .text { font-style: italic; font-size: 18px; color: #efe4cc; }
 /* what one of them says in the story's own words: upright, as speech; a little smaller than the scripture */
 #g-card.said .text { font-size: 18px; }
-#g-card .ref { margin-top: 10px; text-align: right; color: var(--gold); font-size: 14px; letter-spacing: 0.08em; font-variant: small-caps; }
-#g-card .hint { margin-top: 8px; text-align: center; font-size: 12px; letter-spacing: 0.1em; opacity: 0.55; }
-#g-card .answers { margin-top: 14px; display: grid; gap: 8px; }
+#g-card .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 9px; }
+/* where the words are from. A verse quoted is named in gold; what one of them says in the story's own words, not the
+   scripture's, says "from" and the verse in grey, so that it is not taken for scripture */
+#g-card .cite { color: var(--gold); font-size: 13px; letter-spacing: 0.08em; font-variant: small-caps; white-space: nowrap; }
+#g-card .cite.told { color: var(--ink); opacity: 0.55; }
+#g-card .next { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; letter-spacing: 0.04em; opacity: 0.9; white-space: nowrap; cursor: pointer; }
+#g-card .next svg { width: 9px; height: 12px; fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#g-card .next kbd { font: inherit; font-size: 11px; line-height: 1; padding: 2px 6px 3px; border: 1px solid var(--line); border-radius: 4px; opacity: 0.8; }
+#g-card .hint { margin-top: 9px; text-align: center; font-size: 12px; letter-spacing: 0.1em; opacity: 0.55; }
+#g-card .answers { margin-top: 12px; display: grid; gap: 8px; }
 #g-card .answer {
-  padding: 9px 14px; border: 1px solid var(--line); border-radius: 4px; font-size: 17px; line-height: 1.4; opacity: 0.72;
+  padding: 9px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 17px; line-height: 1.4; opacity: 0.72;
   pointer-events: auto; cursor: pointer; transition: opacity 0.15s, background 0.15s, border-color 0.15s;
 }
 #g-card .answer.at { opacity: 1; border-color: var(--gold); background: rgba(227, 189, 109, 0.14); }
 #g-card .answer b { color: var(--gold); font-weight: normal; margin-right: 10px; }
-#g-card .who { color: var(--gold); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 7px; }
-/* what one of them says in the story's own words, not the scripture's: where it is from, small and grey, not in gold */
-#g-card .from, #g-toast .from { margin-top: 8px; text-align: right; font-size: 12px; letter-spacing: 0.06em; opacity: 0.5; }
-#g-toast .from { display: block; margin-top: 2px; text-align: center; font-size: 11px; }
+/* a word to fill in: the few short answers side by side */
+#g-card .answers.row { grid-auto-flow: column; grid-auto-columns: 1fr; }
+#g-card .answers.row .answer { padding: 10px 8px; text-align: center; }
+#g-card .answers.row .answer b { display: none; }
+#g-toast .from { display: block; margin-top: 2px; text-align: center; font-size: 12px; letter-spacing: 0.08em; font-variant: small-caps; opacity: 0.55; }
 #g-toast .who { display: block; margin-bottom: 1px; color: var(--gold); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
 /* What to do is said quietly: a thin dark ground with a gold edge, the word Task over it, and no frame. */
 #g-objective {
@@ -110,7 +123,7 @@ const CSS = /* css */ `
 }
 #g-marker.spirit .a { border-width: 7px; left: -7px; top: -7px; border-left-color: rgba(255, 244, 210, 0.95); transform: rotate(var(--turn, 0rad)) translateX(24px); }
 #g-toast {
-  display: none; box-sizing: border-box; max-width: 100%; padding: 10px 20px 9px; border-radius: 6px; background: rgba(24, 18, 12, 0.6);
+  display: none; box-sizing: border-box; max-width: 100%; padding: 10px 20px 9px; border-radius: 12px; background: rgba(24, 18, 12, 0.6);
   text-align: center; color: #fff; font-size: 18px; line-height: 1.5; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
   opacity: 0; transition: opacity 0.6s;
 }
@@ -261,8 +274,9 @@ const CSS = /* css */ `
 }
 .g-screen .next { font-size: 15px; opacity: 0.75; }
 @media (max-width: 600px) {
-  #g-card .text { font-size: 17px; }
-  #g-card { padding: 16px 18px 12px; }
+  #g-card .text, #g-card.said .text, #g-card.thought .text { font-size: 16px; }
+  #g-card { padding: 14px 16px 11px; }
+  #g-card .answer { font-size: 16px; }
   #g-objective { left: 12px; top: 12px; max-width: calc(100vw - 24px); }
 }
 /* On a small screen the word Task and the line share a row, so the panel is one line high where it can be. */
@@ -309,8 +323,12 @@ export function createUI({ touch = false } = {}) {
   let toastGone = 0;
   let objectiveText = null;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  /** Who is speaking now ('' for no one): told to whoever asked to hear (speaker, below), for the name over his head. */
+  let heardBy = null;
+  const speaks = (who) => heardBy?.(who || '');
   /** Takes the line of scripture away: fading (and then giving up its room), or at once. */
   const hideToast = (atOnce) => {
+    speaks('');
     clearTimeout(toastTimer);
     clearTimeout(toastGone);
     toast.classList.remove('on');
@@ -320,6 +338,10 @@ export function createUI({ touch = false } = {}) {
 
   return {
     touch,
+    /** `fn(who)` is told whenever someone begins to speak (a card or a line under their name), and '' when they have done. */
+    speaker(fn) {
+      heardBy = fn;
+    },
     /** What the touch controls listen to: a tap on a card goes on from it, a tap on the prompt acts. */
     tapTargets: { card: [card], act: [prompt] },
     card: {
@@ -327,16 +349,27 @@ export function createUI({ touch = false } = {}) {
        * Shows a card: scripture with its reference, or a thought (italic, no reference). With `answers` it asks: they
        * are listed under it, the one at `at` lit, and `onPick(i)` is told if one is clicked.
        */
-      show({ text, ref = '', who = '', from = '', kind = ref ? 'scripture' : 'thought', hint = touch ? 'Tap to continue' : 'E or click to continue', answers = null, at = 0, onPick = null }) {
+      show({ text, ref = '', who = '', from = '', kind = ref ? 'scripture' : 'thought', hint = '', answers = null, at = 0, onPick = null }) {
         // (a card lies where the line of scripture does: the line goes)
         hideToast(true);
         card.className = `g-layer on ${kind}`;
-        const list = answers ? `<div class="answers">${answers.map((a, i) => `<div class="answer${i === at ? ' at' : ''}" data-i="${i}"><b>${i + 1}</b>${esc(a)}</div>`).join('')}</div>` : '';
-        card.innerHTML = `${who ? `<div class="who">${esc(who)}</div>` : ''}<div class="text">${esc(text)}</div>${list}${ref ? `<div class="ref">${esc(ref)}</div>` : ''}${from ? `<div class="from">from ${esc(from)}</div>` : ''}<div class="hint">${esc(hint)}</div>`;
+        // where the words are from: the verse quoted, or the verse that what is said is drawn from
+        const cite = ref ? `<span class="cite">${esc(ref)}</span>` : from ? `<span class="cite told">from ${esc(from)}</span>` : '';
+        // (a few short answers lie side by side; longer ones, one under another)
+        const row = answers && answers.length <= 3 && answers.every((a) => a.length <= 12);
+        const list = answers ? `<div class="answers${row ? ' row' : ''}">${answers.map((a, i) => `<div class="answer${i === at ? ' at' : ''}" data-i="${i}"><b>${i + 1}</b>${esc(a)}</div>`).join('')}</div>` : '';
+        // a card that asks has its reference beside the name, and its answers are the way on; one that is read has
+        // its reference under the words, and Next beside it
+        const head = who || (answers && cite) ? `<div class="head"><span class="who">${esc(who)}</span>${answers ? cite : ''}</div>` : '';
+        const next = `<span class="next">${touch ? '' : '<kbd>E</kbd>'}Next<svg viewBox="0 0 9 12" aria-hidden="true"><path d="M2 1.5 7 6 2 10.5"/></svg></span>`;
+        const foot = answers ? (hint ? `<div class="hint">${esc(hint)}</div>` : '') : `<div class="foot">${cite}${next}</div>`;
+        card.innerHTML = `${head}<div class="text">${esc(text)}</div>${list}${foot}`;
+        speaks(who);
         for (const a of card.querySelectorAll('.answer')) a.addEventListener('click', () => onPick?.(Number(a.dataset.i)));
       },
       hide() {
         card.classList.remove('on');
+        speaks('');
       },
     },
     /**
@@ -400,6 +433,7 @@ export function createUI({ touch = false } = {}) {
         void toast.offsetWidth;
       }
       toast.classList.add('on');
+      speaks(who);
       toastTimer = setTimeout(() => hideToast(false), seconds * 1000);
     },
     fade(to, seconds = 1) {

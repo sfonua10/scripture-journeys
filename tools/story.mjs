@@ -77,7 +77,7 @@ while (simulated < limit) {
       // (let the story's promises run between frames)
       await new Promise((r) => setTimeout(r, 0));
       // a card wanted for a still: stop here, with it on the screen
-      const ref = document.querySelector('#g-card.on .ref')?.textContent;
+      const ref = document.querySelector('#g-card.on .cite')?.textContent;
       if (ref && wanted.some((w) => ref.includes(w))) {
         cards.push(ref);
         // (a second more, so the eye has come to where the story set it)

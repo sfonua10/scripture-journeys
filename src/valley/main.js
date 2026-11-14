@@ -914,6 +914,8 @@ mark('warm');
 
 // ---- the story -----------------------------------------------------------------------------------------------
 const ui = createUI({ touch });
+// (the one who speaks has his name marked over his head)
+ui.speaker((who) => names.speak(who));
 const narration = createNarration(sounds, { note, book: journey.scripture.book });
 // (the list of recordings is asked for once the sounds are ready, since they are played through them)
 Promise.resolve(soundsReady).then(() => narration.load());

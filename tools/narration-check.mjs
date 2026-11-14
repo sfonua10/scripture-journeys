@@ -60,7 +60,7 @@ try {
   const run = (seconds, until) =>
     page.evaluate(
       async ([s, want]) => {
-        const card = () => document.querySelector('#g-card.on .ref, #g-card.on .from')?.textContent ?? (document.querySelector('#g-card.on') ? '(a card)' : '');
+        const card = () => document.querySelector('#g-card.on .cite')?.textContent ?? (document.querySelector('#g-card.on') ? '(a card)' : '');
         const t0 = performance.now();
         let last = t0;
         while (performance.now() - t0 < s * 1000) {

@@ -15,6 +15,8 @@ const CSS = /* css */ `
   text-shadow: 0 0 2px rgba(12, 8, 4, 0.95), 0 1px 3px rgba(12, 8, 4, 0.8), 0 0 8px rgba(12, 8, 4, 0.5);
 }
 body.touch #g-names .n { font-size: 12px; }
+/* the one who is speaking: his name in gold on a dark ground, so that the words are known for his */
+#g-names .n.on { padding: 2px 10px 3px; border-radius: 999px; background: rgba(38, 29, 19, 0.9); color: var(--gold, #e3bd6d); text-shadow: none; }
 `;
 
 /** Metres from the eye: as plain as it gets within NEAR, gone at FAR. MOST is how plain that is (1 would be solid). */
@@ -55,7 +57,15 @@ export function createNames(blocked) {
       e.className = 'n';
       e.textContent = text;
       layer.append(e);
-      list.push({ e, object, seen, head, lying, wide: 4.5 * text.length, clear: true, show: 0, where: '' });
+      list.push({ e, object, seen, head, lying, wide: 4.5 * text.length, clear: true, show: 0, where: '', on: false });
+    },
+    /** Who is speaking now, by the name written over him ('' for no one): his name is marked while he does. */
+    speak(text) {
+      const who = (text || '').toLowerCase();
+      for (const n of list) {
+        n.on = !!who && n.e.textContent.toLowerCase() === who;
+        n.e.classList.toggle('on', n.on);
+      }
     },
     /**
      * Each frame, once the camera is where the frame is drawn from. With `on` false, none are shown. `marker` is
@@ -89,6 +99,8 @@ export function createNames(blocked) {
             }
           }
         }
+        // (the speaker's is as plain as can be, wherever he stands in sight)
+        if (n.on && show > 0) show = 1;
         show = Math.round(show * 20) / 20;
         if (show !== n.show) n.e.style.opacity = n.show = show;
       }

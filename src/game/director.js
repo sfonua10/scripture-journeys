@@ -185,7 +185,7 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
       return (held || auto) && !frozen;
     },
     /**
-     * A card that asks, with a few answers under it: W and S (or the arrows) go between them, E takes one; or 1, 2.
+     * A card that asks, with a few answers under it: W, A, S and D (or the arrows) go between them, E takes one; or 1, 2.
      * Resolves with the number of the answer taken. The autopilot takes `auto`. What is asked is a thought, in
      * italic; with `ref` it is the scripture's own words (a verse with a word left out), and is shown as scripture.
      */
@@ -197,7 +197,7 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
       clearLine();
       let at = 0;
       let picked = -1;
-      const show = () => ui.card.show({ text, who, ref, kind: ref ? 'scripture' : 'thought', answers, at, hint: ui.touch ? 'Tap an answer' : 'W and S to choose · E to answer', onPick: (i) => (picked = i) });
+      const show = () => ui.card.show({ text, who, ref, kind: ref ? 'scripture' : 'thought', answers, at, hint: ui.touch ? '' : 'Arrow keys to choose · E to answer', onPick: (i) => (picked = i) });
       show();
       const shown = time;
       await until(() => {
@@ -208,7 +208,8 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
         if (time - shown < 0.45) return false;
         const digit = /^(Digit|Numpad)([1-9])$/.exec(k ?? '');
         if (digit && Number(digit[2]) <= answers.length) return ((at = Number(digit[2]) - 1), true);
-        const step = k === 'KeyS' || k === 'ArrowDown' ? 1 : k === 'KeyW' || k === 'ArrowUp' ? -1 : 0;
+        // (down or right to the next, up or left to the one before: the answers may lie in a row or one under another)
+        const step = ['KeyS', 'ArrowDown', 'KeyD', 'ArrowRight'].includes(k) ? 1 : ['KeyW', 'ArrowUp', 'KeyA', 'ArrowLeft'].includes(k) ? -1 : 0;
         if (step) {
           at = (at + step + answers.length) % answers.length;
           show();

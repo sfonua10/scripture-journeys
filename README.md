@@ -181,7 +181,7 @@ npm run build      # a static site in dist/, to host anywhere
 npm run serve      # serves dist/ on 5383
 ```
 
-Controls: W A S D to walk, Shift to run, the mouse to look (click to capture it), E or Enter to act and to go on from a card, Esc to pause. When a card asks a question, W and S choose an answer and E takes it (or press 1 or 2). A gamepad works too, for walking.
+Controls: W A S D to walk, Shift to run, the mouse to look (click to capture it), E or Enter to act and to go on from a card, Esc to pause. When a card asks a question, W A S D or the arrows choose an answer and E takes it (or press 1, 2 or 3); on a phone, tap one. A gamepad works too, for walking.
 
 On a phone or a tablet it is played by touch (`src/game/touch.js`): a thumb on the left of the screen is a stick to walk by, a finger dragged on the right looks round, a tap goes on from a card or acts, an answer is tapped to take it, and the button at the lower right runs. It is painted at low quality there unless the address says otherwise. `?touch` tries the same controls with a mouse.
 

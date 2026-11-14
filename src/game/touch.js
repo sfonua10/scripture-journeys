@@ -58,7 +58,7 @@ body.touch #g-objective { left: calc(12px + env(safe-area-inset-left)); }
   body.touch #g-card .text { font-size: 15px; line-height: 1.45; }
   body.touch #g-card .answers { gap: 6px; margin-top: 8px; }
   body.touch #g-card .answer { font-size: 15px; padding: 8px 12px; }
-  body.touch #g-card .ref, body.touch #g-card .hint { margin-top: 5px; }
+  body.touch #g-card .foot, body.touch #g-card .hint { margin-top: 5px; }
   body.touch #g-objective { top: 10px; max-width: min(440px, 60vw); }
   body.touch #g-objective ul { font-size: 13px; gap: 2px; }
   body.touch #g-low { bottom: 12px; gap: 8px; }
