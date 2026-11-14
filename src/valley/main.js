@@ -630,7 +630,8 @@ function showMarker() {
   // behind the eye: at the side it lies, half way up, with an arrow that way round
   if (marked.z > 1) {
     const left = w - x < w / 2;
-    return void ui.marker(left ? 50 : w - 50, h / 2, metres, left ? Math.PI : 0);
+    markedAt = [left ? 50 : w - 50, h / 2];
+    return void ui.marker(markedAt[0], markedAt[1], metres, left ? Math.PI : 0);
   }
   // off the picture: at its edge (and clear of the words low on the screen), with an arrow to where it is
   const cx = Math.min(w - 50, Math.max(50, x));
