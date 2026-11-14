@@ -4,6 +4,7 @@
 // and the wind is made here as valley/sounds.js makes it.
 //
 //   node tools/clip-cut.mjs --spec <spec.mjs> --frames <dir clip.mjs wrote> --music <dir clip-music.mjs wrote> --out film.mp4
+//     [--song song.wav [--song-gain 0.8]] [--cover picture.jpg [--cover-frames 12]]
 //
 // In the spec a segment may give `tail` (seconds a reading may run on past the cut; 0), `speak` (no more than so many
 // seconds of each reading: to stop at a pause in it) and `steps` (false for none);
@@ -23,6 +24,12 @@ const spec = (await import(pathToFileURL(resolve(flag('spec'))).href)).default;
 const framesDir = resolve(flag('frames'));
 const musicDir = resolve(flag('music'));
 const out = resolve(flag('out', 'film.mp4'));
+// a song laid under the whole of it in place of the game's own music (already cut to the film's length), brought down
+// while anyone speaks; and a picture for the first frames, which is what is shown of a film before it is played
+const song = flag('song', '');
+const songGain = Number(flag('song-gain', '0.8'));
+const cover = flag('cover', '');
+const coverFrames = Number(flag('cover-frames', '12'));
 const RATE = 48000;
 
 // ---- the pictures: one run of numbered frames ----
@@ -43,6 +50,20 @@ for (const seg of spec.segments) {
   for (const f of files) symlinkSync(join(dir, f), join(all, `${String(count++).padStart(6, '0')}.jpg`));
 }
 const total = count / fps;
+if (cover) {
+  // the picture whole, on a blurred and darkened spread of itself where the film is not its shape
+  const [w, h] = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', join(all, '000000.jpg')], { encoding: 'utf8' }).trim().split(',').map(Number);
+  const made = join(framesDir, '_cover.jpg');
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', resolve(cover), '-filter_complex',
+    // (the spread is taken from toward the picture's right, where a title at its left is not in it to show through)
+    `[0]crop='min(iw,ih*${w}/${h})':ih:'(iw-min(iw,ih*${w}/${h}))*0.95':0,scale=${w}:${h},gblur=sigma=34,eq=brightness=-0.1[bg];[0]scale=${w}:${h}:force_original_aspect_ratio=decrease:flags=lanczos[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2`,
+    '-frames:v', '1', '-q:v', '2', made]);
+  for (let i = 0; i < Math.min(coverFrames, count); i++) {
+    const at = join(all, `${String(i).padStart(6, '0')}.jpg`);
+    rmSync(at);
+    symlinkSync(made, at);
+  }
+}
 
 // ---- the sound ----
 const n = Math.ceil(total * RATE);
@@ -63,7 +84,7 @@ function load(file) {
   return cache.get(file);
 }
 /** Lays `ch` into the mix at `at` seconds: from `from` seconds into it, for no more than `length`, coming in and going out. */
-function lay(ch, at, { gain = 1, from = 0, length = Infinity, rise = 0.008, fall = 0.06, pan = 0 } = {}) {
+function lay(ch, at, { gain = 1, from = 0, length = Infinity, rise = 0.008, fall = 0.06, pan = 0, under = null } = {}) {
   const start = Math.round(at * RATE);
   const skip = Math.round(from * RATE);
   const len = Math.min(ch[0].length - skip, Math.round(Math.min(length, total - at) * RATE));
@@ -75,13 +96,15 @@ function lay(ch, at, { gain = 1, from = 0, length = Infinity, rise = 0.008, fall
     const k = Math.min(1, i / up, (len - i) / down);
     const j = start + i;
     if (j < 0 || j >= n) continue;
-    mix[0][j] += ch[0][skip + i] * g[0] * k;
-    mix[1][j] += ch[1][skip + i] * g[1] * k;
+    // (`under`: how much of it is let through at each moment of the film, where it gives way to what is said)
+    const u = under ? under[j] : 1;
+    mix[0][j] += ch[0][skip + i] * g[0] * k * u;
+    mix[1][j] += ch[1][skip + i] * g[1] * k * u;
   }
 }
 
 // wind over dry grass, as sounds.js makes it where there is no recording: under everything, very low
-{
+if (!song) {
   const wind = [new Float32Array(n), new Float32Array(n)];
   for (let c = 0; c < 2; c++) {
     let brown = 0;
@@ -100,14 +123,18 @@ const narration = join(here, 'dist', 'audio', 'narration');
 const steps = [1, 2, 3, 4, 5].map((i) => join(here, 'dist', 'audio', `footstepOnGrass${i}Medium.ogg`));
 const stem = (name) => load(join(musicDir, `${name}.wav`));
 const heard = [];
+const voiced = [];
 for (const seg of segs) {
   const rel = (e) => (e.f - seg.first) / fps;
   const inside = (e) => rel(e) >= 0 && rel(e) < seg.length;
   // what is said: each reading from where its card came up, until the next begins or the picture is cut
-  const said = seg.events.filter((e) => e.type === 'say' && inside(e) && existsSync(join(narration, `${e.key}.mp3`)));
+  // (`voice: 0` in the spec: nothing said in this segment is heard)
+  const said = seg.voice === 0 ? [] : seg.events.filter((e) => e.type === 'say' && inside(e) && existsSync(join(narration, `${e.key}.mp3`)));
   said.forEach((e, i) => {
     const until = Math.min(seg.length + (seg.tail ?? 0), rel(e) + (seg.speak ?? Infinity), i + 1 < said.length ? rel(said[i + 1]) : Infinity);
-    lay(load(join(narration, `${e.key}.mp3`)), seg.at + rel(e), { length: until - rel(e), fall: 0.18, gain: seg.voice ?? 1 });
+    const voice = load(join(narration, `${e.key}.mp3`));
+    lay(voice, seg.at + rel(e), { length: until - rel(e), fall: 0.18, gain: seg.voice ?? 1 });
+    voiced.push([seg.at + rel(e), seg.at + rel(e) + Math.min(until - rel(e), voice[0].length / RATE)]);
     heard.push(`${(seg.at + rel(e)).toFixed(2)} s  ${e.key}`);
   });
   if (seg.steps !== false) {
@@ -119,6 +146,8 @@ for (const seg of segs) {
       lay(load(steps[pick]), seg.at + rel(e), { gain: e.v * 1.1, pan: (Math.random() - 0.5) * 0.3 });
     }
   }
+  // (with a song there is none of the game's own music: two musics at once would be at odds)
+  if (song) continue;
   for (const e of seg.events.filter((e) => e.type === 'pluck' && inside(e))) lay(stem('pluck'), seg.at + rel(e), { gain: 0.9, length: seg.length - rel(e) + 1, fall: 0.6 });
   // the held sounds: the angel's chord from where it began; the Spirit's tone for as long as it leads
   const began = (type) => seg.events.find((e) => e.type === type && e.v > 0 && rel(e) < seg.length);
@@ -126,7 +155,19 @@ for (const seg of segs) {
   if (angel) lay(stem('angel'), seg.at + Math.max(0, rel(angel)), { from: Math.max(0, -rel(angel)), length: seg.length - Math.max(0, rel(angel)), gain: 3.4, rise: 0.05, fall: 0.25 });
   if (began('spirit')) lay(stem('spirit'), seg.at, { from: 1, length: seg.length, gain: 0.7, rise: 0.25, fall: 0.3 });
 }
-for (const t of spec.tracks ?? []) {
+if (song) {
+  // it gives way while anyone speaks: down a little before the first word, and up again slowly after the last
+  const want = new Float32Array(n).fill(1);
+  for (const [a, b] of voiced) want.fill(0.3, Math.max(0, Math.round((a - 0.18) * RATE)), Math.min(n, Math.round((b + 0.1) * RATE)));
+  const under = new Float32Array(n);
+  let g = 1;
+  for (let i = 0; i < n; i++) {
+    g += (want[i] - g) / ((want[i] < g ? 0.07 : 0.3) * RATE);
+    under[i] = g;
+  }
+  lay(load(resolve(song)), 0, { gain: songGain, rise: 0.02, fall: 0.4, under });
+}
+for (const t of song ? [] : (spec.tracks ?? [])) {
   const from = segs.find((s) => s.name === t.from);
   const to = t.to ? segs.find((s) => s.name === t.to).at : total;
   lay(stem(t.stem), from.at + (t.delay ?? 0), { length: to - from.at - (t.delay ?? 0), gain: t.gain ?? 1, rise: t.rise ?? 0.02, fall: t.fall ?? (t.to ? 0.2 : 1.2) });
