@@ -208,7 +208,7 @@ Four times a verse is shown with a word left out, to be filled in from three: as
 - **From the text**: a valley, with a river of water in it (2:6, 2:8); a tent, in which their father dwelt (2:15); an altar of stones (2:7); that the family is there, their mother among them (5:1).
 - **Not known**: where the valley was. It is drawn as this land is drawn (dry grass, bare ridges to either side), which is the hill country's paint and not Arabia's; its river does not run to a sea that is seen.
 - **A guess**: four tents of goat hair, their father's the largest and open towards the river; jars and a woven cloth before it; the altar as unhewn stones laid in courses, by the water; that his brothers stand by their own tents while their father speaks ("thy brothers murmur", 3:5).
-- **Not in the text, shown because a scene needs it**: that Nephi goes to his brothers and then down the valley, for "I, Nephi, and my brethren took our journey in the wilderness" (3:9); that the plates lie on the cloth before the tent at the end.
+- **Not in the text, shown because a scene needs it**: that Nephi goes to his brothers and then down the valley, for "I, Nephi, and my brethren took our journey in the wilderness" (3:9); that on the way up to the gate Laman goes before, Lemuel with him and Sam beside Nephi, for "the lot fell upon Laman" (3:11), where on the last going up they come after him, for "they did follow me" (4:4); that the plates lie on the cloth before the tent at the end.
 - **No tents near Jerusalem**: the brothers took their tents with them (3:9), but none is shown pitched in the land of Jerusalem. There they are on their way up to the city, and stop on the path, in sight of it, to consult and cast lots (3:10–11).
 
 What happens is fixed; how you do it is yours. There is no score, no meter and no other ending.
@@ -291,7 +291,7 @@ On an Apple M4 at 1080p the game runs at about 56–68 fps at medium with the ca
 - `src/game/small-means.js`, `src/game/scripture-nephi16.js`, `src/game/spoken-nephi16.js`: the 1 Nephi 16 journey's beats, its camp and small things; 1 Nephi 16:9–32 verse by verse, the shortened verses and those with a word left out; what its people say in the story's own words.
 - `src/game/liahona.js`, `src/game/bow.js`, `src/game/beasts.js`, `src/game/hunt.js`, `src/game/solid.js`: the ball and its spindles; the bow, its arrow and its flight; the wild beasts; the hunt; and the paint for solid things made in code.
 - `src/game/director.js`: runs the beats (cards, places to reach, things to act on), saves checkpoints, and drives the autopilot.
-- `src/game/npc.js`: the brothers, Laban, his servants, Zoram and the angel. They are clones of the one figure that walk paths or follow Nephi's trail.
+- `src/game/npc.js`: the brothers, Laban, his servants, Zoram and the angel. They are clones of the one figure that walk paths, follow Nephi's trail, or go before him along a way at his pace, waiting if he falls behind.
 - `src/game/guidance.js`: the leading light for the night act.
 - `src/game/town.js`: the people in the streets by day.
 - `src/game/music.js`: the story's music, made in code and played through the valley's sounds.

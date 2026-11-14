@@ -1,7 +1,8 @@
 // The others in the story: Laman, Lemuel and Sam, Laban, his servants, Zoram, the angel. Each is Patch's starter man,
 // cloned from one download and dressed in his own colours (wanderer.js), moved by the story rather than by physics:
-// he stands, turns to face someone, walks or runs a line of points, or keeps up with Nephi. His clips are played
-// straight from a mixer (idle, walk, jog), at the rate that matches how fast he is really going.
+// he stands, turns to face someone, walks or runs a line of points, keeps up with Nephi, or goes before him along a
+// way. His clips are played straight from a mixer (idle, walk, jog), at the rate that matches how fast he is really
+// going.
 import * as THREE from 'three';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { createWanderer } from '../valley/wanderer.js';
@@ -36,6 +37,43 @@ export function cloneMan(src) {
 }
 
 const angleWrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+
+/**
+ * A line of points [[x, z], ...], measured: its length (`total`); how far along it the point nearest (x, z) lies
+ * (`nearest`); and the point `s` metres along it, with the way the line runs there (`at`: [x, z, ux, uz]).
+ */
+function measure(line) {
+  const legs = [];
+  let total = 0;
+  for (let i = 0; i + 1 < line.length; i++) {
+    const [ax, az] = line[i];
+    const [bx, bz] = line[i + 1];
+    const len = Math.hypot(bx - ax, bz - az) || 1e-6;
+    legs.push({ ax, az, ux: (bx - ax) / len, uz: (bz - az) / len, len, from: total });
+    total += len;
+  }
+  return {
+    total,
+    nearest(x, z) {
+      let best = Infinity;
+      let s = 0;
+      for (const l of legs) {
+        const t = Math.min(l.len, Math.max(0, (x - l.ax) * l.ux + (z - l.az) * l.uz));
+        const d = Math.hypot(x - l.ax - l.ux * t, z - l.az - l.uz * t);
+        if (d < best) {
+          best = d;
+          s = l.from + t;
+        }
+      }
+      return s;
+    },
+    at(s) {
+      const l = legs.find((leg) => s <= leg.from + leg.len) ?? legs[legs.length - 1];
+      const t = Math.min(l.len, Math.max(0, s - l.from));
+      return [l.ax + l.ux * t, l.az + l.uz * t, l.ux, l.uz];
+    },
+  };
+}
 
 // Falling down to worship: the body sinks to its knees and bends forward to the ground. Every bone is turned about
 // the one line across the body (from his left to his right), so the turns can be worked out from how the bones lie
@@ -150,7 +188,7 @@ export function createCast(field, base, world) {
       z: 0,
       yaw: 0,
       speed: 0,
-      // what he is doing: 'stand', 'walk' (a line of points), 'follow' (someone), 'lie'
+      // what he is doing: 'stand', 'walk' (a line of points), 'follow' (someone), 'lead' (someone, along a way), 'lie'
       mode: 'stand',
       path: [],
       pace: 1.45,
@@ -168,7 +206,7 @@ export function createCast(field, base, world) {
       },
       /** Stands him at (x, z) facing yaw (0 looks along +z). */
       place(x, z, yaw = npc.yaw) {
-        Object.assign(npc, { x, z, yaw, speed: 0, mode: 'stand', path: [], followTarget: null, faceTo: null, maxSpeed: undefined, rest: 0, keen: false });
+        Object.assign(npc, { x, z, yaw, speed: 0, mode: 'stand', path: [], followTarget: null, faceTo: null, maxSpeed: undefined, rest: 0, keen: false, abreast: false });
         w.group.visible = true;
         if (npc.lying) npc.lie(false);
         settle(npc, 0, true);
@@ -192,14 +230,36 @@ export function createCast(field, base, world) {
       /**
        * Keeps him near someone ({ x, z } read each frame), `gap` metres off, walking or running to keep up. He keeps
        * to the trail laid from now on; with `whole`, to all of it (the way Nephi came out of a house, say, before
-       * he was followed).
+       * he was followed). With `abreast` he walks at the other's side, `side` metres off, and not after him: he
+       * falls in behind only when he has been left a long way back.
        */
-      follow(target, gap = 3, side = 0, { whole = false } = {}) {
+      follow(target, gap = 3, side = 0, { whole = false, abreast = false } = {}) {
         npc.mode = 'follow';
         npc.followTarget = target;
         npc.followGap = gap;
         npc.followSide = side;
+        npc.abreast = abreast;
+        npc.seen = null;
         npc.followFrom = whole ? 0 : laid;
+        npc.path = [];
+        return npc;
+      },
+      /**
+       * He goes before someone ({ x, z } read each frame) along a way [[x, z], ...]: `ahead` metres further along it
+       * than the one he leads, `side` metres to one side of it. He keeps the other's pace, and no more: if the other
+       * falls behind or turns aside he stands, and presently turns to look back for him; he does not go back along
+       * the way, and at its end he stands.
+       */
+      lead(target, way, ahead = 5, side = 0) {
+        npc.mode = 'lead';
+        npc.followTarget = target;
+        npc.followSide = side;
+        npc.leadWay = measure(way);
+        npc.leadAhead = ahead;
+        npc.leadAt = npc.leadWay.nearest(npc.x, npc.z);
+        npc.leading = false;
+        npc.waited = 0;
+        npc.faceTo = null;
         npc.path = [];
         return npc;
       },
@@ -243,6 +303,36 @@ export function createCast(field, base, world) {
         want = npc.pace;
         npc.yaw += angleWrap(Math.atan2(dx, dz) - npc.yaw) * Math.min(1, dt * 8);
       }
+    } else if (npc.mode === 'follow' && npc.abreast && dt > 0 && Math.hypot(npc.followTarget.x - npc.x, npc.followTarget.z - npc.z) < 9) {
+      // At his side. Where the other goes, and how fast, is seen from where he was a moment ago; his own place is
+      // `side` metres off the other's line. He goes as fast as the other does, and faster or slower as he is behind
+      // his place or before it; and he makes for a point a few steps beyond it, so that he walks a line and is not
+      // turned about by being a hand's breadth out.
+      const t = npc.followTarget;
+      const seen = (npc.seen ??= { x: t.x, z: t.z, vx: 0, vz: 0 });
+      const k = Math.min(1, dt * 6);
+      seen.vx += ((t.x - seen.x) / dt - seen.vx) * k;
+      seen.vz += ((t.z - seen.z) / dt - seen.vz) * k;
+      seen.x = t.x;
+      seen.z = t.z;
+      const going = Math.hypot(seen.vx, seen.vz);
+      const moving = going > 0.5;
+      const hx = moving ? seen.vx / going : Math.sin(t.yaw ?? 0);
+      const hz = moving ? seen.vz / going : Math.cos(t.yaw ?? 0);
+      const px = t.x + hz * npc.followSide;
+      const pz = t.z - hx * npc.followSide;
+      const out = Math.hypot(px - npc.x, pz - npc.z);
+      if (moving || out > 0.7) {
+        const on = moving ? 2.5 : 0;
+        const dx = px + hx * on - npc.x;
+        const dz = pz + hz * on - npc.z;
+        const behind = (px - npc.x) * hx + (pz - npc.z) * hz;
+        want = Math.min(npc.maxSpeed ?? 8.5, moving ? Math.max(0, going + behind * 2) : 0.8 + out * 1.5);
+        const turn = angleWrap(Math.atan2(dx, dz) - npc.yaw);
+        want *= Math.max(0.3, Math.cos(Math.min(Math.PI / 2, Math.abs(turn))));
+        npc.yaw += turn * Math.min(1, dt * 7);
+        npc.faceTo = null;
+      } else npc.faceTo = [t.x, t.z];
     } else if (npc.mode === 'follow' && npc.followTarget) {
       const t = npc.followTarget;
       // a place on Nephi's trail, his gap behind him; near him, a place beside him
@@ -285,6 +375,35 @@ export function createCast(field, base, world) {
         want *= Math.max(0.2, Math.cos(Math.min(Math.PI / 2, Math.abs(turn))));
         npc.yaw += turn * Math.min(1, dt * 7);
       } else npc.faceTo = [t.x, t.z];
+    } else if (npc.mode === 'lead' && npc.followTarget) {
+      const t = npc.followTarget;
+      const way = npc.leadWay;
+      // how far along the way he has come (he does not go back along it), and how much further he should be: his
+      // `ahead` beyond the one he leads
+      const mine = way.nearest(npc.x, npc.z);
+      if (mine > npc.leadAt && mine < npc.leadAt + 12) npc.leadAt = mine;
+      const gap = Math.min(way.total, way.nearest(t.x, t.z) + npc.leadAhead) - npc.leadAt;
+      // (once going he goes on till he is where he should be; once stood, he waits till there is a step to take)
+      npc.leading = gap > (npc.leading ? 0.25 : 1);
+      if (npc.leading) {
+        npc.waited = 0;
+        npc.faceTo = null;
+        // he makes for a point a few steps on along the way, on his own side of it: so he comes into the way and
+        // keeps it, and is not turned about by every small thing
+        const [px, pz, ux, uz] = way.at(Math.min(way.total, npc.leadAt + Math.max(2.5, Math.min(gap, 6))));
+        const dx = px + uz * npc.followSide - npc.x;
+        const dz = pz - ux * npc.followSide - npc.z;
+        // the further he has to make up, the faster: so he keeps the pace of the one he leads, walking or running
+        // (one who goes before must be able to outrun the one he leads, who runs at 7 m/s)
+        want = Math.min(npc.maxSpeed ?? 8.5, 0.7 + gap * 2.5);
+        const turn = angleWrap(Math.atan2(dx, dz) - npc.yaw);
+        want *= Math.max(0.2, Math.cos(Math.min(Math.PI / 2, Math.abs(turn))));
+        npc.yaw += turn * Math.min(1, dt * 7);
+      } else {
+        // (he looks back for him only when he has stood a moment: not at every check in the other's step)
+        npc.waited += dt;
+        if (npc.waited > 1.2) npc.faceTo = [t.x, t.z];
+      }
     }
     // (one who rests a while where he has come to: `rest` seconds, and then whoever waits on him is told)
     if (npc.rest > 0 && npc.mode === 'stand') {

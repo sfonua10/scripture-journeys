@@ -249,6 +249,16 @@ export function story(g) {
     who('laman').follow(g.player, 3.6, -1.4, options);
     who('lemuel').follow(g.player, 4.6, 1.6, options);
   }
+  /**
+   * Laman goes before along a way [[x, z], ...], Lemuel at his shoulder, and Sam walks beside Nephi. They keep
+   * Nephi's pace, and wait for him if he falls behind. (The lot fell upon Laman, the eldest: the errand is his, and
+   * he is not led to it by the youngest. Where they follow Nephi, it is because it is written that they did: 4:4.)
+   */
+  function lamanLeads(way) {
+    who('laman').lead(g.player, way, 6.5, -0.7);
+    who('lemuel').lead(g.player, way, 5.2, 1.5);
+    who('sam').follow(g.player, 1.7, -1.6, { abreast: true });
+  }
   /** Over Nephi's shoulder, at someone or something: a still view while the cards about it are read. */
   const shoulder = (point, options) => g.shoulder(point, options);
   const nearest = (names) => names.map(who).sort((a, b) => Math.hypot(a.x - g.player.x, a.z - g.player.z) - Math.hypot(b.x - g.player.x, b.z - g.player.z))[0];
@@ -403,7 +413,8 @@ export function story(g) {
         g.music.pluck();
         await say(c, 'lot');
         c.objective('Go up to the gate of Jerusalem with your brethren.');
-        followMe();
+        // the lot is Laman's: he goes before, Lemuel with him, and Sam beside Nephi
+        lamanLeads([me(), gateOut]);
         await c.reach(...gateOut, 9);
       },
     },
