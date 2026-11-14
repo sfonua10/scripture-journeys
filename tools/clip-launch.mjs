@@ -31,14 +31,15 @@ export default {
   tallQuery: 'touch=1',
   // on a phone held upright the bottom fifth and the top tenth lie under the app's own buttons: keep words clear of them
   tall: `
-    #g-card, #g-low { bottom: 23vh !important; }
+    #g-card, #g-low { bottom: 19vh !important; }
     #g-objective { top: 12vh !important; }
-    #clip-cap { top: 13vh; width: calc(100vw - 40px); }
+    #clip-cap { top: 11.5vh; }
     #clip-over .free span { display: block; }
     #clip-over .free i { display: none; }
   `,
   wide: `
-    #clip-cap { top: 7vh; width: max-content; max-width: 70vw; }
+    #clip-cap { top: 6vh; }
+    #clip-cap .t { font-size: 17px; }
     #clip-over .name { font-size: 54px; }
     #clip-over .journey { font-size: 28px; }
     #clip-over .ref { font-size: 17px; }
@@ -51,9 +52,9 @@ export default {
     { stem: 'theme', from: 'home', to: null, gain: 0.85 },
   ],
   segments: [
-    { name: 'laban', beat: 'a2-laban', query: 'autoread=4.6', until: `clip.said('said-seize') >= 0`, frames: n(129), caption: { text: 'You play as Nephi.' }, css: quiet },
+    { name: 'laban', beat: 'a2-laban', query: 'autoread=4.6', until: `clip.said('said-seize') >= 0`, frames: n(129), caption: { text: 'Playing as Nephi' }, css: quiet },
     { name: 'chase', beat: 'a2-laban', query: 'autoread=0.3', until: `clip.said('said-run') >= 0`, frames: n(100), caption: null },
-    { name: 'hard', beat: 'a1', query: 'autoread=3.8', until: `clip.said('said-hard') >= 0`, frames: n(108), caption: { text: 'Walk Nephi’s journey with your family', sub: '1 Nephi 3–4' }, css: quiet },
+    { name: 'hard', beat: 'a1', query: 'autoread=3.8', until: `clip.said('said-hard') >= 0`, frames: n(108), caption: { text: 'Walk 1 Nephi 3–4 with your family' }, css: quiet },
     { name: 'do', beat: 'a1', query: 'autoread=4', until: `clip.said('said-commandment') >= 0 && !!document.querySelector('#g-card.on .answer')`, delay: 78, frames: n(126), speak: 2.6, caption: null, css: quiet },
     { name: 'night', beat: 'a3', query: 'autoread=0.3', until: `clip.heard('spirit') >= 0`, delay: 60, frames: n(96), caption: { text: 'By night, a light goes before you' }, css: quiet },
     { name: 'angel', beat: 'a2-rock', query: 'autoread=0.3', until: `clip.heard('angel') >= 0`, frames: n(64), caption: null },

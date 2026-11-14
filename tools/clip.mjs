@@ -63,11 +63,10 @@ const BASE_CSS = /* css */ `
 #start, #hint, #n-voice { display: none !important; }
 #clip-cap {
   position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); box-sizing: border-box; text-align: center; opacity: 0;
-  font-family: Georgia, 'Times New Roman', serif; color: #f4ead6; pointer-events: none;
-  padding: 10px 16px 11px; background: rgba(24, 18, 12, 0.78); border: 1px solid rgba(227, 189, 109, 0.5); border-radius: 6px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4); text-wrap: balance;
+  font-family: Georgia, 'Times New Roman', serif; color: #fff; pointer-events: none; white-space: nowrap; width: max-content;
+  padding: 7px 17px 8px; background: rgba(42, 46, 56, 0.88); border-radius: 999px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
 }
-#clip-cap .t { font-size: 21px; line-height: 1.25; }
+#clip-cap .t { font-size: 15px; line-height: 1.25; letter-spacing: 0.01em; }
 #clip-over { position: fixed; z-index: 40; inset: 0; opacity: 0; pointer-events: none; font-family: Georgia, 'Times New Roman', serif; color: #f4ead6; }
 #clip-cap .s { margin-top: 4px; font-size: 13px; letter-spacing: 0.08em; color: #e3bd6d; font-variant: small-caps; }
 `;
