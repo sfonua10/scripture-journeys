@@ -1,6 +1,10 @@
 // 1 Nephi 3–5, verse by verse, as published (Project Gutenberg eBook #17, The Book of Mormon, public domain; the
 // same words and verses as the Church's current edition). Generated from that text, not typed by hand.
 // Cards in the game quote these exactly; `verses('3:7')` or `verses('4:11', '4:12')` joins a run of them.
+//
+// What someone says is shown under their name (SPEAKERS), without the words that only tell who speaks: "NEPHI · I
+// will go and do …" where the verse reads "And it came to pass that I, Nephi, said unto my father: I will go and
+// do …" (SAID, EXCERPTS, BLANKS, at the foot of this file; tools/excerpts.mjs checks each against its verse).
 export const VERSES = {
   '3:1': "And it came to pass that I, Nephi, returned from speaking with the Lord, to the tent of my father.",
   '3:2': "And it came to pass that he spake unto me, saying: Behold I have dreamed a dream, in the which the Lord hath commanded me that thou and thy brethren shall return to Jerusalem.",
@@ -120,3 +124,74 @@ export function scripture(book, table) {
 
 export const nephi = scripture('1 Nephi', VERSES);
 export const { verses, reference } = nephi;
+
+/**
+ * Who speaks, as the cards name them. What is quoted from a verse is shown under the speaker's name, in place of the
+ * verse's own "And it came to pass that he spake unto me, saying": on those cards the name is the only word that is
+ * not the verse's (tools/excerpts.mjs lists, for each, the words the name stands in place of). The same names are
+ * over what they say in the story's own words (spoken-nephi.js), which is not scripture and is marked so. They are
+ * also who reads the card aloud: each has a voice of their own (tools/narrate.mjs).
+ */
+export const SPEAKERS = {
+  nephi: 'Nephi',
+  lehi: 'Lehi',
+  sariah: 'Sariah',
+  laman: 'Laman',
+  lemuel: 'Lemuel',
+  sam: 'Sam',
+  laban: 'Laban',
+  zoram: 'Zoram',
+  // "I commanded him in the voice of Laban" (4:20)
+  asLaban: 'Nephi, in the voice of Laban',
+  angel: 'An angel of the Lord',
+  spirit: 'The Spirit',
+};
+const { nephi: NEPHI, sariah, laban, angel, spirit } = SPEAKERS;
+
+/** The verses that are, whole, what one of them says: shown whole, under the name. */
+export const SAID = {
+  '3:16': NEPHI,
+  '4:13': spirit,
+};
+
+/**
+ * Parts of verses, where the story shows less than the whole: the verse's own words, in order, with "…" where words
+ * are left out. One with `who` is what that one says, shown under their name: the words that tell who speaks (and,
+ * for the angel, that he came and stood before them, which is seen) are left off, and no "…" marks it, since the
+ * name does. tools/excerpts.mjs checks every one against the verse.
+ */
+export const EXCERPTS = {
+  // in the valley of Lemuel: Nephi's answer to his father (3:7)
+  '3:7-said': { verse: '3:7', who: NEPHI, text: 'I will go and do the things which the Lord hath commanded, for I know that the Lord giveth no commandments unto the children of men, save he shall prepare a way for them that they may accomplish the thing which he commandeth them.' },
+  // Laban to Laman (3:13), and what Nephi says to his brethren when he comes out (3:15)
+  '3:13-said': { verse: '3:13', who: laban, text: 'Behold thou art a robber, and I will slay thee.' },
+  '3:15-said': { verse: '3:15', who: NEPHI, text: 'As the Lord liveth, and as we live, we will not go down unto our father in the wilderness until we have accomplished the thing which the Lord hath commanded us.' },
+  // overtaken in the chase, it is begun again (3:27)
+  '3:27-b': { verse: '3:27', text: '… and the servants of Laban did not overtake us, …' },
+  // in the cavity of the rock: the angel, and Nephi (3:29, 4:1)
+  '3:29-said': { verse: '3:29', who: angel, text: 'Why do ye smite your younger brother with a rod? Know ye not that the Lord hath chosen him to be a ruler over you, and this because of your iniquities? Behold ye shall go up to Jerusalem again, and the Lord will deliver Laban into your hands.' },
+  '4:1-said': { verse: '4:1', who: NEPHI, text: 'Let us go up again unto Jerusalem, and let us be faithful in keeping the commandments of the Lord; for behold he is mightier than all the earth, then why not mightier than Laban and his fifty, yea, or even than his tens of thousands?' },
+  // before Laban, in the street (4:11–12, 4:18: what he then did is not shown, and is not read)
+  '4:11-said': { verse: '4:11', who: spirit, text: 'Behold the Lord hath delivered him into thy hands.' },
+  '4:11-b': { verse: '4:11', text: '… Yea, and I also knew that he had sought to take away mine own life; yea, and he would not hearken unto the commandments of the Lord; and he also had taken away our property.' },
+  '4:12-said': { verse: '4:12', who: spirit, text: 'Slay him, for the Lord hath delivered him into thy hands;' },
+  '4:18-a': { verse: '4:18', text: 'Therefore I did obey the voice of the Spirit, …' },
+  // their mother, at the tent of their father (5:8)
+  '5:8-said': { verse: '5:8', who: sariah, text: 'Now I know of a surety that the Lord hath commanded my husband to flee into the wilderness; yea, and I also know of a surety that the Lord hath protected my sons, and delivered them out of the hands of Laban, and given them power whereby they could accomplish the thing which the Lord hath commanded them.' },
+};
+for (const [key, e] of Object.entries(EXCERPTS)) e.voice = `1 Nephi ${key} cut`;
+
+/**
+ * Verses with a word left out, to be filled in from three (shortened with "…" where they are long). The right answer
+ * is the word that was there; tools/excerpts.mjs checks that, put back, it is the verse's own words. The verse is
+ * then read whole: or, where the verse begins by telling who speaks, the part of it that is said (`said`).
+ */
+export const BLANKS = {
+  do: { verse: '3:7', who: NEPHI, said: '3:7-said', text: 'I will go and _____ the things which the Lord hath commanded …', answers: ['see', 'do', 'tell'], right: 1 },
+  mightier: { verse: '4:1', who: NEPHI, said: '4:1-said', text: '… for behold he is _____ than all the earth …', answers: ['mightier', 'older', 'farther'], right: 0 },
+  spirit: { verse: '4:6', text: 'And I was led by the _____, not knowing beforehand the things which I should do.', answers: ['stars', 'moon', 'Spirit'], right: 2 },
+  // (what Nephi has said of the Lord before the chase: one of these is asked as each try at it begins)
+  faithful: { verse: '3:16', who: NEPHI, text: 'Wherefore, let us be _____ in keeping the commandments of the Lord …', answers: ['faithful', 'silent', 'swift'], right: 0 },
+  accomplished: { verse: '3:15', who: NEPHI, said: '3:15-said', text: '… we will not go down unto our father in the wilderness until we have _____ the thing which the Lord hath commanded us.', answers: ['forgotten', 'accomplished', 'sold'], right: 1 },
+  way: { verse: '3:7', who: NEPHI, said: '3:7-said', text: '… save he shall prepare a _____ for them that they may accomplish the thing which he commandeth them.', answers: ['sword', 'tent', 'way'], right: 2 },
+};

@@ -4,13 +4,15 @@
 
 Painted walking games through the scriptures, one journey at a time. The first screen asks for a book of scripture (the Book of Mormon, the Old Testament), then lists that book's journeys, with the next one shown as coming.
 
-Adding a journey: write its story beside `src/game/story.js`, give it an entry in `src/game/stories.js` with its `work` (the book it belongs to), its `scripture` (the verses its cards quote) and `released: true`. A journey may bring its own land (`land`: the hill country round Jerusalem, or `'plain'`, the river plain of Babylon, in `src/valley/world.js`), its own city (`look`), people and clothes, as the Daniel journeys do (`src/game/daniel.js`, `src/game/lions-den.js`, `src/game/babylon.js`). Each journey keeps its own place in the browser.
+Adding a journey: write its story beside `src/game/story.js`, give it an entry in `src/game/stories.js` with its `work` (the book it belongs to), its `scripture` (the verses its cards quote) and `released: true`. A journey may bring its own land (`land`: the hill country round Jerusalem, or `'plain'`, the river plain of Babylon, in `src/valley/world.js`), its own city (`look`), people and clothes, as the Daniel journeys do (`src/game/daniel.js`, `src/game/lions-den.js`, `src/game/babylon.js`), and sets and small things of its own (`props`), as the Jonah journey does (`src/game/jonah.js`, `src/game/nineveh.js`). Each journey keeps its own place in the browser.
+
+A journey still being made is marked `wip: true` in `src/game/stories.js` (the Old Testament ones are, for now). It is left off the list, and reached only with `?all` in the address (every journey listed) or by name (`?story=jonah`). While only one journey is open, someone new goes straight into it; once they have a place kept or have finished it, the list offers to go on, start over or play again. Take `wip` off a journey to open it.
 
 (The game was first called Book of Mormon Journeys, when the Book of Mormon was all it held. The old web address and the old repository name redirect to the new ones.)
 
 ## Book of Mormon, Journey 1: I Will Go and Do
 
-A short painted walking game through **1 Nephi 3–4**: Nephi and his brothers go back to Jerusalem for the plates of brass. You walk where they walked and read what they said, in the scripture's own words, at the moment each thing happens. The aim is to help families understand the account and see how the Lord prepared a way.
+A short painted walking game through **1 Nephi 3–4**: Nephi and his brothers go back to Jerusalem for the plates of brass. It begins and ends at the tent of their father in the valley of Lemuel, which is a place of its own, out of sight of Jerusalem; the rest is in the land of Jerusalem. You walk where they walked and read what they said, in the scripture's own words, at the moment each thing happens. The aim is to help families understand the account and see how the Lord prepared a way.
 
 > "I will go and do the things which the Lord hath commanded, for I know that the Lord giveth no commandments unto the children of men, save he shall prepare a way for them that they may accomplish the thing which he commandeth them." (1 Nephi 3:7)
 
@@ -22,7 +24,7 @@ A short painted walking game through **1 Nephi 3–4**: Nephi and his brothers g
 
 It is played more than it is read. What is said (the herald's command, the king's words, the three's answer) is a card, read before the story goes on; what is only done is a line low on the screen, read while you walk; a list said over again is cut short with "…" (the cut verses are in `src/game/scripture-daniel.js` and `tools/excerpts.mjs` checks each is the verse's own words in order). There are about 22 stops.
 
-A card of what someone says has their name over it, and under the name only what they said: "NEBUCHADNEZZAR · Is it true, O Shadrach, Meshach, and Abednego …" where the verse reads "Nebuchadnezzar spake and said unto them, Is it true …". The five names (The herald, Certain Chaldeans, Nebuchadnezzar, Shadrach, Meshach, and Abednego, The king's counsellors) are the only words on those cards that are not the verse's; the reference stays, and `tools/excerpts.mjs` lists for each card the words its name stands in place of. The first journey's cards are not yet shown this way.
+A card of what someone says has their name over it, and under the name only what they said: "NEBUCHADNEZZAR · Is it true, O Shadrach, Meshach, and Abednego …" where the verse reads "Nebuchadnezzar spake and said unto them, Is it true …". The five names (The herald, Certain Chaldeans, Nebuchadnezzar, Shadrach, Meshach, and Abednego, The king's counsellors) are the only words on those cards that are not the verse's; the reference stays, and `tools/excerpts.mjs` lists for each card the words its name stands in place of. The first journey's cards are shown this way too (see "The story").
 
 | Act | Verses | What you do |
 |---|---|---|
@@ -81,26 +83,92 @@ The same city and plain (`BABYLON_DARIUS` in `src/game/babylon.js`: the same wal
 
 The morning's light is the evening's turned about (`src/valley/sky.js`): this land had only afternoons and nights before.
 
+## Old Testament, Journey 3: Should Not I Spare Nineveh?
+
+**Jonah 1–4**, the whole book, in the King James Version: the word that comes and the ship at Joppa, the tempest, the deep and the fish's belly, Nineveh, and the booth and the gourd. You are Jonah.
+
+> "And should not I spare Nineveh, that great city, wherein are more than sixscore thousand persons that cannot discern between their right hand and their left hand; and also much cattle?" (Jonah 4:11)
+
+It is told as the Daniel journeys are (a card under the speaker's name for what is said, a line for what is done, "…" where a verse is cut, `tools/excerpts.mjs` checking every one), but there is more in it to do than to read: the Daniel 6 journey was found to be a walk, a reading and a scene, and this one was made so that each act has its own play.
+
+| Act | Verses | What you do |
+|---|---|---|
+| One: Arise, Go | 1:1–3 | The word comes. The way to Nineveh is marked, and you may take it or turn from it: whichever you do, what Jonah did is read (1:3), and the story goes down to Joppa. Find the ship on the quay, pay the fare, and go down into her. Fill in "to flee unto Tarshish from the ___ of the LORD". |
+| Two: The Storm | 1:4–16 | The tempest, and the mariners casting forth the wares, seen while he sleeps below. The shipmaster wakes you. The deck rolls and carries you down it: take up what is left of the wares and cast it into the sea. Draw your lot with the mariners; answer them (fill in "which hath made the ___ and the dry land"). Take an oar and pull: the land comes no nearer. Go to the ship's side. The sea ceases from her raging. |
+| Three: Out of the Belly | 1:17–2:10 | You go down through the deep, the weeds about you (2:3, 2:5), and the great fish comes. Then it is dark. Three days and three nights: each day there is a light somewhere about you, and you turn and look for it ("yet I will look again toward thy holy temple", 2:4, which you fill in); while you look toward it, part of the prayer is read. |
+| Four: That Great City | 3 | On the dry land the word comes the second time, and the way is marked as it was before. Enter Nineveh and cry against it in three places, deeper into the city each time as the day goes on; each place does a part of 3:5 (they believe; they proclaim a fast and put on sackcloth; from the greatest to the least). Go to the king's seat: he rises from his throne, lays his robe from him, and sits in ashes. Fill in "the people of Nineveh ___ God". |
+| Five: The Gourd | 4 | Fill in "slow to ___". Go out of the city to its east side; bring four boughs and make a booth, and sit in its shadow. The gourd comes up over you; the worm; the east wind and the sun. Then you are asked to look upon the city, and as you do the LORD's question is read. |
+
+The book ends on that question, with no answer of Jonah's, and so does the journey: the end screen asks the family how they would answer it. Five times a verse is shown with a word left out; a wrong answer costs nothing. There is no score and no other ending. It has no recorded reading yet (`node tools/narrate.mjs --story jonah --dry` lists what there is to record), and no portrait for its card: the first letter of his name stands in its place until `face` in `src/game/stories.js` is given a `src`.
+
+What you do that the text does not say Jonah did (said plainly, because the cards beside it are scripture):
+
+- **You help to cast the wares into the sea.** 1:5 says the mariners did, while he was asleep below; that is shown first, as it is written, and what you cast is "what is left".
+- **You take an oar.** 1:13 says "the men rowed hard to bring it to the land; but they could not".
+- **You carry the boughs of the booth**, four of them, one at a time. 4:5 says "and there made him a booth".
+- **You may take the marked way to Nineveh in act one.** Jonah did not, and the story does not pretend you did: 1:3 is read, and you are at Joppa.
+
+What is shown, and what is not:
+
+- He is cast into the sea between one picture and the next.
+- "A great fish" (1:17) is all the text says of it, and it is drawn so: a great dark shape, with a tail and fins, that passes before him all its length and then comes for him out of the dark. He is swallowed between one picture and the next. The fish's belly is shown dark and nothing more; the light he turns toward is the game's picture of "I will look again toward thy holy temple", not something the text says he saw.
+- "And it vomited out Jonah upon the dry land" (2:10) is read, and not seen: the next picture is the shore.
+- The sackcloth is on the people only: "man and beast" (3:8) is read, and no beast is shown.
+- The worm (4:7) is read; what is seen is the gourd withered in the morning.
+
+### Nineveh, the ship and the sea, and how sure we are of them
+
+Nineveh (`NINEVEH` in `src/game/nineveh.js`) stands where Babylon stands in the Daniel journeys, on the same river plain: Nineveh was on the Tigris as Babylon was on the Euphrates. The ship, the quay at Joppa and the shore are sets of the story's own, built on the level ground before the gate and shown with the land hidden (`g.set` and `g.land` in `src/valley/main.js`); the sea is `src/game/sea.js`.
+
+- **Not known**: what Nineveh looked like in Jonah's day (about 760 BC, in the reign of Jeroboam the second, 2 Kings 14:25: a lifetime before Sennacherib made it his capital and built what has been dug up). It is given a wall of mud brick with stepped tops, great stone figures at its gate and slabs of stone at the foot of the king's house (as Assyrian gates and palaces had, a century later), a temple tower in stages, and houses blind to the street.
+- **Not known**: where the king sat. His seat is set before his house, on the street, under a canopy, so that he can be seen to rise from it.
+- **Not known**: where Jonah was when the word came, and what Joppa looked like. Act one opens on the open plain, with the city hidden; Joppa is a paved quay and a street's worth of houses.
+- **A guess**: the ship as a round-built Phoenician merchantman of some twenty metres, one mast, a furled sail, a hatch, benches and oars. "A ship going to Tarshish" (1:3), "the sides of the ship" (1:5) and that they rowed (1:13) are what the text gives.
+- **Not known**: what plant the gourd was. The Hebrew word is found nowhere else; it is drawn as a gourd vine, with broad leaves and long-necked fruit.
+- **Reckoned**: that the booth was of boughs and dry leaves on four posts, as booths were (Nehemiah 8:15); that the rise he sits on is east of the city (4:5), which in this land is before its gate.
+- **Geography, bent**: in this land the city's gate is on its east side, so he comes to Nineveh from the east. He would have come from the west.
+- **Not in the text, shown because a scene needs it**: the people of Joppa on the quay; the mariners coming together at the mast for the lots; the three places in the city; the king's nobles beside him; the heat at the picture's edges as the sun beats on his head.
+
+Two misprints in Project Gutenberg's text of Jonah are put right in `src/game/scripture-jonah.js`, and the file says so at its head: 1:10 has "said unto him. Why hast thou done this?" (a full stop for a comma), and 1:15 has "So they look up Jonah" (for "took up"). `tools/verses.mjs --check` reports exactly those two differences.
+
 It is a remix of Patch's [Painted valley](https://patch.gg/blendi/painted-valley), a three.js scene painted like an animated film's backgrounds. The painting, grass, sky, figure and walk come from Painted valley. This game adds the hill country, the city, the story and the night.
 
 ## The story
 
 | Act | Verses | When | What you do |
 |---|---|---|---|
-| One: Up to Jerusalem | 3:7–21 | Afternoon | Consult with your brothers, walk to the gate. Laman goes in and is driven out. You answer your brothers (3:15–20). |
-| Two: Our Gold and Our Silver | 3:22–4:4 | Golden hour | Go into Lehi's house by its door and gather the gold, the silver and the precious things, in any order: a list at the top left ticks each off, and Laman, Lemuel and you carry them out. Carry them to Laban. Before you flee you are asked for a word of a verse you have read; remember it and you are strengthened for the first moments of the chase. Flee his servants: what you carry slows you, and they gain on you until you leave the property behind (3:26). If they overtake you the chase begins again. Hide in the rock. The angel speaks. You answer your brothers again (4:1–3). |
-| Three: Led by the Spirit | 4:5–38 | Night | No marker and no objective. Stand still and a soft light gathers in the air the way you should go, with a soft tone (4:6). Take a wrong turning and there is no light until you stand still again. Find Laban, drunken in the street. You may obey at once, or shrink as Nephi did (4:10): step back or wait, and the Spirit speaks again (4:11, 4:12–13). Then speak to Zoram in the voice of Laban, go with him into the treasury, and choose how you answer him three times. Go back to your brothers outside the walls, and make the oath. |
-| The tent of their father | 5:7–8, 5:21, 3:7 | Evening | The return, and the end screen with questions to talk about. |
+| One: Up to Jerusalem | 3:1–21 | Afternoon | In the valley of Lemuel, go to your father at his tent. He tells you what the Lord has commanded; Laman, from their tents, says it is a hard thing, and your father answers him. Answer your father: fill in "I will go and ___" (3:7). Call your brothers to the journey and go down the valley, Lemuel murmuring as you go. Then, in the land of Jerusalem, cast lots with your brothers (the lot falls upon Laman) and walk to the gate. You wait without it as Laman goes in; Laban's words to him are heard (3:13), and he runs out. You answer your brothers (3:15). |
+| Two: Our Gold and Our Silver | 3:22–4:4 | Golden hour | Go into Lehi's house by its door and gather the gold, the silver and the precious things, in any order: a list at the top left ticks each off, and Laman, Lemuel and you carry them out. Carry them to Laban. Before you flee you are asked for a word of a verse Nephi has said; remember it and you are strengthened for the first moments of the chase. Flee his servants: what you carry slows you, and they gain on you until you leave the property behind (3:26). If they overtake you the chase begins again. Hide in the rock. The angel speaks (3:29). You answer your brothers again (4:1). |
+| Three: Led by the Spirit | 4:5–38 | Night | No marker and no objective. Stand still and a soft light gathers in the air the way you should go, with a soft tone (4:6). Take a wrong turning and there is no light until you stand still again. Find Laban, drunken in the street. You may obey at once, or shrink as Nephi did (4:10): step back or wait, and the Spirit speaks again (4:11, 4:12–13). Then speak to Zoram in the voice of Laban, go with him into the treasury, and choose how you answer him three times. Go back to your brothers outside the walls, hold Zoram, and make the oath. |
+| The tent of their father | 5:2–10, 3:7 | Evening | The return to the valley of Lemuel: their mother, their father, the plates laid before him; and the end screen with questions to talk about. |
 
-The words on the cards are the scripture's own, quoted from `src/game/scripture.js`. The few lines that are not scripture are shown in italics without a reference. That includes the three questions about Zoram and their answers: the right answer is what the verse says Nephi did, and the verse follows it; a wrong answer makes Zoram hesitate, and the question is asked again.
+### Who tells it, and what is scripture
 
-Four times a verse is shown with a word left out, to be filled in from three: after 3:7, before each try at the chase (3:16, 3:15 or 3:7, a different one each try), after 4:1 and after 4:6. The card is the verse's own words with its reference, and the right answer is the word that was there. A wrong answer costs nothing: the whole verse is read again and the story goes on.
+It is told by those who were there, not by a narrator. Most of what is said is **in the story's own words, and is not scripture**: short, plain lines (`src/game/spoken-nephi.js`), each retelling what a verse says that person said or did, each in the speaker's own voice. "LAMAN · Back to Jerusalem? It is a hard thing he asks of us." retells 3:5, "thy brothers murmur, saying it is a hard thing which I have required of them". Who they are comes from the text: Nephi goes and does and does not murmur (3:6–7); Laman and Lemuel murmur (3:5, 3:31); Sam believed Nephi's words (2:17); Laban is angry and lusts after their property (3:13, 3:25); Zoram trembles and then takes courage (4:30, 4:35). Face to face these lines are cards; on the walks they are lines low on the screen, said while you keep walking.
+
+So that no one takes them for scripture, they are marked: no reference in gold, but "from 1 Nephi 3:5" small and grey under each, so that a family can find the verse. Five of them give a manner the verse does not ("The lot is mine. Of course it is."; Sam's "I am with you, Nephi.", the text having no words of his here): they are marked `tone` in the file, and may be struck without loss.
+
+**The scripture itself is kept word for word**, with its reference in gold, where the account turns on it: Nephi's sayings (3:7, 3:15, 4:1), what Laban says to Laman (3:13), the angel (3:29), all of Nephi before Laban in the street (4:6, 4:9–19: the Spirit's words to him, and his own account of what he thought and did), and their mother's witness (5:8). The words of the Lord, of the Spirit and of the angel are never retold. These are quoted from `src/game/scripture.js`. What someone says in them is a card under their name, with the words that only tell who speaks left off: "NEPHI · I will go and do the things which the Lord hath commanded …" where the verse reads "And it came to pass that I, Nephi, said unto my father: I will go and do …". On those cards the name is the only word that is not the verse's, and `tools/excerpts.mjs` lists for each the words its name stands in place of. Under the angel's name more is left off than who speaks: "an angel of the Lord came and stood before them" (3:29) is seen, not read.
+
+The three questions about Zoram and what follows a wrong answer are in italics, as thoughts: the right answer is what the verse says Nephi did, and he then says it; a wrong answer makes Zoram hesitate, and the question is asked again.
+
+Four times a verse is shown with a word left out, to be filled in from three: as Nephi answers his father (3:7), before each try at the chase (3:16, 3:15 or 3:7, a different one each try), as he speaks to his brothers at the rock (4:1), and at 4:6. The card is the verse's own words with its reference, and the right answer is the word that was there. A wrong answer costs nothing: what was said is then read whole, whichever was chosen, and the story goes on.
+
+### The valley of Lemuel, and how sure we are of it
+
+"And it came to pass that when he had traveled three days in the wilderness, he pitched his tent in a valley by the side of a river of water" (2:6). The journey used to begin among the brothers' tents in sight of Jerusalem, as if their father's tent were there. It is not: the valley is now a place of its own (`LEMUEL` in `src/game/places.js`, its ground in `src/valley/world.js`, its tents in `src/game/city.js`), in the hollow behind the hill the brothers come up to Jerusalem by, and nothing of Jerusalem is seen from it. Between the valley and the land of Jerusalem the picture goes dark: the many days of the way are not walked.
+
+- **From the text**: a valley, with a river of water in it (2:6, 2:8); a tent, in which their father dwelt (2:15); an altar of stones (2:7); that the family is there, their mother among them (5:1).
+- **Not known**: where the valley was. It is drawn as this land is drawn (dry grass, bare ridges to either side), which is the hill country's paint and not Arabia's; its river does not run to a sea that is seen.
+- **A guess**: four tents of goat hair, their father's the largest and open towards the river; jars and a woven cloth before it; the altar as unhewn stones laid in courses, by the water; that his brothers stand by their own tents while their father speaks ("thy brothers murmur", 3:5).
+- **Not in the text, shown because a scene needs it**: that Nephi goes to his brothers and then down the valley, for "I, Nephi, and my brethren took our journey in the wilderness" (3:9); that the plates lie on the cloth before the tent at the end.
+- **No tents near Jerusalem**: the brothers took their tents with them (3:9), but none is shown pitched in the land of Jerusalem. There they are on their way up to the city, and stop on the path, in sight of it, to consult and cast lots (3:10–11).
 
 What happens is fixed; how you do it is yours. There is no score, no meter and no other ending.
 
 By day there are a few people in the streets of Jerusalem, who say nothing. By night there are none. Laban is dressed as a captain who "can command fifty" (3:31), in a coat of bronze scales, which is the armour Nephi puts on (4:19).
 
-There is very little music, and all of it is made in code (`src/game/music.js`): the tone of the Spirit's leading, a frame drum in the chase, one chord for the angel, only Laban's breathing in the street, and a single lyre tune at the tent of their father. The beating at the rock (3:28) and Laban's death (4:18) are read, not shown: the screen dims or goes dark, and the 4:18 card quotes only "Therefore I did obey the voice of the Spirit …".
+There is very little music, and all of it is made in code (`src/game/music.js`): the tone of the Spirit's leading, a frame drum in the chase, one chord for the angel, only Laban's breathing in the street, and a single lyre tune at the tent of their father. The beating at the rock (3:28) is neither shown nor told: the screen dims, and what the angel asks ("Why do ye smite your younger brother with a rod?") says what it was. Laban's death (4:18) is not shown: the screen goes dark, and the card quotes only "Therefore I did obey the voice of the Spirit, …".
 
 The game takes about 15–20 minutes. The act you reached is kept in the browser, so you can stop and continue later.
 
@@ -120,7 +188,7 @@ On a phone or a tablet it is played by touch (`src/game/touch.js`): a thumb on t
 Useful URL options:
 - `?quality=low|medium|high` (medium by default)
 - `?names=0` leaves off the names written small over those the text names (`src/game/names.js`)
-- `?beat=a2` starts at a beat. The beats are `a1`, `a1-gate`, `a2`, `a2-laban`, `a2-rock`, `a3`, `a3-laban`, `a3-treasury`, `a3-walls` and `home`. (With `?story=fiery-furnace`: `a1`, `a1-dura`, `a2`, `a3`, `a3-fire`, `a3-forth`. With `?story=lions-den`: `a1`, `a1-accounts`, `a2`, `a2-king`, `a3`, `a3-den`, `a4`, `a4-up`.)
+- `?beat=a2` starts at a beat. The beats are `a1`, `a1-land`, `a1-gate`, `a2`, `a2-laban`, `a2-rock`, `a3`, `a3-laban`, `a3-treasury`, `a3-walls` and `home`. (With `?story=fiery-furnace`: `a1`, `a1-dura`, `a2`, `a3`, `a3-fire`, `a3-forth`. With `?story=lions-den`: `a1`, `a1-accounts`, `a2`, `a2-king`, `a3`, `a3-den`, `a4`, `a4-up`.)
 - `?auto` lets the game play itself. With `&hold` it is overtaken once in the chase before it leaves the property, and with `&wrong` it answers Zoram wrongly once each time and fills in every left-out word wrongly, so a test covers those ways too.
 - `?count=log` writes what would be counted to the console in place of counting it (see "What is counted").
 
@@ -147,14 +215,18 @@ node tools/story.mjs --beat a3 --snap "4:6,4:9" --quality medium --out shots/sto
 node tools/look.mjs city:120,0,0,4,50 --out shots/work                               # a still from any place (u, v, turn, pitch, fov)
 node tools/touch.mjs                                                                 # the touch controls, on a phone-sized touch page
 node tools/narration-check.mjs                                                       # the reading aloud, with a stand-in recording
+node tools/narrate.mjs --cast                                                        # who reads what in the first journey: each speaker's voice
 node tools/fps.mjs --query "quality=medium&beat=a2-laban"                            # frame rate
 node tools/story.mjs --query "story=fiery-furnace"                                   # the Daniel journey, to its end
 node tools/story.mjs --query "story=fiery-furnace&bow&wrong"                         # falling down once, every word filled in wrongly
 node tools/story.mjs --query "story=lions-den"                                       # the Daniel 6 journey, to its end
 node tools/story.mjs --query "story=lions-den&wrong"                                 # choosing not to pray once, every word filled in wrongly
+node tools/story.mjs --query "story=jonah"                                           # the Jonah journey, to its end
+node tools/story.mjs --query "story=jonah&wrong"                                     # taking the way to Nineveh in act one, every word filled in wrongly
 node tools/journeys.mjs                                                              # the list of journeys, what is kept, and the end screens
 node tools/excerpts.mjs                                                              # every shortened verse is the verse's own words
 node tools/verses.mjs pg10.txt "The Book of Daniel" --check src/game/scripture-daniel.js VERSES   # the verses are as the King James text has them
+node tools/verses.mjs pg10.txt "Jonah" --check src/game/scripture-jonah.js VERSES                 # Jonah likewise: it reports the two misprints put right (1:10, 1:15), and no others
 node tools/same.mjs shots/before shots/after                                         # two folders of stills, pixel by pixel
 node tools/count-check.mjs                                                           # what is counted, and that a test's play is not
 ```
@@ -165,20 +237,23 @@ On an Apple M4 at 1080p the game runs at about 56–68 fps at medium with the ca
 
 ## What is where
 
-- `src/game/places.js`: where everything is (the camp, the city and gate, Lehi's house, the rock) and the paths between them.
-- `src/game/city.js`: the walls and gate, the flat-roofed houses, Laban's house and court, the treasury, Lehi's house and the tents. The same boxes are the colliders.
-- `src/game/story.js`: the beats, and who wears what.
+- `src/game/places.js`: where everything is (the valley of Lemuel, where the brothers come up into the land of Jerusalem, the city and gate, Lehi's house, the rock) and the paths between them.
+- `src/game/city.js`: the walls and gate, the flat-roofed houses, Laban's house and court, the treasury and Lehi's house; and the camp in the valley of Lemuel (its tents and the altar of stones), a set shown only there. The same boxes are the colliders.
+- `src/game/story.js`: the beats, and who wears what. `src/game/scripture.js`: 1 Nephi 3–5 verse by verse, who speaks, the parts of verses that are quoted, and the verses with a word left out. `src/game/spoken-nephi.js`: what its people say in the story's own words, each with the verse it retells.
 - `src/game/director.js`: runs the beats (cards, places to reach, things to act on), saves checkpoints, and drives the autopilot.
 - `src/game/npc.js`: the brothers, Laban, his servants, Zoram and the angel. They are clones of the one figure that walk paths or follow Nephi's trail.
 - `src/game/guidance.js`: the leading light for the night act.
 - `src/game/town.js`: the people in the streets by day.
 - `src/game/music.js`: the story's music, made in code and played through the valley's sounds.
-- `src/game/narration.js`: the scripture read aloud, from recordings in `public/audio/narration/` made by `tools/narrate.mjs` (ElevenLabs; the key is in `.env` and stays on your machine). A card with a recording goes on by itself when it has been read; the button at the top right, or M, turns the reading off.
+- `src/game/narration.js`: the scripture read aloud, from recordings in `public/audio/narration/` made by `tools/narrate.mjs` (ElevenLabs; the key is in `.env` and stays on your machine). A card with a recording goes on by itself when it has been read; the button at the top right, or M, turns the reading off. In the first journey everyone speaks in a voice of their own (Nephi, Lehi, Sariah, Laman, Lemuel, Sam, Laban, Zoram, the angel: the `cast` in `tools/narrate.mjs`), both in what is quoted and in what is said in the story's own words; Nephi's voice also reads his own account (4:6, 4:9–19), and when he speaks "in the voice of Laban" (4:20) it is Laban's voice that is heard. The narrator reads only what the Spirit says. `node tools/narrate.mjs --tidy` puts away the recordings a journey no longer reads (into `shots/narration/unused/`, which is not published). `node tools/narrate.mjs --cast` lists who reads what, with a link to hear each voice, and `--audition` makes one short card in each.
 - `src/game/touch.js`: the touch controls, for phones and tablets.
 - `src/game/tally.js`: what leaves the page: the counts of how a journey is played, and a parent's note at its end.
 - `src/game/daniel.js`, `src/game/scripture-daniel.js`: the Daniel journey's beats, people and clothes; Daniel 3 verse by verse, the shortened verses and those with a word left out.
 - `src/game/babylon.js`, `src/game/glaze.js`: Babylon and the plain of Dura; the glazed brick's figures (bull, dragon, lion, rosette, palmette), drawn in code.
 - `src/game/lions-den.js`, `src/game/lions.js`, `src/game/telling.js`: the Daniel 6 journey's beats, people and clothes; the lions of the den, made in code; and how a story shows its scripture (a card, a line, a verse with a word left out).
+- `src/game/jonah.js`, `src/game/scripture-jonah.js`: the Jonah journey's beats, people and clothes, and its weather; Jonah verse by verse, the shortened verses and those with a word left out.
+- `src/game/nineveh.js`: Nineveh; and the journey's sets (the ship, her oars, the quay at Joppa, the shore, the booth, the gourd) and small things (the wares, the boughs, the king's robe, the ashes).
+- `src/game/sea.js`: the sea, calm and in the tempest; the rain; the deep, its weeds, and the great fish.
 - `tools/verses.mjs`: prints verses for `scripture-daniel.js` from the King James text as published (Project Gutenberg #10), and checks the table against it.
 - `src/game/crowd.js`: the multitude, painted, which falls down when the music sounds.
 - `src/game/heat.js`: the furnace's heat at the picture's edges.

@@ -19,14 +19,14 @@ import { PLAIN } from './places.js';
 import { footing, ground, house, MOTIF, PART, ROOF, WOOD } from './city.js';
 
 // baked brick; the mud plaster of houses; gold; brick blackened by fire; the limestone of the road and its red edge
-const BRICK = [0.72, 0.58, 0.42];
+export const BRICK = [0.72, 0.58, 0.42];
 const GOLD = [1.0, 0.76, 0.28];
 const SOOT = [0.3, 0.22, 0.17];
 const LIME = [0.86, 0.82, 0.72];
 const RED = [0.6, 0.34, 0.28];
 const PURPLE = [0.27, 0.05, 0.14];
 const WHITE = [1, 1, 1];
-const PLASTERS = [
+export const PLASTERS = [
   [0.74, 0.62, 0.46],
   [0.68, 0.56, 0.41],
   [0.79, 0.67, 0.5],
@@ -61,13 +61,13 @@ export const IN_BABYLON = {
   lionWalls: { from: 212, at: 10, thick: 2, tall: 7 },
 };
 
-const brick = (seed, base, extra = {}) => ({ part: PART.BRICK, colour: BRICK, seed, base, roofPart: PART.BRICK, roofColour: BRICK, ...extra });
+export const brick = (seed, base, extra = {}) => ({ part: PART.BRICK, colour: BRICK, seed, base, roofPart: PART.BRICK, roofColour: BRICK, ...extra });
 /** A face of glazed brick: on side `side` of a box whose face lies at `plane`, from `a` to `c` along it (v for a
  * west or east face, u for a south or north one). */
 const glaze = (b, side, plane, a, c, yLo, yHi, base, motif) => b.patch(side, plane, (a + c) / 2, Math.abs(c - a), yLo, yHi, base, PART.GLAZE, WHITE, motif + 0.37);
 
 /** Stepped battlements along the top of a run of wall, from (u0, v0) to (u1, v1) (one of them the same), at `top`. */
-function stepped(b, u0, v0, u1, v1, top, base, alongU) {
+export function stepped(b, u0, v0, u1, v1, top, base, alongU) {
   const len = alongU ? Math.abs(u1 - u0) : Math.abs(v1 - v0);
   const n = Math.max(1, Math.floor(len / 2.4));
   for (let i = 0; i < n; i++) {
@@ -80,7 +80,7 @@ function stepped(b, u0, v0, u1, v1, top, base, alongU) {
 }
 
 /** A road of limestone slabs from (u0, v0) to (u1, v1), with a band of red stone along each side `edge` wide. */
-function paving(b, u0, u1, v0, v1, edge = 0) {
+export function paving(b, u0, u1, v0, v1, edge = 0) {
   // (laid in pieces a few metres square, each corner on the ground, so it lies on the land however it lies)
   const lay = (a, c, d, e, colour, seed) => {
     const y = (p, q) => ground(p, q) + 0.05;

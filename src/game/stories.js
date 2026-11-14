@@ -4,10 +4,16 @@
 // To release the next: write its story beside story.js, give it an entry here with `released: true`, and put a new
 // teaser after it. The teaser is the one entry with `released: false`: with a title and a ref it is named on the
 // select screen, and without them it only says that a new journey is coming.
+//
+// A journey still being made is marked `wip: true`: it is not listed, and the page does not fall to it, unless the
+// address asks for all of them (?all) or for that one by name (?story=id). With only one journey open and nothing
+// of it kept, there is nothing to choose: the page goes straight into it (main.js).
 import * as furnace from './daniel.js';
+import * as jonah from './jonah.js';
 import * as den from './lions-den.js';
 import { nephi } from './scripture.js';
 import { daniel, PAIRS } from './scripture-daniel.js';
+import { jonah as bookOfJonah } from './scripture-jonah.js';
 import { CLOTHES, NAMES, PEOPLE, story } from './story.js';
 
 export const GAME = {
@@ -36,7 +42,7 @@ export const WORKS = [
   {
     id: 'ot',
     name: 'Old Testament',
-    books: [{ id: 'daniel', name: 'Daniel', face: { src: './faces/daniel.webp', who: 'Daniel' } }],
+    books: [{ id: 'daniel', name: 'Daniel', face: { src: './faces/daniel.webp', who: 'Daniel' } }, { id: 'jonah', name: 'Jonah', face: { who: 'Jonah' } }],
   },
   { id: 'nt', name: 'New Testament', books: [] },
   {
@@ -88,6 +94,7 @@ export const STORIES = [
   { id: 'next', work: 'bom', book: null, number: 2, title: null, ref: null, released: false },
   {
     id: 'fiery-furnace',
+    wip: true,
     work: 'ot',
     book: 'daniel',
     number: 1,
@@ -121,6 +128,7 @@ export const STORIES = [
   },
   {
     id: 'lions-den',
+    wip: true,
     work: 'ot',
     book: 'daniel',
     number: 2,
@@ -161,9 +169,46 @@ export const STORIES = [
       ],
     },
   },
+  {
+    id: 'jonah',
+    wip: true,
+    work: 'ot',
+    book: 'jonah',
+    number: 1,
+    title: 'Should Not I Spare Nineveh?',
+    ref: 'Jonah 1–4',
+    blurb: 'Jonah flees from the presence of the LORD, is cast into the sea, cries against Nineveh, and is asked a question.',
+    released: true,
+    first: 'a1',
+    beats: jonah.story,
+    people: jonah.PEOPLE,
+    names: jonah.NAMES,
+    clothes: jonah.CLOTHES,
+    scripture: bookOfJonah,
+    bearded: true,
+    /** Nineveh (nineveh.js), on the river plain; the ship, the sea and the shore are the story's own sets. */
+    look: jonah.LOOK,
+    land: 'plain',
+    town: jonah.town,
+    /** Its own small things (city.js, createProps): the wares of the ship, the boughs of the booth. */
+    props: jonah.PROPS,
+    end: {
+      heading: 'Should Not I Spare Nineveh?',
+      quote: '“… for I knew that thou art a gracious God, and merciful, slow to anger, and of great kindness …”',
+      cite: 'Jonah 4:2',
+      // (the book ends on the LORD's question, and gives no answer of Jonah's: so the family is asked it)
+      talk: 'The book ends with the Lord’s question, and Jonah’s answer is not written. How would you answer it? Jonah was shown mercy in the deep, and was angry when Nineveh was shown it too. Why is it sometimes hard to be glad when someone else is forgiven? Whom does Heavenly Father want you to have pity on?',
+      links: [
+        ['Jonah 1', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/1?lang=eng'],
+        ['Jonah 2', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/2?lang=eng'],
+        ['Jonah 3', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/3?lang=eng'],
+        ['Jonah 4', 'https://www.churchofjesuschrist.org/study/scriptures/ot/jonah/4?lang=eng'],
+      ],
+    },
+  },
 ];
-/** The released story of that id, or the first if there is none. */
-export const storyById = (id) => STORIES.find((s) => s.released && s.id === id) ?? STORIES.find((s) => s.released);
+/** The released story of that id (one still being made too, asked for by name), or the first open one if there is none. */
+export const storyById = (id) => STORIES.find((s) => s.released && s.id === id) ?? STORIES.find((s) => s.released && !s.wip);
 
 // ---- what is kept in the browser, by story ------------------------------------------------------------------------
 const key = (id, what) => `${GAME.save}:${id}:${what}`;

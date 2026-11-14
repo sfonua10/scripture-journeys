@@ -28,9 +28,18 @@ body.menu #t-run, body:not(.ready) #t-run { display: none; }
 #t-turn {
   left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%); padding: 6px 14px; border-radius: 4px;
   background: rgba(24, 18, 12, 0.74); color: #f4ead6; font-size: 13px; letter-spacing: 0.05em; white-space: nowrap;
-  display: none; z-index: 11;
+  display: none; z-index: 11; opacity: 0; transition: opacity 0.6s;
 }
-@media (orientation: portrait) { #t-turn { display: block; } }
+/* (said for a few seconds when the phone is held upright, and the list of what to do sits under it while it is) */
+@media (orientation: portrait) {
+  #t-turn { display: block; }
+  body.turn-hint #t-turn { opacity: 1; }
+  body.touch.turn-hint #g-objective { top: calc(50px + env(safe-area-inset-top)); }
+  body.touch #g-objective { transition: opacity 0.5s, transform 0.5s, top 0.5s; }
+  /* (the verse low on the screen sits over the button that runs, not under it) */
+  body.touch #g-low { bottom: calc(108px + env(safe-area-inset-bottom)); }
+  body.touch #g-toast { font-size: 17px; }
+}
 /* a card can be longer than a phone held sideways is tall: it scrolls, and a tap on it goes on */
 body.touch #g-card { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
 body.touch #g-card.on { pointer-events: auto; }
@@ -50,10 +59,8 @@ body.touch #g-objective { left: calc(12px + env(safe-area-inset-left)); }
   body.touch #g-card .answers { gap: 6px; margin-top: 8px; }
   body.touch #g-card .answer { font-size: 15px; padding: 8px 12px; }
   body.touch #g-card .ref, body.touch #g-card .hint { margin-top: 5px; }
-  body.touch #g-objective { top: 10px; padding: 7px 14px 8px 12px; max-width: min(340px, 60vw); }
-  body.touch #g-objective .label { display: none; }
-  body.touch #g-objective .text { font-size: 15px; }
-  body.touch #g-objective ul { font-size: 13px; margin-top: 6px; padding-top: 6px; gap: 2px; }
+  body.touch #g-objective { top: 10px; max-width: min(440px, 60vw); }
+  body.touch #g-objective ul { font-size: 13px; gap: 2px; }
   body.touch #g-low { bottom: 12px; gap: 8px; }
   body.touch #g-prompt { font-size: 16px; }
   body.touch #g-toast { font-size: 15px; line-height: 1.4; padding: 7px 14px 6px; }
@@ -75,7 +82,7 @@ export function wantsTouch(params) {
  * @param o.wake called on a touch: the browser lets sound start only then
  * @param o.mouse take the mouse's presses too, as fingers (?touch on a PC)
  */
-export function createTouch({ canvas, input, ui, press, tap, wake, mouse = false }) {
+export function createTouch({ canvas, input, ui, press, tap, hold, wake, mouse = false }) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.append(style);
@@ -92,6 +99,21 @@ export function createTouch({ canvas, input, ui, press, tap, wake, mouse = false
   const run = add('button', 't-run', 'Run');
   run.setAttribute('aria-pressed', 'false');
   add('div', 't-turn', 'Turn your phone sideways for a wider view');
+  const upright = matchMedia('(orientation: portrait)');
+  let hintTimer = 0;
+  const hint = () => {
+    clearTimeout(hintTimer);
+    document.body.classList.toggle('turn-hint', upright.matches);
+    if (upright.matches) hintTimer = setTimeout(() => document.body.classList.remove('turn-hint'), 7000);
+  };
+  // (when a journey begins, from the menu, and whenever the phone is turned upright again)
+  let playing = false;
+  new MutationObserver(() => {
+    const now = document.body.classList.contains('ready') && !document.body.classList.contains('menu');
+    if (now && !playing) hint();
+    playing = now;
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  upright.addEventListener('change', () => playing && hint());
 
   const state = { move: { x: 0, y: 0 }, look: { x: 0, y: 0 }, sprint: false };
   input.touch = state;
@@ -182,6 +204,12 @@ export function createTouch({ canvas, input, ui, press, tap, wake, mouse = false
       wake?.();
       press();
     });
+    // (and a finger kept on it holds, for what must be held: the finger is kept though it slides off)
+    el.addEventListener('pointerdown', (e) => {
+      el.setPointerCapture?.(e.pointerId);
+      hold?.(true);
+    });
+    for (const type of ['pointerup', 'pointercancel']) el.addEventListener(type, () => hold?.(false));
   }
   return state;
 }

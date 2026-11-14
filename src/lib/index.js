@@ -156,6 +156,7 @@ export function createField({
     uFloorInv: { value: 0 },
     uLamp: { value: new THREE.Vector4(0, 0, 0, 0) },
     uWalker: { value: new THREE.Vector4(0, 0, 0, 0) },
+    uCave: { value: new THREE.Vector4(0, 0, 0, 0) },
     // which land's colours: 0 the hill country (as it always was), 1 the river plain
     uLand: { value: 0 },
   };

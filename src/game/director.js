@@ -36,13 +36,23 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
   };
 
   const confirmKeys = new Set(['KeyE', 'Enter', 'Space', 'NumpadEnter']);
+  /** E (or the mouse's button, or a finger on the prompt) is down now: for what must be held, not only pressed. */
+  let held = false;
   addEventListener('keydown', (e) => {
+    if (confirmKeys.has(e.code)) held = true;
     if (e.repeat) return;
     if (confirmKeys.has(e.code)) pressed = true;
     key = e.code;
   });
+  addEventListener('keyup', (e) => {
+    if (confirmKeys.has(e.code)) held = false;
+  });
+  addEventListener('blur', () => (held = false));
   g.canvas.addEventListener('mousedown', (e) => {
-    if (e.button === 0 && document.pointerLockElement === g.canvas) pressed = true;
+    if (e.button === 0 && document.pointerLockElement === g.canvas) pressed = held = true;
+  });
+  addEventListener('mouseup', (e) => {
+    if (e.button === 0) held = false;
   });
 
   const until = (test) =>
@@ -72,7 +82,7 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
       ui.card.show({ text, ref, ...options });
       // read aloud, where there is a recording of it (narration.js): the card then goes on by itself a moment
       // after the reading ends, and a press still goes on at once
-      const voice = ref ? g.narration?.say(named ?? ref) : null;
+      const voice = (named ?? ref) ? g.narration?.say(named ?? ref) : null;
       let readAt = null;
       const shown = time;
       await until(() => {
@@ -99,30 +109,41 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
      * stays as long as it takes to read (or to be read aloud). Resolves when it has been, so that what comes next
      * does not cut it short; nothing need wait on it.
      */
-    line(text, ref, { voice: named = null } = {}) {
+    line(text, ref, { voice: named = null, who = '', from = '', least = 6 } = {}) {
       const words = text.split(/\s+/).length;
-      const seconds = Math.max(6, words * 0.42);
-      const voice = ref ? g.narration?.say(named ?? ref) : null;
-      ui.toast(text, ref, seconds + 1);
+      const seconds = Math.max(least, words * 0.42);
+      const voice = (named ?? ref) ? g.narration?.say(named ?? ref) : null;
+      ui.toast(text, ref, seconds + 1, { who, from });
       lineUp = true;
       const shown = time;
       return until(() => (voice ? voice.ended || time - shown > seconds * 2.2 : time - shown > seconds) || auto);
     },
+    /**
+     * What one of them says, in the story's own words and not the scripture's: a card under their name, read before
+     * the story goes on, with where it is from (`from`: "1 Nephi 3:22") small under it in place of a reference.
+     */
+    said: (who, text, { voice = null, from = '' } = {}) => c.card(text, '', { who, from, kind: 'said', voice }),
+    /** The same said as they go: a line low on the screen under their name, which stops no one. Resolves when it has been said. */
+    aside: (who, text, { voice = null, from = '' } = {}) => c.line(text, '', { who, from, voice, least: 2.4 }),
     /** The line saying what to do (null to take it away), and under it a list of [{ label, done }] if there is one. */
     objective: (text, list) => ui.objective(text, list),
     /**
      * Waits for Nephi to come within r of (x, z). `via` is the way there, a few points (through the gate, along the
      * streets): the marker shows the next of them, and the autopilot walks them. `mark: false` for no marker.
+     * A point of the way is [x, z], which he must come to (a gate, a door, a street's corner), or [x, z, r] with r of
+     * 10 or more for one in open country, which only shows the way: it is behind him as soon as he is nearer the
+     * next than it is, however wide of it he went, so the marker is never left at his back.
      * `unless` is asked each frame: when it says so the wait is given up. Resolves true if he got there.
      */
     async reach(x, z, r = 4, { via = [], mark = true, unless = null } = {}) {
-      const stops = [...via.map(([px, pz]) => ({ x: px, z: pz, r: 3.5 })), { x, z, r }];
+      const stops = [...via.map(([px, pz, pr = 3.5]) => ({ x: px, z: pz, r: pr, open: pr >= 10 })), { x, z, r }];
+      const passed = (a, b) => a.open && Math.hypot(g.player.x - b.x, g.player.z - b.z) < Math.hypot(a.x - b.x, a.z - b.z);
       let k = 0;
       let there = false;
       await until(() => {
         // (skip on to the furthest stop he is already near)
         for (let j = stops.length - 1; j > k; j--) if (near(stops[j].x, stops[j].z, stops[j].r)) k = j;
-        while (k < stops.length - 1 && near(stops[k].x, stops[k].z, stops[k].r)) k++;
+        while (k < stops.length - 1 && (near(stops[k].x, stops[k].z, stops[k].r) || passed(stops[k], stops[k + 1]))) k++;
         goal = { ...stops[k], mark };
         there = near(x, z, r);
         return there || !!unless?.();
@@ -152,10 +173,16 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
       goal = null;
       return acted;
     },
-    /** A prompt for something he can do wherever he stands (null to take it away); `pressed` says if he has. */
-    prompt: (label) => ui.prompt(label),
+    /**
+     * A prompt for something he can do wherever he stands (null to take it away); `pressed` says if he has. With
+     * `hold` (0 to 1) it is something to be held down, and shows how far it has come; `holding` says if it is held.
+     */
+    prompt: (label, hold = null) => ui.prompt(label, hold),
     get pressed() {
       return pressed && !frozen;
+    },
+    get holding() {
+      return (held || auto) && !frozen;
     },
     /**
      * A card that asks, with a few answers under it: W and S (or the arrows) go between them, E takes one; or 1, 2.
@@ -234,6 +261,11 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
       current = beats[i];
       // the first beat sets the world up; so does each that opens a new scene, after the dark between them
       if (i === start || current.scene) current.setup?.(g);
+      // (a line said as they went belongs to the scene it was said in: it does not follow them into the next)
+      if (current.scene) {
+        lineUp = false;
+        ui.toast('', '', 0);
+      }
       // (a beat that does not open its own scene from the dark is shown at once)
       if (i === start && !current.scene) ui.fade(0, 1);
       keep?.keep(current.id, current.label);
@@ -278,6 +310,10 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
     /** As E: from the touch controls' act button. */
     press() {
       pressed = true;
+    },
+    /** A finger down on the prompt, or lifted from it: as E held, and let go. */
+    hold(on) {
+      held = !!on;
     },
     /** A tap on the screen: goes on from a card and acts, as a click does, but answers nothing. */
     tap() {

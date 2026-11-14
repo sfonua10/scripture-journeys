@@ -1,5 +1,5 @@
 // The people of Jerusalem, by day: a few in the streets and at the gate, going about their own business, who say
-// nothing (the account gives them no words). By night the streets are empty, as Nephi found them (4:5).
+// nothing (the account gives them no words). By night there are very few: two who walk, one who stands at a corner.
 // Each is one of the cast (npc.js), walking to and fro between two places or standing where he is put.
 import { GATE } from './places.js';
 
@@ -40,9 +40,36 @@ export function createTown(g) {
     { stand: C(31, -2.7), face: C(32.3, -2.2) },
     { stand: C(32.3, -2.2), face: C(31, -2.7) },
   ];
+  // By night: one on the main street, west of the cross street; one on the far cross street; one standing in the
+  // square inside the gate.
+  const NIGHT = [
+    { walk: [C(-50, -1.6), C(8, -1.6)], pace: 1.05, from: 0.6 },
+    { walk: [C(-27, 34), C(-27, -36)], pace: 0.95, from: 0.3 },
+    { stand: C(-40, 9), face: C(-30, 0) },
+  ];
   // (which day this is: a walker whose day has ended does not set out again)
   let day = 0;
   const people = () => TOWNSFOLK.map(([name]) => g.cast.get(name));
+  /** One who walks to and fro between two places, stopping a while at each, for as long as it is the day `mine`. */
+  function walkTo(npc, way, i, mine) {
+    // he sets out from somewhere along his way, so the street is not empty at its ends
+    const [a, b] = way.walk;
+    const t = way.from ?? (i * 0.37) % 1;
+    npc.place(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, Math.atan2(b[0] - a[0], b[1] - a[1]));
+    let to = 1;
+    (async () => {
+      while (mine === day) {
+        await npc.walk([way.walk[to]], way.pace);
+        if (mine !== day) return;
+        // (he stops a while where he was going: a few seconds, not the same for each)
+        await new Promise((done) => {
+          npc.arrive = done;
+          npc.rest = 3 + ((i * 1.7) % 4);
+        });
+        to = 1 - to;
+      }
+    })();
+  }
 
   return {
     /** The streets as they are by day. */
@@ -51,29 +78,22 @@ export function createTown(g) {
       people().forEach((npc, i) => {
         const way = WAYS[i];
         if (way.stand) return void npc.place(...way.stand, 0).face(...way.face);
-        // he sets out from somewhere along his way, so the street is not empty at its ends
-        const [a, b] = way.walk;
-        const t = (i * 0.37) % 1;
-        npc.place(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, Math.atan2(b[0] - a[0], b[1] - a[1]));
-        let to = 1;
-        const go = async () => {
-          while (mine === day) {
-            await npc.walk([way.walk[to]], way.pace);
-            if (mine !== day) return;
-            // (he stops a while where he was going: a few seconds, not the same for each)
-            await new Promise((done) => {
-              npc.arrive = done;
-              npc.rest = 3 + ((i * 1.7) % 4);
-            });
-            to = 1 - to;
-          }
-        };
-        go();
+        walkTo(npc, way, i, mine);
       });
     },
-    /** The streets as they are by night: no one. (The cast's own clear() has taken them in.) */
-    night() {
-      day++;
+    /**
+     * The streets as they are by night: no one (the cast's own clear() has taken them in); or, with `few`, the two or
+     * three who are abroad late, going slowly, none of them near Laban's house or his treasury.
+     */
+    night(few = false) {
+      const mine = ++day;
+      if (!few) return;
+      people().forEach((npc, i) => {
+        const way = NIGHT[i];
+        if (!way) return;
+        if (way.stand) return void npc.place(...way.stand, 0).face(...way.face);
+        walkTo(npc, way, i, mine);
+      });
     },
     /** Everyone stops where he is and turns to look at Nephi: something is happening in the street. */
     watch() {

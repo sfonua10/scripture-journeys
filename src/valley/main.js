@@ -19,27 +19,30 @@ import { createSky, createSkyParts, SUNSET } from './sky.js';
 import { createSounds } from './sounds.js';
 import { createStrokes } from './strokes.js';
 import { createTrees } from './trees.js';
-import { createRiver } from './water.js';
+import { createRiver, createStream } from './water.js';
 import { CLOTHES, createWanderer } from './wanderer.js';
-import { addCityColliders, createCity, createProps, TURN as CITY_TURN } from '../game/city.js';
+import { addCityColliders, createCity, createProps, createSet, TURN as CITY_TURN } from '../game/city.js';
 import { createDirector } from '../game/director.js';
 import { createGuidance } from '../game/guidance.js';
 import { createMusic } from '../game/music.js';
 import { createNarration } from '../game/narration.js';
 import { createTown, TOWN_CLOTHES, TOWNSFOLK } from '../game/town.js';
-import { cloneMan, createCast, poseAcross, PRAY, PRAY_SINK } from '../game/npc.js';
+import { cloneMan, createCast, poseAcross, PRAY, PRAY_SINK, SEAT, SEAT_SINK, SIT, SIT_SINK } from '../game/npc.js';
 import { createNames } from '../game/names.js';
 import { GAME, keeper, STORIES, storyById, WORKS } from '../game/stories.js';
 import { createUI } from '../game/ui.js';
 import { createNotes, createTally } from '../game/tally.js';
 import { createTouch, wantsTouch } from '../game/touch.js';
 import { loadMan } from '../figure/man.js';
-import { fromValley, heightAt, HERO, LAND, paint, setLand, START, tarnDistance } from './world.js';
-import { CITY, IN_CITY, PLAIN } from '../game/places.js';
+import { fromValley, heightAt, HERO, LAND, lemuelFloor, paint, setLand, START, tarnDistance } from './world.js';
+import { CAVE, CITY, IN_CITY, LEMUEL, PLAIN } from '../game/places.js';
 
 const params = new URLSearchParams(location.search);
 // the journey this page plays (?story=id): the first, if none is asked for
 const journey = storyById(params.get('story'));
+// the journeys still being made are listed only when all are asked for (?all), or on the page of one of them
+const all = params.has('all') || !!journey.wip;
+const listed = STORIES.filter((s) => all || !s.wip);
 // how this journey is played, counted (tally.js; the page's being opened is counted by Umami's script, in index.html)
 const tally = createTally({ journey: journey.id, params, log: (message) => console.log(`[game] ${message}`) });
 // the land it is told in: the hill country round Jerusalem, unless it brings its own (Babylon's plain). Chosen before
@@ -238,7 +241,12 @@ mark('city');
 const horizon = createHorizon(field, EXTENT / 2);
 scene.add(sky.mesh, horizon, trees.group, farWoods.group, city.mesh);
 // the river plain's river and canals
-if (LAND === 'plain') scene.add(createRiver(field, sky, PLAIN.river.level, EXTENT));
+// (and in the hills, the river of the valley of Lemuel: 1 Nephi 2:6–8)
+const river =
+  LAND === 'plain'
+    ? createRiver(field, sky, PLAIN.river.level, EXTENT)
+    : createStream(field, sky, { at: fromValley(LEMUEL.at[0] + LEMUEL.river.off, LEMUEL.at[1]), level: lemuelFloor() - LEMUEL.river.water, across: LEMUEL.reach + 10, along: 16 });
+if (river) scene.add(river);
 // the finish: the frame laid in as brush marks. ?paint=0 for none; P turns it on and off.
 frame.paint = params.has('paint') ? Number(params.get('paint')) : quality === 'low' ? 0 : quality === 'medium' ? 2 : 3;
 const paintWas = frame.paint || 3;
@@ -246,7 +254,14 @@ mark('build');
 await stage(0.45, 'Planting trees');
 const stones = createStones(field);
 scene.add(stones.group);
-if (quality !== 'low' && params.get('seeds') !== '0') scene.add(createFluff(field, quality === 'medium' ? 200 : 320));
+// (under the rock the brothers hide in, the ground and the stones are in its shade)
+if (stones.roof.length) {
+  // (as far as the rock overhead reaches: all of it within the stones, less towards the mouth)
+  const [x, z, r, y] = stones.roof[0];
+  field.uniforms.uCave.value.set(x, z, r * 1.25, y);
+}
+const fluff = quality !== 'low' && params.get('seeds') !== '0' ? createFluff(field, quality === 'medium' ? 200 : 320) : null;
+if (fluff) scene.add(fluff);
 // time passes: the afternoon you start in is sunset twenty minutes later. ?drift=0 holds the hour; T and 1 to 4
 // pick a time of day and hold it there, 0 lets it pass again, and , and . nudge it.
 // (in the story the hour is the story's: it does not pass by itself)
@@ -268,6 +283,9 @@ let carryPose = null;
 let carryK = 0;
 /** How far he is into kneeling to pray, 0 to 1 (the story asks for it: g.player.kneel). */
 let kneelK = 0;
+/** And into sitting: on the ground (g.player.sit) or on a seat (g.player.seated). */
+let sitK = 0;
+let seatedK = 0;
 /** What the story has asked to be done every frame (g.each): the lions of the den, say. */
 const eachFrame = new Set();
 /** The treasury's door: where it is, and the collider that shuts it. */
@@ -275,6 +293,10 @@ let treasuryDoor = null;
 let guidance = null;
 /** A fixed view the story asks for ({ position, target }), or null for the eye behind Nephi. */
 let cinematic = null;
+/** What the story's weather does to him and to the eye (g.shove, g.sway): a deck that heaves under him, at sea. */
+const shove = { x: 0, z: 0 };
+const sway = { roll: 0, heave: 0 };
+const lifted = new THREE.Vector3();
 
 // ---- the walker ----------------------------------------------------------------------------------------------
 const EYE = 1.68;
@@ -416,7 +438,10 @@ const physics = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
     for (let row = 0; row <= cells; row++) heights[row + col * (cells + 1)] = field.heightAt(-half + col, -half + row);
   }
   physics.createCollider(RAPIER.ColliderDesc.heightfield(cells, cells, heights, { x: 2 * half, y: 1, z: 2 * half }));
-  for (const [sx, sz, gap] of stones.solid) physics.createCollider(RAPIER.ColliderDesc.cylinder(1, gap * 0.75).setTranslation(sx, field.heightAt(sx, sz), sz));
+  // (the stones of the rock are walls, as high as they stand: the eye behind him does not go through them)
+  for (const [sx, sz, gap, high] of stones.solid) physics.createCollider(RAPIER.ColliderDesc.cylinder(high ? high / 2 + 0.5 : 1, gap * 0.75).setTranslation(sx, field.heightAt(sx, sz) + (high ? high / 2 - 0.5 : 0), sz));
+  // (and the rock that lies over them is a roof to it)
+  for (const [rx, rz, r, y] of stones.roof) physics.createCollider(RAPIER.ColliderDesc.cylinder(0.25, r).setTranslation(rx, y + 0.25, rz));
   for (const [tx, tz, kind, scale] of trees.trees) {
     if (kind > 3) break;
     physics.createCollider(RAPIER.ColliderDesc.cylinder(4, (kind === 0 ? 0.85 : 0.4) * scale).setTranslation(tx, field.heightAt(tx, tz) + 3, tz));
@@ -438,7 +463,7 @@ await Promise.all(PEOPLE.map(([name, dress, beard, scale]) => cast.add(name, STO
 // and the people of the city, by day
 await Promise.all(TOWNSFOLK.map(([name, dress, beard]) => cast.add(name, TOWN_CLOTHES[dress], { beard })));
 scene.add(cast.group);
-const props = createProps(city, (x, z) => field.heightAt(x, z));
+const props = createProps(city, (x, z) => field.heightAt(x, z), journey.props);
 scene.add(props.group);
 const animator = new Animator(wanderer.man);
 const walker = new Walker({ RAPIER, world: physics, man: wanderer.man, animator, spawn: new THREE.Vector3(player.x, player.y, player.z), yaw: player.yaw + Math.PI });
@@ -517,11 +542,26 @@ function updateWanderer(dt) {
     // while a card is up he stands; the eye can still look round
     inp.move = { x: 0, y: 0 };
     inp.jump = false;
-  } else if (director?.auto) steer(inp, dt);
+  } else {
+    if (director?.auto) steer(inp, dt);
+    // (a deck that heaves under him carries him down it: the story's shove, in the world's (x, z), turned to the eye's)
+    if (shove.x || shove.z) {
+      const c = follow.yaw;
+      const mx = (inp.move?.x ?? 0) + shove.x * -Math.cos(c) + shove.z * Math.sin(c);
+      const my = (inp.move?.y ?? 0) + shove.x * Math.sin(c) + shove.z * Math.cos(c);
+      const len = Math.max(1, Math.hypot(mx, my));
+      inp.move = { x: mx / len, y: my / len };
+    }
+  }
   // One who kneels does not walk; he can still look round, and act (E), which a card's stillness would not let him.
   const kneeling = director ? (g.player.kneel ?? 0) : 0;
   kneelK += (kneeling - kneelK) * Math.min(1, dt * 2.6);
-  if (kneeling > 0 || kneelK > 0.02) {
+  const sitting = director ? (g.player.sit ?? 0) : 0;
+  const seated = director ? (g.player.seated ?? 0) : 0;
+  sitK += (sitting - sitK) * Math.min(1, dt * 2.6);
+  seatedK += (seated - seatedK) * Math.min(1, dt * 2.6);
+  const down = Math.max(kneelK, sitK, seatedK);
+  if (kneeling > 0 || sitting > 0 || seated > 0 || down > 0.02) {
     inp.move = { x: 0, y: 0 };
     inp.jump = false;
     inp.sprint = false;
@@ -543,17 +583,26 @@ function updateWanderer(dt) {
   const man = wanderer.man.object;
   man.position.copy(at);
   man.rotation.set(0, walker.yaw, 0);
+  // (one who is borne up, in deep water: g.player.afloat, { up, lean }; his feet then seek no ground)
+  const afloat = director ? g.player.afloat : null;
+  if (afloat) {
+    man.position.y += afloat.up;
+    man.rotation.set(afloat.lean ?? 0, walker.yaw, afloat.roll ?? 0, 'YXZ');
+  }
   man.updateMatrixWorld(true);
   const onGround = walker.grounded && walker.mode !== 'jump' && walker.mode !== 'air';
   local.copy(walker.vel).applyAxisAngle(UP, -walker.yaw);
   animator.update(dt, { speed: walker.mode === 'move' ? walker.speed : Math.hypot(local.x, local.z), moveAngle: walker.moveAngle, grounded: walker.grounded });
   animator.relaxHands(walker.speed);
-  animator.uprightTrunk(dt, walker.speed, onGround ? 1 : 0.3);
+  // (one borne up in deep water is not held upright: he lies as the water has him)
+  if (!afloat) animator.uprightTrunk(dt, walker.speed, onGround ? 1 : 0.3);
   const looking = walker.mode === 'move' || walker.mode === 'idleExtra' ? Math.min(1, Math.max(0, 1 - (walker.speed - 1.5) / 2)) : 0;
-  animator.lookToward(dt, camera.getWorldDirection(gaze), looking * (1 - kneelK));
+  animator.lookToward(dt, camera.getWorldDirection(gaze), looking * (1 - down));
   animator.armClearance(dt);
-  if (kneelK > 0.01) {
-    poseAcross(animator.bones, man, walker.yaw, PRAY, PRAY_SINK, kneelK);
+  if (down > 0.01) {
+    if (kneelK > 0.01) poseAcross(animator.bones, man, walker.yaw, PRAY, PRAY_SINK, kneelK);
+    if (sitK > 0.01) poseAcross(animator.bones, man, walker.yaw, SIT, SIT_SINK, sitK);
+    if (seatedK > 0.01) poseAcross(animator.bones, man, walker.yaw, SEAT, SEAT_SINK, seatedK);
     man.updateMatrixWorld(true);
   }
   // what Nephi carries, he carries in both hands (g.player.holds, set by props.carry)
@@ -569,7 +618,7 @@ function updateWanderer(dt) {
   if (walker.mode === 'move' && !walker.strafe) animator.leanInto(dt, walker.turnRate, walker.speed, walker.accelF);
   else animator.leanInto(dt, 0, 0, 0);
   // (the feet of one who kneels are not put to the ground: his knees are)
-  if (kneelK <= 0.01) animator.placeFeet(dt, (x, z, from) => walker.ground(x, z, from, 1.4), at.y, onGround ? 1 : 0);
+  if (down <= 0.01 && !afloat) animator.placeFeet(dt, (x, z, from) => walker.ground(x, z, from, 1.4), at.y, onGround ? 1 : 0);
   man.updateMatrixWorld(true);
   // a step is heard when a foot of his comes down, and at no other time: louder the faster he goes
   // (a foot has landed when its ankle, having swung clear of the ground, is back down by it)
@@ -602,7 +651,12 @@ function updateWanderer(dt) {
   if (!window.__tg?.view) {
     follow.free = cinematic;
     // (the eye comes in when a wall is in the way, as it does for a trunk)
-    follow.update(dt, at, inp.look, inp.zoom, (from, dir, max) => walker.castRay(from, dir, max), (x, z) => field.heightAt(x, z) + 0.5);
+    follow.update(dt, afloat ? lifted.copy(at).setY(at.y + afloat.up) : at, inp.look, inp.zoom, (from, dir, max) => walker.castRay(from, dir, max), (x, z) => field.heightAt(x, z) + 0.5);
+    // (at sea the eye rides the ship: it rolls a little, and rises and falls)
+    if (sway.roll || sway.heave) {
+      camera.rotateZ(sway.roll);
+      camera.position.y += sway.heave;
+    }
     camera.updateMatrixWorld();
     // (should you step into your own eyes, you look the way the camera did)
     player.yaw = follow.yaw - Math.PI;
@@ -618,10 +672,13 @@ function showMarker() {
   markedAt = null;
   // (nothing until the story has begun: the warm-up frames come before the page's parts are made)
   if (!director) return;
-  const goal = director.goal;
-  if (!goal?.mark || director.frozen) return void ui.marker(null);
+  // (in the night nothing is marked: he is led, and what is shown is only where the light that leads him is)
+  const led = !director.goal?.mark && guidance?.active && guidance.light > 0.05 ? guidance.point : null;
+  const goal = director.goal?.mark ? director.goal : led;
+  if (!goal || director.frozen) return void ui.marker(null);
   // (over the heads of any who stand there)
-  marked.set(goal.x, field.heightAt(goal.x, goal.z) + 3, goal.z).project(camera);
+  // (the light that leads him: where it is, at the height of his heart, so that it is found though a wall hides it)
+  marked.set(goal.x, field.heightAt(goal.x, goal.z) + (led ? 1.25 : 3), goal.z).project(camera);
   const w = window.innerWidth;
   const h = window.innerHeight;
   const metres = Math.hypot(goal.x - player.x, goal.z - player.z);
@@ -630,12 +687,13 @@ function showMarker() {
   // behind the eye: at the side it lies, half way up, with an arrow that way round
   if (marked.z > 1) {
     const left = w - x < w / 2;
-    return void ui.marker(left ? 50 : w - 50, h / 2, metres, left ? Math.PI : 0);
+    markedAt = [left ? 50 : w - 50, h / 2];
+    return void ui.marker(markedAt[0], markedAt[1], metres, left ? Math.PI : 0, !!led);
   }
   // off the picture: at its edge (and clear of the words low on the screen), with an arrow to where it is
   const cx = Math.min(w - 50, Math.max(50, x));
   const cy = Math.min(h - Math.max(150, h * 0.3), Math.max(70, y));
-  ui.marker(cx, cy, metres, cx === x && cy === y ? null : Math.atan2(y - cy, x - cx));
+  ui.marker(cx, cy, metres, cx === x && cy === y ? null : Math.atan2(y - cy, x - cx), !!led);
   markedAt = [cx, cy];
 }
 
@@ -859,13 +917,16 @@ const ui = createUI({ touch });
 const narration = createNarration(sounds, { note, book: journey.scripture.book });
 // (the list of recordings is asked for once the sounds are ready, since they are played through them)
 Promise.resolve(soundsReady).then(() => narration.load());
-if (touch) createTouch({ canvas, input, ui, press: () => director?.press(), tap: () => director?.tap(), wake: () => sounds.start(), mouse: params.has('touch') });
+if (touch) createTouch({ canvas, input, ui, press: () => director?.press(), tap: () => director?.tap(), hold: (on) => director?.hold(on), wake: () => sounds.start(), mouse: params.has('touch') });
 /** What the story can reach of the game. Places are given in (u, v) with P, or in metres from the city's middle with C. */
 const g = {
   canvas,
   scene,
   /** The camera (read only: where it is, so a thing that moves can keep out from between it and the walker). */
   camera,
+  /** The sky (its uniforms, its exposure) and the city, for a story that makes weather or builds a set of its own. */
+  sky,
+  city,
   ui,
   cast,
   props,
@@ -902,6 +963,11 @@ const g = {
     visible: true,
     /** 1 while he kneels to pray, upright on his knees (he does not walk then, but can still act); else 0. */
     kneel: 0,
+    /** 1 while he sits on the ground, his knees drawn up; `seated`, on a seat (a bench). He does not walk then. */
+    sit: 0,
+    seated: 0,
+    /** Borne up `up` metres and leant (`lean`, `roll`, radians): in deep water; or laid down, asleep. Null: on his feet. */
+    afloat: null,
   },
   /** Asks for `fn(dt)` to be called every frame from now on, on the game's own clock (which a test steps). */
   each(fn) {
@@ -923,6 +989,10 @@ const g = {
   /** What he carries weighs on him: he goes no faster than `cap` m/s (null: nothing weighs on him). */
   burden(cap) {
     walker.cap = cap;
+  },
+  /** He flees: a stick tilted at all runs (a thumb on glass, a gamepad), where it would only have walked. */
+  hurry(on) {
+    walker.hurry = !!on;
   },
   /** Opens or shuts the treasury's door. */
   door(open) {
@@ -1009,6 +1079,66 @@ const g = {
   get frozen() {
     return !!director?.frozen;
   },
+  /**
+   * Shows the land or hides it (the ground and its grass, the trees, the city, the river, the far country), for a
+   * scene the story sets somewhere the land is not: at sea, on a ship's deck, in deep water. The ground is still
+   * walked on; the story draws what is seen in its place.
+   */
+  land(on, { city: cityToo = on } = {}) {
+    for (const part of [field.group, trees.group, farWoods.group, horizon, stones.group, river, fluff]) if (part) part.visible = on;
+    city.mesh.visible = cityToo;
+  },
+  /** Whether the one you walk as is drawn. */
+  show(on) {
+    if (third) wanderer.group.visible = on;
+  },
+  /**
+   * A set of the story's own, built as the city is (city.js, createSet: the same boxes, painted the same way, in
+   * (u, v)): `fill(b, random)` builds it. It is hidden, and stops no one, until `show(true)`.
+   */
+  set(fill) {
+    const made = createSet(city, fill);
+    made.mesh.visible = false;
+    scene.add(made.mesh);
+    const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), CITY_TURN);
+    const colliders = made.solids.map(({ at, half }) => {
+      const collider = physics.createCollider(RAPIER.ColliderDesc.cuboid(half[0], half[1], half[2]).setTranslation(at[0], at[1], at[2]).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }));
+      collider.setEnabled(false);
+      return collider;
+    });
+    return {
+      mesh: made.mesh,
+      show(on = true) {
+        made.mesh.visible = on;
+        for (const collider of colliders) collider.setEnabled(on);
+      },
+    };
+  },
+  /** Carries him along the ground, as a heaving deck does: (x, z) in the world's frame, about 0 to 0.7; (0, 0) for none. */
+  shove(x = 0, z = 0) {
+    shove.x = x;
+    shove.z = z;
+  },
+  /** Rolls the eye (radians) and lifts it (metres), as a ship does one who stands on it; (0, 0) for none. */
+  sway(roll = 0, heave = 0) {
+    sway.roll = roll;
+    sway.heave = heave;
+  },
+  /** The wind's speed, m/s (4.5 unless the story says): it is heard, and the grass and the cloaks take it. */
+  wind: (speed = 4.5) => setWind(speed),
+  /** The eye behind him: which way it looks (`yaw`, and `pitch`, + down on him), and `turn(yaw, pitch)` to set it. */
+  eye: {
+    get yaw() {
+      return follow.yaw;
+    },
+    get pitch() {
+      return follow.pitch;
+    },
+    turn(yaw, pitch = follow.pitch) {
+      follow.yaw = yaw;
+      follow.pitch = pitch;
+    },
+  },
 };
 // (the people of the city, as the journey has them: Jerusalem's, unless it brings its own)
 g.town = journey.town ? journey.town(g) : createTown(g);
@@ -1087,14 +1217,17 @@ function openJourney(id, go) {
 }
 
 // the story begins: straight away for a test (?auto), a chosen beat (?beat=a2) or a journey chosen on the page before
-// this one (?go=begin); else from the list of journeys
+// this one (?go=begin); else from the list of journeys. With one journey to choose and nothing of it kept (not begun,
+// not finished) there is nothing to choose, and it begins; once there is, the list offers to go on or start over.
 {
   const chosen = params.get('beat');
   const go = params.get('go');
   ui.fade(1, 0);
   if (g.auto || chosen) director.play(chosen ?? journey.first);
   else {
-    let pick = go === 'begin' || go === 'continue' ? { id: journey.id, go } : null;
+    const open = listed.filter((s) => s.released);
+    const only = open.length === 1 && open[0] === journey && !director.saved() && !keeper(journey).done;
+    let pick = go === 'begin' || go === 'continue' ? { id: journey.id, go } : only ? { id: journey.id, go: 'begin' } : null;
     if (pick) {
       // (so that loading the page again shows the list, not this journey from its beginning)
       const bare = new URL(location.href);
@@ -1108,7 +1241,7 @@ function openJourney(id, go) {
         works: WORKS,
         // (asked for by name, as on coming back from a journey: its book's journeys are shown)
         at: params.has('story') ? { work: journey.work, book: journey.book } : null,
-        list: STORIES.map((s) => {
+        list: listed.map((s) => {
           const kept = s.released ? keeper(s) : null;
           // (this page's journey is asked of its director, which knows its beats: a place it has no beat for is none)
           const place = s === journey ? director.saved() : kept?.place;

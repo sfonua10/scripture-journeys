@@ -2,7 +2,7 @@
 // wind made visible, as seed fluff and petals carried past on the gusts.
 import * as THREE from 'three';
 import { COMMON } from '../lib/index.js';
-import { keepClear, ROCK, ROCK_STONES } from '../game/places.js';
+import { CAVE, keepClear, ROCK, ROCK_STONES } from '../game/places.js';
 import { fromValley, heightAt, LAND, pathDistance, tarnDistance, toValley } from './world.js';
 
 const TAU = Math.PI * 2;
@@ -121,7 +121,10 @@ void main() {
   float n1 = texture(tNoise, vObj.xy * 0.31 + vObj.z * 0.17).r;
   float n2 = texture(tNoise, vObj.zx * 1.1 + vObj.y * 0.4).g;
   // light and shade as two paints with a narrow turn; under a tree or a cloud it is all in shade
-  float open = cloudAt(vWorld.xz);
+  // (the rock that lies over a hollow is in the sun on top, whatever is under it; what is under it is in its shade)
+  float cave = caveAt(vWorld.xz);
+  float under = cave * (1.0 - smoothstep(uCave.w + 0.2, uCave.w + 0.9, vWorld.y));
+  float open = cloudAt(vWorld.xz) / (1.0 - 0.92 * cave) * (1.0 - 0.92 * under);
   float lit = smoothstep(0.02, 0.2, dot(N, uSunDir) + (n1 - 0.5) * 0.28) * smoothstep(0.42, 0.78, open);
   // (pale limestone)
   vec3 light = mix(vec3(0.52, 0.48, 0.4), vec3(0.74, 0.69, 0.58), n2 * 0.6 + n1 * 0.4);
@@ -134,6 +137,8 @@ void main() {
   // it stands in grass: green comes up it, and its foot is dark
   float foot = 1.0 - smoothstep(0.0, 0.45, vWorld.y - groundAt(vWorld.xz));
   col = mix(col, vec3(0.12, 0.1, 0.06) * (uSkyColor + uSunColor * 0.25 * open), foot * 0.6);
+  // (and little of the sky's light comes in under the rock)
+  col *= 1.0 - 0.5 * under;
   outC = vec4(applyFog(col, vWorld), 1.0);
 }
 `;
@@ -163,9 +168,12 @@ export function createStones(field) {
     }
   }
   // the rock the brothers hide in: great boulders round a hollow
-  for (const [du, dv, size, tall] of hills ? ROCK_STONES : []) {
+  // (each is chosen, not left to chance: which stone, how it is turned, how it leans; and one may lie on the others)
+  const floor = heightAt(...fromValley(...CAVE.at));
+  for (const [du, dv, size, tall, { turn = 0, kind = 0, lean = 0, lift = null } = {}] of hills ? ROCK_STONES : []) {
     const [x, z] = fromValley(ROCK[0] + du, ROCK[1] + dv);
-    stones.push([x, z, size, random() * TAU, Math.floor(random() * 3), tall, (random() - 0.5) * 0.2]);
+    // (one that lies over the hollow: its flat underside `lift` above the floor)
+    stones.push([x, z, size, turn, kind, tall, lean, lift == null ? null : floor + lift + 0.3 * size * tall, true]);
   }
   const group = new THREE.Group();
   const material = new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: stoneVertex, fragmentShader: stoneFragment, uniforms: field.uniforms });
@@ -176,18 +184,24 @@ export function createStones(field) {
     const mine = stones.filter((s) => s[4] === kind);
     if (!mine.length) continue;
     const mesh = new THREE.InstancedMesh(stoneGeometry(11 + kind * 17), material, mine.length);
-    mine.forEach(([x, z, size, turn, , tall, lean], i) => {
+    mine.forEach(([x, z, size, turn, , tall, lean, y], i) => {
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), turn);
       tilt.setFromAxisAngle(new THREE.Vector3(1, 0, 0), lean);
       q.multiply(tilt);
       // sunk a little, as a stone that has lain there is
-      matrix.compose(new THREE.Vector3(x, heightAt(x, z) + size * 0.08, z), q, new THREE.Vector3(size, size * tall, size));
+      matrix.compose(new THREE.Vector3(x, y ?? heightAt(x, z) + size * 0.08, z), q, new THREE.Vector3(size, size * tall, size));
       mesh.setMatrixAt(i, matrix);
     });
     mesh.frustumCulled = false;
     group.add(mesh);
   }
-  return { group, solid: stones.filter((s) => s[2] > 0.6).map(([x, z, size]) => [x, z, size * 0.82]) };
+  // The ones too big to walk through: [x, z, how near its middle one may come]. Those of the rock are walls: a fourth
+  // number says how high they stand, so that the eye behind him is stopped by them too, and they are held to nearer
+  // their true size. What lies over the hollow stops no one; `roof` is the rock overhead, [x, z, radius, y], for the eye.
+  const standing = stones.filter((s) => s[2] > 0.6 && s[7] == null);
+  const solid = standing.map(([x, z, size, , , tall, , , rock]) => (rock ? [x, z, size * 1.12, size * tall * 0.66] : [x, z, size * 0.82]));
+  const roof = stones.filter((s) => s[7] != null).map(([x, z, size, , , tall, , y]) => [x, z, size * 0.8, y - 0.3 * size * tall]);
+  return { group, solid, roof };
 }
 
 const fluffVertex = /* glsl */ `

@@ -1,8 +1,9 @@
 // "And I was led by the Spirit, not knowing beforehand the things which I should do." (1 Nephi 4:6)
 // In the night act there is no marker and no line saying where to go. When Nephi stands still, a soft light gathers
 // in the air a little way along the way he should go, lighting the ground under it, and the edges of the picture
-// warm; walking on quietly it stays faint, and running it is lost. So is it by a wrong turning: off the way there
-// is no light at all while he walks, and only when he stands still does it come back to him. If he is a long while
+// warm; going on along the way it stays, fainter (fainter still at a run). By a wrong turning it is lost: off the way
+// there is no light at all while he walks, and only when he stands still does it come back to him. Where it is off
+// the picture, a small light at the picture's edge shows which way it lies (main.js, showMarker). If he is a long while
 // getting nowhere he is reminded to stand still and look. A soft tone gathers and fades with the light (music.js),
 // so the leading can be listened for as well as looked for. The ground's light is the field's one carried light
 // (field.setLamp), coloured gold-white instead of fire; the light in the air is a halo.
@@ -100,7 +101,8 @@ export function createGuidance(g, ui) {
         else still = Math.max(0, still - dt * 3);
         const p = pointAhead(route, g.player.x, g.player.z, 11);
         // (the little that a quiet walk keeps is kept only on the way: a street's width to either side of it)
-        const kept = speed < 2.2 && p.off < 5.5 ? 0.3 : 0;
+        // (running, less of it; but it is not lost to one who keeps the way, and he can follow it as he goes)
+        const kept = p.off < 5.5 ? (speed < 2.2 ? 0.55 : 0.4) : 0;
         const want = Math.min(1, Math.max(kept, (still - 0.5) / 1.6));
         light += (want - light) * Math.min(1, dt * 2.2);
         if (p.off > 7) {

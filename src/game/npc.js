@@ -63,6 +63,30 @@ export const PRAY = [
 ];
 /** How far the body sinks when it kneels so. */
 export const PRAY_SINK = 0.46;
+// Sitting on the ground (Jonah 3:6, "and sat in ashes"; 4:5, "and sat under it in the shadow"): the knees drawn up
+// before him, the feet on the ground, the back a little bent, the arms forward to the knees.
+export const SIT = [
+  ['thigh_l', -112], ['thigh_r', -112],
+  ['calf_l', 74], ['calf_r', 74],
+  ['foot_l', 30], ['foot_r', 30],
+  ['spine_01', 12], ['spine_02', 10], ['spine_03', 8],
+  ['upperarm_l', -34], ['upperarm_r', -34],
+];
+export const SIT_SINK = 0.76;
+// Lying where he fell (Laban, drunken with wine): one knee drawn up, the other leg a little bent, the head back.
+const SPRAWL = [
+  ['thigh_r', -38], ['calf_r', 66],
+  ['thigh_l', -6], ['calf_l', 14],
+  ['neck_01', -8],
+];
+// Sitting on a seat (a king on his throne; one who rows, on his bench): the thighs level, the shins upright.
+export const SEAT = [
+  ['thigh_l', -88], ['thigh_r', -88],
+  ['calf_l', 88], ['calf_r', 88],
+  ['spine_01', 3], ['spine_02', 2],
+  ['upperarm_l', -16], ['upperarm_r', -16],
+];
+export const SEAT_SINK = 0.42;
 /**
  * Turns bones about the line across a figure (`table`: [bone, degrees], as BOW), `k` of the way (0 to 1), and
  * sinks the whole of him `sink` metres times k. `object` is the figure, standing at `yaw`; his bones are as his
@@ -286,7 +310,8 @@ export function createCast(field, base, world) {
       o.rotation.set(-Math.PI / 2, 0, npc.yaw, 'YXZ');
     } else {
       // (one who stands in the air, `lift` metres up, rising and settling a little)
-      o.position.set(npc.x, y + (npc.lift ? npc.lift + 0.05 * Math.sin(npc.t * 1.1) : 0), npc.z);
+      // (or on something built, `raise` metres up: a dais, a deck)
+      o.position.set(npc.x, y + (npc.lift ? npc.lift + 0.05 * Math.sin(npc.t * 1.1) : 0) + (npc.raise ?? 0), npc.z);
       o.rotation.set(0, npc.yaw, 0);
     }
     // the clips: idle below walking pace, walk to about 2 m/s, jog, then run
@@ -333,6 +358,14 @@ export function createCast(field, base, world) {
       b.upperarm_r.rotateZ(-0.2 * k);
       b.Head.rotateY(0.3 * Math.sin(npc.t * 0.21));
     }
+    // one who lies where he fell is not laid out straight: an arm flung wide, a knee drawn up, his head to one side
+    if (npc.lying) {
+      const b = npc.man.bones;
+      b.upperarm_l.rotateZ(1.05);
+      b.lowerarm_l.rotateX(0.35);
+      b.upperarm_r.rotateZ(-0.4);
+      poseAcross(b, o, npc.yaw, SPRAWL, 0, 1);
+    }
     if (npc.open) {
       // arms a little out from the sides, the forearms forward, the hands open (the angel)
       const b = npc.man.bones;
@@ -347,6 +380,11 @@ export function createCast(field, base, world) {
     // one who kneels to pray (`kneel`, 0 to 1): upright on his knees
     npc.kneelK = (npc.kneelK ?? 0) + ((npc.kneel ?? 0) - (npc.kneelK ?? 0)) * (snap ? 1 : Math.min(1, dt * 2.6));
     if (npc.kneelK > 0.01) poseAcross(npc.man.bones, o, npc.yaw, PRAY, PRAY_SINK, npc.kneelK);
+    // one who sits: on the ground (`sit`, 0 to 1), or on a seat (`seated`)
+    npc.sitK = (npc.sitK ?? 0) + ((npc.sit ?? 0) - (npc.sitK ?? 0)) * (snap ? 1 : Math.min(1, dt * 2.6));
+    if (npc.sitK > 0.01) poseAcross(npc.man.bones, o, npc.yaw, SIT, SIT_SINK, npc.sitK);
+    npc.seatedK = (npc.seatedK ?? 0) + ((npc.seated ?? 0) - (npc.seatedK ?? 0)) * (snap ? 1 : Math.min(1, dt * 2.6));
+    if (npc.seatedK > 0.01) poseAcross(npc.man.bones, o, npc.yaw, SEAT, SEAT_SINK, npc.seatedK);
     o.updateMatrixWorld(true);
     // one who carries something has both hands to it
     npc.held = npc.holds ?? npc.held;

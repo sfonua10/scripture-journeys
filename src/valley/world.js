@@ -5,7 +5,7 @@
 //
 // Or, for the journeys told in Babylon, the river plain there (setLand('plain')): level silt with no hill anywhere,
 // the Euphrates going by the city, canals off it and fields along them. The same functions answer for either.
-import { chooseLand, CITY, cityDistance, LAND, LEHI_HOUSE, PATHS, PLAIN, riverMiddle } from '../game/places.js';
+import { CAVE, chooseLand, CITY, cityDistance, LAND, LEHI_HOUSE, LEMUEL, lemuelRiver, PATHS, PLAIN, riverMiddle } from '../game/places.js';
 
 export { LAND };
 
@@ -17,6 +17,8 @@ export function setLand(name) {
   chooseLand(name);
   cityLevel = null;
   lehiLevel = null;
+  caveLevel = null;
+  lemuelLevel = null;
 }
 
 /** The way the valley runs from the start, a unit vector (x, z). */
@@ -163,17 +165,56 @@ export function forestAt(x, z) {
 let cityLevel = null;
 /** The level Lehi's house and court are built at. */
 let lehiLevel = null;
+/** The level of the floor of the cavity of the rock. */
+let caveLevel = null;
+/** The level of the floor of the valley of Lemuel. */
+let lemuelLevel = null;
+
+/** The level of the floor of the valley of Lemuel, metres: its river's water lies LEMUEL.river.water below it. */
+export function lemuelFloor() {
+  lemuelLevel ??= wildLand(...fromValley(LEMUEL.at[0], LEMUEL.at[1]));
+  return lemuelLevel;
+}
+
+/** How much of the river of the valley of Lemuel there is at v, 1 to 0: it runs out before the valley does. */
+const lemuelRuns = (v) => 1 - smooth(LEMUEL.reach - 45, LEMUEL.reach - 5, Math.abs(v - LEMUEL.at[1]));
+
+/**
+ * The valley of Lemuel: a level floor between two dry ridges, with the bed of its river cut along it. `h` is the
+ * wild land there; `across` is how far up the valley's line (+u) of its middle, `along` how far along it.
+ */
+function lemuelLand(h, x, z, u, v, across, along) {
+  const there = 1 - smooth(LEMUEL.reach, LEMUEL.reach + 90, along);
+  const wide = Math.abs(across);
+  h += (lemuelFloor() - h) * there * (1 - smooth(26, 84, wide));
+  // (the ridges are rough, and stand clear of the floor, which stays level)
+  const rough = 0.7 + 0.6 * fbm(x / 60 + 3.3, z / 60 + 7.7, 2, 71);
+  h += there * rough * smooth(30, 62, wide) * (17 * Math.exp(-(((across - 112) / 50) ** 2)) + 14 * Math.exp(-(((across + 104) / 46) ** 2)));
+  const { half, deep } = LEMUEL.river;
+  h -= deep * lemuelRuns(v) * (1 - smooth(half * 0.45, half * 1.4, Math.abs(u - lemuelRiver(v))));
+  return h;
+}
 
 function land(x, z) {
   const h = wildLand(x, z);
   const u = x * DX + z * DZ;
   const v = -x * DZ + z * DX;
+  // the valley of Lemuel, behind the camp's hill
+  const across = u - LEMUEL.at[0];
+  const along = Math.abs(v - LEMUEL.at[1]);
+  if (along < LEMUEL.reach + 90 && Math.abs(across) < 230) return lemuelLand(h, x, z, u, v, across, along);
   // inside the walls the ground is made level for building, and it eases back into the hill outside them
   const d = cityDistance(u, v);
   if (d <= 40) {
     cityLevel ??= wildLand(...fromValley(CITY.at[0], CITY.at[1]));
     const level = cityLevel + (u - CITY.at[0]) * 0.03;
     return h + (level - h) * (1 - smooth(4, 40, d));
+  }
+  // the cavity of the rock: its floor is level, let into the hillside, which stands as a bank behind it
+  const cave = Math.hypot(u - CAVE.at[0], v - CAVE.at[1]);
+  if (cave < CAVE.ease) {
+    caveLevel ??= wildLand(...fromValley(CAVE.at[0], CAVE.at[1]));
+    return h + (caveLevel - h) * (1 - smooth(CAVE.floor, CAVE.ease, cave));
   }
   // Lehi's house and its court stand on made ground too, so its door is at the ground and not sunk in the slope
   const lu = Math.max(Math.abs(u - LEHI_HOUSE[0]) - 11, 0);
@@ -385,18 +426,32 @@ export function paint(x, z) {
   const u = x * DX + z * DZ;
   const v = -x * DZ + z * DX;
   // dry nearly everywhere: grass gone to straw, sage and thorn in the hollows
-  const dry = 0.62 + 0.36 * smooth(0.4, 0.66, fbm(x / 90 + 2.2, z / 90 + 8.1, 3, 21));
-  const wet = smooth(0.7, 0.78, fbm(x / 47 + 5.5, z / 47 + 9.9, 2, 33)) * 0.35;
+  let dry = 0.62 + 0.36 * smooth(0.4, 0.66, fbm(x / 90 + 2.2, z / 90 + 8.1, 3, 21));
+  let wet = smooth(0.7, 0.78, fbm(x / 47 + 5.5, z / 47 + 9.9, 2, 33)) * 0.35;
   // thin cover, in clumps, with stony earth between
   const clumps = fbm(x / 9 + 1.3, z / 9 - 4.1, 3, 41) * 0.65 + fbm(x / 60 - 3.3, z / 60 + 2.7, 2, 43) * 0.35;
   let growth = 0.15 + 0.85 * smooth(0.34, 0.6, clumps);
   // a footpath worn to earth, its edges ragged
   const path = pathDistance(x, z);
   growth = Math.min(growth, smooth(0.6, 1.8, path + (fbm(x / 2.7, z / 2.7, 2, 61) - 0.5) * 0.9));
-  // nothing grows in the city's streets or in the trodden ground round its walls, the camp, or the house
+  // nothing grows in the city's streets or in the trodden ground round its walls or the house
   growth *= smooth(-2, 12, cityDistance(u, v));
-  growth *= smooth(9, 22, Math.hypot(u - 4, v - 6));
   growth *= smooth(16, 30, Math.hypot(u - LEHI_HOUSE[0], v - LEHI_HOUSE[1]));
+  // nor under the rock, where no sun comes
+  growth *= smooth(CAVE.floor - 1.5, CAVE.floor + 1.5, Math.hypot(u - CAVE.at[0], v - CAVE.at[1]));
+  // the valley of Lemuel: trodden earth round the tents, green along the river's banks, and gravel in its bed
+  if (Math.abs(v - LEMUEL.at[1]) < LEMUEL.reach && Math.abs(u - LEMUEL.at[0]) < 70) {
+    const ragged = (fbm(x / 5.3, z / 5.3, 2, 67) - 0.5) * 9;
+    growth *= smooth(11, 27, Math.hypot(u - LEMUEL.at[0] + 5, (v - LEMUEL.at[1]) * 0.62) + ragged);
+    const { half } = LEMUEL.river;
+    const s = Math.abs(u - lemuelRiver(v)) + (fbm(x / 3.1, z / 3.1, 2, 69) - 0.5) * 1.6;
+    const runs = lemuelRuns(v);
+    const bank = (1 - smooth(half * 1.4 + 1, half * 1.4 + 6, s)) * runs;
+    growth = Math.max(growth, bank * (0.75 + 0.25 * clumps));
+    dry *= 1 - 0.85 * bank;
+    wet = Math.max(wet, bank * 0.7);
+    growth *= 1 - runs * (1 - smooth(half * 0.9, half * 1.5, s));
+  }
   // a few red anemones and yellow flowers in drifts
   const flowers = smooth(0.58, 0.74, fbm(x / 38 - 6, z / 38 + 3, 2, 55)) * 0.35;
   return { dry: dry * (1 - wet), growth, wet, flowers };

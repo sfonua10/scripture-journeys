@@ -48,8 +48,9 @@ const check = (name, ok, got = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'}  ${name}${ok || got === '' ? '' : `  (got ${JSON.stringify(got)})`}`);
 };
 const ready = () => page.waitForFunction(() => window.__tg?.ready, null, { timeout: 120000 });
-const open = async (query = '') => {
-  await page.goto(`${base}?${common}${query ? `&${query}` : ''}`);
+// (with every journey listed, those still being made too: ?all. `some` is the page as it is found without it.)
+const open = async (query = '', some = false) => {
+  await page.goto(`${base}?${common}${some ? '' : '&all'}${query ? `&${query}` : ''}`);
   await ready();
 };
 /** What the list shows: its heading, each work (and whether it is coming), each book (and whether it is greyed), and
@@ -93,13 +94,18 @@ check(
 );
 check(
   'under them their books, those with no journey greyed',
-  l.books.slice(0, 4).join(', ') === 'Daniel, 1 Nephi, 2 Nephi:greyed, Jacob:greyed' && l.books.at(-1) === 'A new journey · coming next week:greyed',
+  l.books.slice(0, 5).join(', ') === 'Daniel, Jonah, 1 Nephi, 2 Nephi:greyed, Jacob:greyed' && l.books.at(-1) === 'A new journey · coming next week:greyed',
   l.books,
 );
 check(
   'and a card for each journey, with the face and name of the one it follows',
-  l.items.map((i) => `${i.who}:${i.no}:${i.buttons.join('|')}`).join(', ') === 'Daniel:Chapter 3:Play, Daniel:Chapter 6:Play, Nephi:Chapters 3–4:Play',
+  l.items.map((i) => `${i.who}:${i.no}:${i.buttons.join('|')}`).join(', ') === 'Daniel:Chapter 3:Play, Daniel:Chapter 6:Play, Jonah:Chapters 1–4:Play, Nephi:Chapters 3–4:Play',
   l.items,
+);
+// (a rule of the stylesheet that is not read leaves what it hides showing: a stray brace once kept every line up)
+check(
+  'what is not up is not shown: the line low on the screen, the card, what to do',
+  (await page.evaluate(() => ['#g-toast', '#g-card', '#g-objective'].map((q) => { const s = getComputedStyle(document.querySelector(q)); return s.display === 'none' || s.opacity === '0'; }).join())) === 'true,true,true',
 );
 await page.click('#g-title .twig:not(:disabled)');
 check('a book closes', (await page.evaluate(() => getComputedStyle(document.querySelector('#g-title .leaves')).display)) === 'none');
@@ -181,6 +187,27 @@ check(
   beside,
 );
 if (shots) await page.screenshot({ path: join(out, '5-daniel-6-end.png'), fullPage: true });
+
+// 7. the page as it is found (without ?all): the journeys still being made are not listed, and with one journey to
+// choose and nothing of it kept, it begins at once
+await page.evaluate(() => localStorage.clear());
+await open('', true);
+await ticks(5);
+const fresh = await page.evaluate(() => ({ beat: window.__tg.director.beat, list: document.querySelector('#g-title')?.classList.contains('on') }));
+check('someone new goes straight into the one journey there is', fresh.beat === 'a1' && !fresh.list, fresh);
+await page.evaluate(() => localStorage.setItem('bom-journeys:plates-of-brass:beat', 'a2'));
+await open('', true);
+l = await list();
+check('with a place kept, the list offers to go on or start over', l.on === true && nephi(l)?.buttons.join('|') === 'Continue|Start over', nephi(l));
+check(
+  'and the journeys still being made are not on it',
+  l.works.join(', ') === 'Old Testament:coming, New Testament:coming, Book of Mormon, Doctrine and Covenants:coming, Pearl of Great Price:coming' && l.items.length === 1,
+  { works: l.works, items: l.items.length },
+);
+await open('story=jonah', true);
+l = await list();
+check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 4, { works: l.works, items: l.items.length });
+await page.evaluate(() => localStorage.clear());
 
 check('no errors on the page', problems.length === 0, problems);
 await browser.close();
