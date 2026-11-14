@@ -147,7 +147,7 @@ const end = await page.evaluate(() => ({
 }));
 check("the end screen has the journey's name and verse", end.on && end.heading === 'The Lord Prepared a Way' && end.cite === '1 Nephi 3:7', end);
 check('one question to talk about, and nothing else to read', end.ask.join('|') === 'When has the Lord prepared a way for you?' && end.more === 0, end);
-check('and the ways on', end.buttons.join('|') === 'Back to journeys|Play again', end.buttons);
+check('and the ways on', end.buttons.join('|') === 'Back to journeys|Play again|Share this journey', end.buttons);
 k = await keys();
 check('the journey is marked finished, its place forgotten', k['bom-journeys:plates-of-brass:done'] === '1' && !('bom-journeys:plates-of-brass:beat' in k), k);
 if (shots) await page.screenshot({ path: join(out, '3-end.png') });
