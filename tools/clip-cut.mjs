@@ -128,7 +128,8 @@ for (const seg of segs) {
   const rel = (e) => (e.f - seg.first) / fps;
   const inside = (e) => rel(e) >= 0 && rel(e) < seg.length;
   // what is said: each reading from where its card came up, until the next begins or the picture is cut
-  const said = seg.events.filter((e) => e.type === 'say' && inside(e) && existsSync(join(narration, `${e.key}.mp3`)));
+  // (`voice: 0` in the spec: nothing said in this segment is heard)
+  const said = seg.voice === 0 ? [] : seg.events.filter((e) => e.type === 'say' && inside(e) && existsSync(join(narration, `${e.key}.mp3`)));
   said.forEach((e, i) => {
     const until = Math.min(seg.length + (seg.tail ?? 0), rel(e) + (seg.speak ?? Infinity), i + 1 < said.length ? rel(said[i + 1]) : Infinity);
     const voice = load(join(narration, `${e.key}.mp3`));
