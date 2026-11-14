@@ -15,7 +15,6 @@ const END = /* html */ `
   <div class="journey">I Will Go and Do</div>
   <div class="ref">1 Nephi 3–4</div>
   <div class="free"><span>Free · Plays in your browser</span><i> · </i><span>No download · No ads · No sign-in</span></div>
-  <div class="url">sfonua10.github.io/scripture-journeys</div>
 </div>`;
 
 // The last card as a picture, where there are the two of them: the game's title art, wide and tall (CLIP_ART names
@@ -33,7 +32,7 @@ const PICTURE = FILES.every((f) => existsSync(join(ART, f)))
     <div class="btn"><i></i></div>
     <b class="star s1"></b><b class="star s2"></b><b class="star s3"></b>
   </div></div>
-  <div class="more"><span class="free">Free · Plays in your browser</span><span class="url">sfonua10.github.io/scripture-journeys</span></div>
+  <div class="more"><span class="free">Free · Plays in your browser</span></div>
 </div>`
   : null;
 // what moves on it, frame by frame: it draws slowly nearer; a light crosses the words, with three sparks after it;
@@ -90,7 +89,7 @@ export default {
     #clip-over .s2 { --k: var(--k2); }
     #clip-over .s3 { --k: var(--k3); }
     #clip-over .more { position: absolute; display: flex; align-items: center; color: #f4ead6; white-space: nowrap; }
-    #clip-over .more .url { margin: 0; padding: 8px 15px 9px; border: 1px solid rgba(227, 189, 109, 0.7); border-radius: 999px; background: rgba(24, 17, 10, 0.82); color: #fff; }
+    #clip-over .more .free { margin: 0; padding: 8px 15px 9px; border: 1px solid rgba(227, 189, 109, 0.7); border-radius: 999px; background: rgba(24, 17, 10, 0.82); color: #fff; font-size: inherit; line-height: inherit; }
     #clip-over .end { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; padding: 0 24px; }
     #clip-over .name { font-size: 34px; line-height: 1.15; }
     #clip-over .rule { width: 56px; height: 1px; background: #e3bd6d; margin: 16px auto 14px; }
@@ -98,7 +97,6 @@ export default {
     #clip-over .ref { margin-top: 4px; font-size: 14px; letter-spacing: 0.1em; color: #e3bd6d; font-variant: small-caps; }
     #clip-over .free { margin-top: 22px; font-size: 16px; line-height: 1.55; }
     #clip-over .free i { font-style: normal; }
-    #clip-over .url { display: inline-block; margin-top: 22px; padding: 9px 16px 10px; border: 1px solid rgba(227, 189, 109, 0.7); border-radius: 6px; font-size: 16px; color: #fff; }
   `,
   // (upright it is a phone: the hints say tap, and the stick and the Run button are seen)
   tallQuery: 'touch=1',
@@ -109,7 +107,7 @@ export default {
     #clip-cap { top: 11.5vh; }
     #clip-over .free span { display: block; }
     #clip-over .free i { display: none; }
-    /* upright: the tall picture, its words across the top and its button low; the address just over the button */
+    /* upright: the tall picture, its words across the top and its button low; that it is free, just over the button */
     #clip-over .art { --art: var(--art-tall); --mask: var(--mask-tall); }
     #clip-over .pic { --u: 13px; --towards: 50% 40%; --from: -14%; --span: 128%; --bl: 3%; --bw: 0.94; }
     #clip-over .bloom { left: 3%; top: 5.5%; width: 94%; height: 22%; }
@@ -118,9 +116,7 @@ export default {
     #clip-over .s2 { left: 12%; top: 18.4%; }
     #clip-over .s3 { left: 90.5%; top: 21.6%; }
     #clip-over .more { left: 50%; top: 71.4%; transform: translateX(-50%); font-size: 13.5px; }
-    #clip-over .more .free { display: none; }
-    #clip-over .more .url { padding: 7px 14px 8px; }
-    #clip-over .more .url::before { content: 'Free · '; color: #e3bd6d; }
+    #clip-over .more .free { padding: 7px 14px 8px; }
   `,
   wide: `
     #clip-cap { top: 6vh; }
@@ -129,8 +125,7 @@ export default {
     #clip-over .journey { font-size: 28px; }
     #clip-over .ref { font-size: 17px; }
     #clip-over .free { font-size: 21px; }
-    #clip-over .url { font-size: 22px; padding: 11px 22px 12px; }
-    /* wide, the picture is the whole of it, and the address lies low at its left */
+    /* wide, the picture is the whole of it, and that it is free lies low at its left */
     #clip-over .art { --art: var(--art-wide); --mask: var(--mask-wide); }
     #clip-over .pic { --u: 24px; --towards: 38% 46%; --from: -10%; --span: 86%; --bl: 2%; --bw: 0.6; }
     #clip-over .bloom { left: 2%; top: 5%; width: 60%; height: 48%; }
@@ -138,8 +133,8 @@ export default {
     #clip-over .s1 { left: 57.6%; top: 11.5%; }
     #clip-over .s2 { left: 5.2%; top: 31%; }
     #clip-over .s3 { left: 53%; top: 39.5%; }
-    #clip-over .more { left: 3.2%; bottom: 5%; gap: 14px; font-size: 19px; padding: 0 0 0 18px; border-radius: 999px; background: rgba(24, 17, 10, 0.78); }
-    #clip-over .more .url { font-size: 19px; padding: 9px 18px 10px; background: rgba(24, 17, 10, 0.4); }
+    #clip-over .more { left: 3.2%; bottom: 5%; font-size: 19px; }
+    #clip-over .more .free { padding: 9px 18px 10px; }
   `,
   // music that runs on over a cut: from the start of one segment to the start of another (or to the end)
   tracks: [
