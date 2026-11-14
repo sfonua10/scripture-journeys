@@ -914,6 +914,8 @@ mark('warm');
 
 // ---- the story -----------------------------------------------------------------------------------------------
 const ui = createUI({ touch });
+// (the one who speaks has his name marked over his head)
+ui.speaker((who) => names.speak(who));
 const narration = createNarration(sounds, { note, book: journey.scripture.book });
 // (the list of recordings is asked for once the sounds are ready, since they are played through them)
 Promise.resolve(soundsReady).then(() => narration.load());
@@ -1073,6 +1075,13 @@ const g = {
           }
         : null,
       counted: tally.on,
+      // (the game's own address, marked so that who comes by it is counted as come by a share)
+      share: {
+        title: `${GAME.name}: ${journey.title}`,
+        text: `${journey.title} (${journey.ref}). ${journey.blurb} A free scripture game to walk through together.`,
+        url: `${document.querySelector('link[rel="canonical"]')?.href ?? location.href.replace(/[?#].*$/, '')}?utm_source=share`,
+      },
+      onShared: (how) => tally('share', { journey: journey.id, how }),
     });
   },
   /** Whether the story holds Nephi still (a card is up). */
