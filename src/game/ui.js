@@ -146,6 +146,11 @@ const CSS = /* css */ `
 .g-screen blockquote cite { display: block; font-style: normal; margin-top: 6px; color: var(--gold); font-size: 14px; font-variant: small-caps; }
 .g-screen { overflow-y: auto; }
 /* at a journey's end, under the ways on: one question to tap an answer to, and a box for a parent's note */
+/* passing it on: one quiet button under the ways on, and a word when it is done */
+.g-screen .share { margin-top: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; font-size: 15px; }
+.g-screen .share button { font-size: 15px; padding: 7px 16px; margin: 0; }
+.g-screen .share .said { flex-basis: 100%; opacity: 0.85; }
+.g-screen .share .said:empty { display: none; }
 .g-screen .heard { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 15px; }
 .g-screen .heard .enjoyed { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; }
 .g-screen .heard button { font-size: 15px; padding: 7px 16px; margin: 0 4px; }
@@ -512,8 +517,10 @@ export function createUI({ touch = false } = {}) {
      * The end of a journey: what was read, where to read more, something to talk about. `copy` is the story's own
      * (stories.js, end): { heading, quote, cite, talk, links: [[name, url]] }. It may also set verses side by side
      * (`pairs`: [[{ text, cite }, { text, cite }]], under `pairsHeading`, with a question after them, `pairsAsk`).
+     * `share` is what is passed on to another family ({ title, text, url }): given to the phone's own way of
+     * sharing where it has one, and where it has none the address is copied. `onShared(how)` hears which.
      */
-    end({ copy, onAgain, onBack, onEnjoyed = null, onNote = null, counted = false }) {
+    end({ copy, onAgain, onBack, onEnjoyed = null, onNote = null, counted = false, share = null, onShared = null }) {
       const links = copy.links.map(([name, url]) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a>`);
       const listed = links.length > 1 ? `${links.slice(0, -1).join(', ')} and ${links.at(-1)}` : links.join('');
       end.innerHTML = `<div class="box">
@@ -533,6 +540,7 @@ export function createUI({ touch = false } = {}) {
         ${listed ? `<p>Read the whole account in ${listed}.</p>` : ''}
         <p class="next">The next journey arrives next week.</p>
         <button data-go="back">Back to journeys</button><button data-go="again" class="plain">Play again</button>
+        ${share ? '<div class="share"><span>Know a family who would enjoy it?</span><button type="button" class="plain" data-share>Share this journey</button><span class="said" role="status"></span></div>' : ''}
         ${
           onEnjoyed || onNote
             ? `<div class="heard">
@@ -566,6 +574,25 @@ export function createUI({ touch = false } = {}) {
           (b.dataset.go === 'back' ? onBack : onAgain)();
         });
       }
+      // passing it on: the phone's own sheet where there is one; else the address, copied
+      end.querySelector('button[data-share]')?.addEventListener('click', async () => {
+        const said = end.querySelector('.share .said');
+        let how = 'shared';
+        try {
+          if (navigator.share) await navigator.share(share);
+          else {
+            await navigator.clipboard.writeText(share.url);
+            how = 'copied';
+          }
+        } catch (e) {
+          // (the sheet was shut with nothing chosen: nothing is said of it)
+          if (e?.name === 'AbortError') return;
+          said.textContent = share.url;
+          return;
+        }
+        said.textContent = how === 'copied' ? 'The link is copied.' : 'Thank you.';
+        onShared?.(how);
+      });
       // the one question, answered with a tap: the answers give place to a word of thanks
       for (const b of end.querySelectorAll('button[data-enjoyed]')) {
         b.addEventListener('click', () => {
