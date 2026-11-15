@@ -722,8 +722,12 @@ function plantPalms(trees, bush) {
   trees.push(...near, ...far, ...shrubs);
 }
 
-/** @param options.cards 0 to 1, the share of leaf sprays drawn */
-export function createTrees(field, { cards = 1 } = {}) {
+/**
+ * @param options.cards 0 to 1, the share of leaf sprays drawn
+ * @param options.edge, options.sight for a trial (?trim, ?far: main.js): no tree is drawn that stands further than
+ *   `edge` metres from the middle of the land, or further than `sight` metres from the eye. 0 for no such limit.
+ */
+export function createTrees(field, { cards = 1, edge = 0, sight = 0 } = {}) {
   // (the hill country's trees, or on the river plain date palms: kinds 1 to 3 near the walk, 4 to 6 past it, 7 and 8
   // bushes, in that order, as the walker's collisions expect; the plain has no great tree, kind 0)
   const hills = LAND !== 'plain';
@@ -997,13 +1001,16 @@ export function createTrees(field, { cards = 1 } = {}) {
           const z = balls[i * 4 + 2];
           const r = balls[i * 4 + 3];
           let step = 0;
-          for (let p = 0; p < 6; p++) {
-            const plane = planes[p];
-            if (plane.normal.x * x + plane.normal.y * y + plane.normal.z * z + plane.constant < -r) {
-              step = -1;
-              break;
+          // (a trial's limits: past the land's edge, or too far from the eye, it is left out as if out of view)
+          if ((edge && Math.hypot(x, z) > edge) || (sight && Math.hypot(x - eye[12], z - eye[14]) > sight)) step = -1;
+          else
+            for (let p = 0; p < 6; p++) {
+              const plane = planes[p];
+              if (plane.normal.x * x + plane.normal.y * y + plane.normal.z * z + plane.constant < -r) {
+                step = -1;
+                break;
+              }
             }
-          }
           if (step === 0) {
             const far = Math.sqrt((x - eye[12]) ** 2 + (y - eye[13]) ** 2 + (z - eye[14]) ** 2) / (sizes[i] * lens);
             if (far > steps[0]) step = far > steps[1] ? (far > steps[2] ? 3 : 2) : 1;

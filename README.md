@@ -236,6 +236,7 @@ On a phone or a tablet it is played by touch (`src/game/touch.js`): a thumb on t
 
 Useful URL options:
 - `?quality=low|medium|high` (medium by default)
+- `?fps` writes the frame rate, the longest frame and the frame's triangles at the top of the page; `?trim=450` draws no tree further than that many metres from the middle of the land, and `?far=200` none further than that from the eye. These are a trial, for finding what a phone is slow at: off unless asked for.
 - `?names=0` leaves off the names written small over those the text names (`src/game/names.js`)
 - `?beat=a2` starts at a beat. The beats are `a1`, `a1-land`, `a1-gate`, `a2`, `a2-laban`, `a2-rock`, `a3`, `a3-laban`, `a3-treasury`, `a3-walls` and `home`. (With `?story=fiery-furnace`: `a1`, `a1-dura`, `a2`, `a3`, `a3-fire`, `a3-forth`. With `?story=lions-den`: `a1`, `a1-accounts`, `a2`, `a2-king`, `a3`, `a3-den`, `a4`, `a4-up`.)
 - `?auto` lets the game play itself. With `&hold` it is overtaken once in the chase before it leaves the property, and with `&wrong` it answers Zoram wrongly once each time and fills in every left-out word wrongly, so a test covers those ways too.

@@ -231,7 +231,11 @@ const frame = createFrame(renderer, field, { samples: quality === 'low' ? 0 : 4,
 mark('frame');
 const sky = createSky(renderer, field, { parts: skyParts });
 mark('sky');
-const trees = createTrees(field, { cards: quality === 'low' ? 0.6 : quality === 'medium' ? 0.8 : 1 });
+// A trial, for finding what a phone is slow at (off unless the address asks): ?trim=450 draws no tree further than
+// that from the middle of the land, ?far=200 none further than that from the eye, and ?fps writes the frame rate
+// and the frame's triangles at the top of the page. The trees left out still stand: they stop the walker as before.
+const trial = { edge: Math.max(0, Number(params.get('trim')) || 0), sight: Math.max(0, Number(params.get('far')) || 0) };
+const trees = createTrees(field, { cards: quality === 'low' ? 0.6 : quality === 'medium' ? 0.8 : 1, ...trial });
 mark('trees');
 const farWoods = createFarWoods(field);
 mark('farWoods');
@@ -1233,6 +1237,38 @@ document.addEventListener('visibilitychange', () => {
 // for tests and filming: everything the page is made of, and a clock to drive by hand
 window.__tg = { sounds, walker, follow, input, wanderer, animator, setThird, standAt, pickTime, timings, view: null, wind, THREE, renderer, scene, camera, field, frame, sky, trees, farWoods, stones, player, keys, tick, setHour, setWind, fromValley, director, cast, props, city, g, ready: true };
 
+// ---- the frame rate, written on the page (?fps) -----------------------------------------------------------------
+/**
+ * Call once a frame, after it is drawn: twice a second it writes how many frames a second were drawn, the longest
+ * of them (ms), how many triangles the last was made of, and what the trial has left out. Null unless asked for.
+ */
+const meter = params.has('fps') ? createMeter() : null;
+function createMeter() {
+  const el = document.createElement('div');
+  el.style.cssText =
+    'position:fixed;top:calc(env(safe-area-inset-top, 0px) + 4px);left:50%;transform:translateX(-50%);z-index:50;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,0.6);color:#fff;font:12px/1.4 ui-monospace,Menlo,monospace;white-space:nowrap;pointer-events:none';
+  document.body.appendChild(el);
+  // (the triangles of a whole frame, all its passes: counted from one frame's end to the next)
+  renderer.info.autoReset = false;
+  const left = [trial.edge && `trim ${trial.edge}`, trial.sight && `far ${trial.sight}`].filter(Boolean).join(' · ') || 'as it is';
+  let since = performance.now();
+  let before = since;
+  let frames = 0;
+  let longest = 0;
+  return (now) => {
+    frames++;
+    longest = Math.max(longest, now - before);
+    before = now;
+    if (now - since >= 500) {
+      el.textContent = `${Math.round((frames * 1000) / (now - since))} fps · worst ${Math.round(longest)} ms · ${(renderer.info.render.triangles / 1e6).toFixed(2)}M tris · ${quality} · ${left}`;
+      since = now;
+      frames = 0;
+      longest = 0;
+    }
+    renderer.info.reset();
+  };
+}
+
 // ---- the loop's switch ----------------------------------------------------------------------------------------
 let last = 0;
 let running = false;
@@ -1248,6 +1284,7 @@ function run() {
           const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
           last = now;
           tick(dt);
+          meter?.(performance.now());
         }
       : null,
   );
