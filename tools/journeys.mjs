@@ -220,6 +220,30 @@ l = await list();
 check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 5, { works: l.works, items: l.items.length });
 await page.evaluate(() => localStorage.clear());
 
+// 8. a journey's own page: its own name and picture for where a link to it is posted, and whoever opens it goes
+// straight into the journey, past the list, with what the address was marked with kept
+{
+  const html = await (await fetch(`${base}but-if-not/`)).text();
+  const meta = (name) => new RegExp(`<meta property="${name}" content="([^"]*)"`).exec(html)?.[1];
+  check("a journey's page has its own name", meta('og:title') === 'But If Not · Daniel 3', meta('og:title'));
+  check('and its own address', /\/but-if-not\/$/.test(meta('og:url') ?? ''), meta('og:url'));
+  const picture = meta('og:image') ?? '';
+  const own = existsSync(join(root, 'og/but-if-not.jpg')) || existsSync(join(root, 'og/but-if-not.png'));
+  check(`and ${own ? 'its own picture' : "the game's picture, having none of its own yet"}`, own ? /\/og\/but-if-not\.(jpg|png)$/.test(picture) : /\/og\.jpg$/.test(picture), picture);
+  const nephi = await (await fetch(`${base}i-will-go-and-do/`)).text();
+  check('the first journey has its own picture', /property="og:image" content="[^"]*\/og\/i-will-go-and-do\.jpg"/.test(nephi));
+  check('a journey still being made has no page', (await fetch(`${base}by-small-means/`)).status === 404);
+  await page.evaluate(() => localStorage.clear());
+  await page.goto(`${base}but-if-not/?${common}&utm_source=share`);
+  await page.waitForURL(/story=fiery-furnace/);
+  await ready();
+  await ticks(5);
+  const there = await page.evaluate(() => ({ beat: window.__tg.director.beat, list: document.querySelector('#g-title')?.classList.contains('on'), from: new URLSearchParams(location.search).get('utm_source') }));
+  check('opening it goes straight into the journey, past the list', there.beat === 'a1' && !there.list, there);
+  check('with what the address was marked with kept', there.from === 'share', there.from);
+  await page.evaluate(() => localStorage.clear());
+}
+
 check('no errors on the page', problems.length === 0, problems);
 await browser.close();
 server.close();

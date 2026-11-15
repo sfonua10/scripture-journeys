@@ -8,6 +8,8 @@ Adding a journey: write its story beside `src/game/story.js`, give it an entry i
 
 A journey still being made is marked `wip: true` in `src/game/stories.js` (the 1 Nephi 16 journey and Jonah are, for now). It is left off the list, and reached only with `?all` in the address (every journey listed) or by name (`?story=jonah`). While only one journey is open, someone new goes straight into it; once they have a place kept or have finished it, the list offers to go on, start over or play again. Take `wip` off a journey to open it. A journey that may be tried before it is finished is marked `beta: true` instead (the two Daniel journeys are): it is listed with the rest, with "Beta" on its card, but it is not counted as one to choose from, so someone new still goes straight into the first journey.
 
+Every journey that is listed has a page of its own, named from its title (`but-if-not/`, `pageOf` in `src/game/stories.js`), which `build.mjs` writes. Where a link to it is posted it shows that journey's name, what it is about and its own picture, and whoever opens it goes straight into the journey, past the list. A journey's picture is `public/og/<page>.jpg` (or `.png`), 1200 × 675 like the game's own (`public/og.jpg`), which stands in for it until there is one; `npm run build` says which picture each page has. The end of a journey shares the address of its own page.
+
 (The game was first called Book of Mormon Journeys, when the Book of Mormon was all it held. The old web address and the old repository name redirect to the new ones.)
 
 ## Book of Mormon, Journey 1: I Will Go and Do

@@ -72,6 +72,8 @@ export const STORIES = [
     title: 'I Will Go and Do',
     ref: '1 Nephi 3–4',
     blurb: 'Nephi and his brothers return to Jerusalem for the plates of brass.',
+    /** What its picture shows (public/og/, below at `pageOf`), for one who cannot see it. */
+    shown: 'Nephi stands in the hill country at sunset, his brothers by the tents behind him.',
     released: true,
     /** The beat it begins at. */
     first: 'a1',
@@ -126,6 +128,7 @@ export const STORIES = [
     title: 'But If Not',
     ref: 'Daniel 3',
     blurb: 'Shadrach, Meshach and Abed-nego will not bow to the image of gold, and are cast into the fire.',
+    shown: 'The three walk out of the burning fiery furnace, a figure in white behind them in the fire; beyond, the image of gold on the plain of Babylon and the multitude bowed before it.',
     released: true,
     first: 'a1',
     beats: furnace.story,
@@ -154,6 +157,7 @@ export const STORIES = [
     title: 'As He Did Aforetime',
     ref: 'Daniel 6',
     blurb: 'Daniel prays at his open windows though the king has signed against it, and is cast into the den of lions.',
+    shown: 'Daniel, an old man, kneels in prayer in the den with the lions lying quiet about him, light falling from its mouth, where the king looks down.',
     released: true,
     first: 'a1',
     beats: den.story,
@@ -206,6 +210,16 @@ export const STORIES = [
     },
   },
 ];
+/**
+ * The name of a journey's own page, from its title: "But If Not" is but-if-not/. The build (build.mjs) writes one for
+ * every journey that is listed. It has that journey's name, what it is about and its own picture for where a link to
+ * it is posted (public/og/but-if-not.jpg: the game's own picture, og.jpg, until there is one), and it sends whoever
+ * opens it straight into the journey, past the list. A journey's end shares the address of its own page.
+ */
+export const pageOf = (s) => s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+/** Whether a journey has a page of its own: one that is listed (released, and not still being made). */
+export const hasPage = (s) => !!s.released && !s.wip;
+
 /** The released story of that id (one still being made too, asked for by name), or the first open one if there is none. */
 export const storyById = (id) => STORIES.find((s) => s.released && s.id === id) ?? STORIES.find((s) => s.released && !s.wip && !s.beta);
 

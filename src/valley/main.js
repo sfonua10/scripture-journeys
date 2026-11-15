@@ -29,7 +29,7 @@ import { createNarration } from '../game/narration.js';
 import { createTown, TOWN_CLOTHES, TOWNSFOLK } from '../game/town.js';
 import { cloneMan, createCast, poseAcross, PRAY, PRAY_SINK, SEAT, SEAT_SINK, SIT, SIT_SINK } from '../game/npc.js';
 import { createNames } from '../game/names.js';
-import { GAME, keeper, STORIES, storyById, WORKS } from '../game/stories.js';
+import { GAME, hasPage, keeper, pageOf, STORIES, storyById, WORKS } from '../game/stories.js';
 import { createUI } from '../game/ui.js';
 import { createNotes, createTally } from '../game/tally.js';
 import { createTouch, wantsTouch } from '../game/touch.js';
@@ -1107,11 +1107,12 @@ const g = {
           }
         : null,
       counted: tally.on,
-      // (the game's own address, marked so that who comes by it is counted as come by a share)
+      // (the address of the journey's own page, which has its own picture and goes straight into it: the game's own
+      // address for a journey that has none. Marked so that who comes by it is counted as come by a share.)
       share: {
         title: `${GAME.name}: ${journey.title}`,
         text: `${journey.title} (${journey.ref}). ${journey.blurb} A free scripture game to walk through together.`,
-        url: `${document.querySelector('link[rel="canonical"]')?.href ?? location.href.replace(/[?#].*$/, '')}?utm_source=share`,
+        url: `${document.querySelector('link[rel="canonical"]')?.href ?? location.href.replace(/[?#].*$/, '')}${hasPage(journey) ? `${pageOf(journey)}/` : ''}?utm_source=share`,
       },
       onShared: (how) => tally('share', { journey: journey.id, how }),
     });
