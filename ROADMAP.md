@@ -4,8 +4,8 @@ What comes after *I Will Go and Do* (1 Nephi 3–4). One journey a week, in this
 each one has in it, not by where it falls in the book; move them as you like.
 
 Each journey should bring **one new way to play** that the account itself asks for, and should not be a re-skin of the
-one before it. The Old Testament journeys (Daniel 3, Daniel 6, Jonah) stay unlisted until they are reworked; they
-are not the pattern.
+one before it. The Old Testament journeys (Daniel 3, Daniel 6, Jonah) are not the pattern: the two Daniel journeys are
+listed to be tried, marked Beta (`beta: true` in `src/game/stories.js`), and Jonah stays unlisted.
 
 | Week | Journey | Chapters | What you do that is new | Status |
 | ---- | ------- | -------- | ----------------------- | ------ |

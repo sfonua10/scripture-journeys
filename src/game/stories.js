@@ -8,6 +8,9 @@
 // A journey still being made is marked `wip: true`: it is not listed, and the page does not fall to it, unless the
 // address asks for all of them (?all) or for that one by name (?story=id). With only one journey open and nothing
 // of it kept, there is nothing to choose: the page goes straight into it (main.js).
+//
+// A journey that may be tried before it is finished is marked `beta: true` instead: it is listed with the rest, with
+// "Beta" on its card, but it is not counted as one to choose from, so someone new still goes straight into the first.
 import * as furnace from './daniel.js';
 import * as jonah from './jonah.js';
 import * as den from './lions-den.js';
@@ -116,7 +119,7 @@ export const STORIES = [
   { id: 'next', work: 'bom', book: null, number: 2, title: null, ref: null, released: false },
   {
     id: 'fiery-furnace',
-    wip: true,
+    beta: true,
     work: 'ot',
     book: 'daniel',
     number: 1,
@@ -144,7 +147,7 @@ export const STORIES = [
   },
   {
     id: 'lions-den',
-    wip: true,
+    beta: true,
     work: 'ot',
     book: 'daniel',
     number: 2,
@@ -204,7 +207,7 @@ export const STORIES = [
   },
 ];
 /** The released story of that id (one still being made too, asked for by name), or the first open one if there is none. */
-export const storyById = (id) => STORIES.find((s) => s.released && s.id === id) ?? STORIES.find((s) => s.released && !s.wip);
+export const storyById = (id) => STORIES.find((s) => s.released && s.id === id) ?? STORIES.find((s) => s.released && !s.wip && !s.beta);
 
 // ---- what is kept in the browser, by story ------------------------------------------------------------------------
 const key = (id, what) => `${GAME.save}:${id}:${what}`;

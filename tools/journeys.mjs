@@ -65,6 +65,8 @@ const list = () =>
       soon: li.classList.contains('soon'),
       who: li.querySelector('figcaption')?.textContent ?? '',
       no: li.querySelector('.about').textContent,
+      // (marked Beta, where the mark can be seen: one that takes up no room on the page is not a mark)
+      beta: (li.querySelector('.beta')?.getBoundingClientRect().width ?? 0) > 8,
       buttons: [...li.querySelectorAll('button')].map((b) => b.textContent),
     })),
   }));
@@ -188,8 +190,8 @@ check('its end screen has its name and verse', den.heading === 'He Delivereth an
 check('and one question', den.ask.join('|') === 'Why was praying to Heavenly Father so important to Daniel?' && den.more === 0, den);
 if (shots) await page.screenshot({ path: join(out, '5-daniel-6-end.png'), fullPage: true });
 
-// 7. the page as it is found (without ?all): the journeys still being made are not listed, and with one journey to
-// choose and nothing of it kept, it begins at once
+// 7. the page as it is found (without ?all): the journeys still being made are not listed, those that may be tried
+// (Beta) are, and with one finished journey to choose and nothing of it kept, it begins at once
 await page.evaluate(() => localStorage.clear());
 await open('', true);
 await ticks(5);
@@ -200,10 +202,19 @@ await open('', true);
 l = await list();
 check('with a place kept, the list offers to go on or start over', l.on === true && nephi(l)?.buttons.join('|') === 'Continue|Start over', nephi(l));
 check(
-  'and the journeys still being made are not on it',
-  l.works.join(', ') === 'Old Testament:coming, New Testament:coming, Book of Mormon, Doctrine and Covenants:coming, Pearl of Great Price:coming' && l.items.length === 1,
-  { works: l.works, items: l.items.length },
+  'the journeys that may be tried are on it, marked Beta, and those still being made are not',
+  l.works.join(', ') === 'Old Testament, New Testament:coming, Book of Mormon, Doctrine and Covenants:coming, Pearl of Great Price:coming' &&
+    l.items.map((i) => `${i.who}:${i.no}${i.beta ? ':Beta' : ''}`).join(', ') === 'Daniel:Chapter 3:Beta, Daniel:Chapter 6:Beta, Nephi:Chapters 3–4',
+  { works: l.works, items: l.items.map((i) => `${i.who}:${i.no}${i.beta ? ':Beta' : ''}`) },
 );
+check('and the journey to hand is still the first finished one, not one marked Beta', (await page.evaluate(() => document.activeElement?.dataset.id)) === 'plates-of-brass');
+if (shots) await page.screenshot({ path: join(out, '6-list-as-found.png') });
+if (shots) {
+  // (and on a phone held upright)
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: join(out, '6-list-as-found-phone.png') });
+  await page.setViewportSize({ width: 1280, height: 720 });
+}
 await open('story=jonah', true);
 l = await list();
 check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 5, { works: l.works, items: l.items.length });

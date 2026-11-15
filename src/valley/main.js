@@ -1281,7 +1281,8 @@ function openJourney(id, go) {
   ui.fade(1, 0);
   if (g.auto || chosen) director.play(chosen ?? journey.first);
   else {
-    const open = listed.filter((s) => s.released);
+    // (one marked Beta is listed, but is not one to choose from: with it there, someone new still goes straight in)
+    const open = listed.filter((s) => s.released && !s.beta);
     const only = open.length === 1 && open[0] === journey && !director.saved() && !keeper(journey).done;
     let pick = go === 'begin' || go === 'continue' ? { id: journey.id, go } : only ? { id: journey.id, go: 'begin' } : null;
     if (pick) {

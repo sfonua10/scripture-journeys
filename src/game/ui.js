@@ -276,6 +276,11 @@ const CSS = /* css */ `
 .g-screen .leaf button { margin: 0; padding: 7px 20px; font-size: 15px; white-space: nowrap; }
 .g-screen .leaf .go button + button { border: 0; padding: 2px 6px; font-size: 13px; opacity: 0.75; text-decoration: underline; }
 .g-screen .leaf .done { font-style: normal; color: var(--gold); }
+/* (one that may be tried before it is finished: a small mark under its name) */
+.g-screen .leaf .beta {
+  width: max-content; margin-top: 5px; padding: 2px 7px 1px; border: 1px solid var(--tree); border-radius: 999px;
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold);
+}
 .g-screen .journeys .soon { border-style: dashed; opacity: 0.5; }
 .g-screen .ask { margin: 14px 0 0; font-style: italic; opacity: 0.75; }
 .g-screen .shelf { margin: 16px 0 -10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -501,9 +506,9 @@ export function createUI({ touch = false } = {}) {
         const go = s.resume
           ? `<button data-id="${esc(s.id)}" data-go="continue">Continue</button><button data-id="${esc(s.id)}" data-go="begin" class="plain">Start over</button>`
           : `<button data-id="${esc(s.id)}" data-go="begin"${s.done ? ' class="plain"' : ''}>${s.done ? 'Play again' : 'Play'}</button>`;
-        return `<li><div class="leaf open">${who(s.face ?? b.face)}<div class="what">
+        return `<li><div class="leaf open${s.beta ? ' is-beta' : ''}">${who(s.face ?? b.face)}<div class="what">
             <div class="about">${esc(chapters(b, s.ref))}${s.done ? ' <span class="done">✓</span>' : ''}</div>
-            <div class="title">${esc(s.title)}</div>
+            <div class="title">${esc(s.title)}</div>${s.beta ? '<div class="beta">Beta</div>' : ''}
           </div><div class="go">${go}</div></div></li>`;
       };
       const CHEV = '<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4"/></svg>';
@@ -558,7 +563,8 @@ export function createUI({ touch = false } = {}) {
         }
         const there = at?.book && title.querySelector(`[data-at="${window.CSS.escape(`${at.work}/${at.book}`)}"]`);
         there?.scrollIntoView({ block: 'center' });
-        (there?.querySelector('button[data-go]') ?? title.querySelector('button[data-go]'))?.focus({ preventScroll: !!there });
+        // (the first journey that is finished is the one to hand, not one marked Beta that happens to be listed above it)
+        (there?.querySelector('button[data-go]') ?? title.querySelector('.leaf:not(.is-beta) button[data-go]') ?? title.querySelector('button[data-go]'))?.focus({ preventScroll: !!there });
       });
     },
     hideTitle() {
