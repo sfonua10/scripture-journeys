@@ -125,8 +125,12 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
     said: (who, text, { voice = null, from = '' } = {}) => c.card(text, '', { who, from, kind: 'said', voice }),
     /** The same said as they go: a line low on the screen under their name, which stops no one. Resolves when it has been said. */
     aside: (who, text, { voice = null, from = '' } = {}) => c.line(text, '', { who, from, voice, least: 2.4 }),
-    /** The line saying what to do (null to take it away), and under it a list of [{ label, done }] if there is one. */
-    objective: (text, list) => ui.objective(text, list),
+    /**
+     * The line saying what to do (null to take it away), and under it a list of [{ label, done }] if there is one.
+     * With a few words of it second ("Gate of Jerusalem"), those are what the pill it is drawn in to says (ui.js):
+     * (text, list), (text, short) or (text, short, list).
+     */
+    objective: (text, a, b) => ui.objective(text, a, b),
     /**
      * Waits for Nephi to come within r of (x, z). `via` is the way there, a few points (through the gate, along the
      * streets): the marker shows the next of them, and the autopilot walks them. `mark: false` for no marker.

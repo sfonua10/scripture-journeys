@@ -340,7 +340,7 @@ export function story(g) {
         g.narration?.warm(g.reference('3:1'));
         await c.chapter('Act One', 'The Image of Gold', 'Daniel 3');
         await c.verse('3:1');
-        c.objective('Go out by the gate to the plain of Dura, where the image stands.');
+        c.objective('Go out by the gate to the plain of Dura, where the image stands.', 'Plain of Dura');
         withMe();
         line(c, '3:2');
         await c.reach(...before, 8, { via: toPlain });
@@ -438,7 +438,7 @@ export function story(g) {
       },
       async run(c) {
         g.narration?.warm(g.reference('3:14'));
-        c.objective('Go with the mighty men, and stand before the king.');
+        c.objective('Go with the mighty men, and stand before the king.', 'Before the king');
         withMe();
         // (they go with you, one either side)
         Object.assign(who('mighty1').follow(g.player, 2.4, 2.2), { maxSpeed: 4 });
@@ -454,7 +454,7 @@ export function story(g) {
         g.view({ from: [...P(ku - 3, kv + 9), 2.4], to: [...P(mu, mv + 4), 5] });
         await part(c, '3:15');
         g.view(null);
-        c.objective('Answer the king.');
+        c.objective('Answer the king.', 'Answer the king');
         await c.act(...kingAt, 6.5, 'Answer the king');
         c.objective(null);
         shoulder(at(who('king')), { back: 3.6, side: -1.1, up: 2.2, look: 1.5 });
@@ -499,7 +499,7 @@ export function story(g) {
         Object.assign(m2.follow(g.player, 1.6, -1.4), { maxSpeed: 2.4 });
         withMe();
         line(c, '3:20');
-        c.objective('Go to the mouth of the furnace.');
+        c.objective('Go to the mouth of the furnace.', 'Mouth of the furnace');
         // half way there, what you know comes to mind; the drum softens, and a still chord comes in
         await c.reach(...street, 3.2, { via: [P(ku + 1, kv + 14)], unless: () => from(street) < from(inCourt) });
         c.objective(null);
@@ -507,7 +507,7 @@ export function story(g) {
         g.music.drum(0.08);
         g.music.still(1);
         heat.set(0.65);
-        c.objective('Go to the mouth of the furnace.');
+        c.objective('Go to the mouth of the furnace.', 'Mouth of the furnace');
         line(c, '3:21');
         await c.reach(...street, 3.2);
         c.objective(null);
@@ -602,7 +602,7 @@ export function story(g) {
         await part(c, '3:26-a');
         await part(c, '3:26-said');
         g.view(null);
-        c.objective('Come forth of the midst of the fire.');
+        c.objective('Come forth of the midst of the fire.', 'Come forth');
         withMe();
         // (the end of the verse is what you now do)
         lineOf(c, '3:26-end');
@@ -627,7 +627,7 @@ export function story(g) {
         for (const name of people.slice(4, 8)) who(name).face(...me());
         const list = () => lookers.map((l) => ({ label: EXCERPTS[l.key].text.replace(/^… /, '').replace(/ …$/, '').replace(/\.$/, ''), done: l.seen }));
         while (lookers.some((l) => !l.seen)) {
-          c.objective('Go among the princes and counsellors.', list());
+          c.objective('Go among the princes and counsellors.', 'Princes and counsellors', list());
           let near = null;
           await c.until(() => {
             const left = lookers.filter((l) => !l.seen).sort((a, b) => from(at(a.n)) - from(at(b.n)));
@@ -641,7 +641,7 @@ export function story(g) {
           g.music.pluck();
         }
         c.lead(null);
-        c.objective('Go among the princes and counsellors.', list());
+        c.objective('Go among the princes and counsellors.', 'Princes and counsellors', list());
         await c.wait(1.2);
         c.objective(null);
         await c.verse('3:27');

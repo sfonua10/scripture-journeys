@@ -349,7 +349,7 @@ export function story(g) {
         const lehi = who('lehi');
         const laman = who('laman');
         for (const name of ['lehi', 'sariah']) who(name).face(...me());
-        c.objective('Go to your father, at his tent.');
+        c.objective('Go to your father, at his tent.', 'Your father’s tent');
         await c.act(...at(lehi), 3.4, 'Speak with your father');
         c.objective(null);
         const toLehi = () => shoulder(at(lehi), { back: 3.6, up: 2.1, look: 1.4 });
@@ -376,11 +376,11 @@ export function story(g) {
         // his father was exceedingly glad, for he knew that he had been blessed of the Lord (3:8)
         await say(c, 'blessed');
         g.view(null);
-        c.objective('Go to your brethren, by their tents.');
+        c.objective('Go to your brethren, by their tents.', 'Your brethren');
         await c.act(...at(who('sam')), 4.5, 'Call your brethren to the journey');
         await say(c, 'tents');
         followMe();
-        c.objective('Take your journey in the wilderness: go down the valley.');
+        c.objective('Take your journey in the wilderness: go down the valley.', 'Down the valley');
         // (as they go: Lemuel murmurs still, and Sam is with him)
         const going = talk(c, ['allthatway', 'withyou'], { first: 2 });
         await c.reach(...downValley, 7);
@@ -403,7 +403,7 @@ export function story(g) {
         g.narration?.warm(SPOKEN.lots.voice);
         await c.fade(0, 1.6);
         await c.chapter('Act One', 'The Land of Jerusalem', '1 Nephi 3:9', 2.6);
-        c.objective('Go to your brethren, and cast lots with them.');
+        c.objective('Go to your brethren, and cast lots with them.', 'Cast lots');
         await c.act(...at(who('sam')), 4.5, 'Cast lots with your brethren');
         c.objective(null);
         for (const name of ['laman', 'lemuel', 'sam']) who(name).face(...me());
@@ -412,7 +412,7 @@ export function story(g) {
         await c.hold(c.wait(0.9));
         g.music.pluck();
         await say(c, 'lot');
-        c.objective('Go up to the gate of Jerusalem with your brethren.');
+        c.objective('Go up to the gate of Jerusalem with your brethren.', 'Gate of Jerusalem');
         // the lot is Laman's: he goes before, Lemuel with him, and Sam beside Nephi
         lamanLeads([me(), gateOut]);
         await c.reach(...gateOut, 9);
@@ -430,7 +430,7 @@ export function story(g) {
         for (const n of ['sam', 'lemuel']) who(n).stop().face(...gateIn);
         // the lot fell upon Laman: he goes in alone, and they wait without the gate. He says what he goes in to do as
         // he goes, so that it is known why they stand there.
-        c.objective('Wait without the gate, while Laman goes in unto Laban.');
+        c.objective('Wait without the gate, while Laman goes in unto Laban.', 'Without the gate');
         const going = bark(c, 'wait');
         await c.hold(Promise.all([laman.walk([P(GATE[0] - 6, -1), gateIn, C(-58, 0.5)], 2.0), going]));
         laman.show(false);
@@ -445,7 +445,7 @@ export function story(g) {
         await say(c, 'robber');
         // "my brethren were about to return unto my father in the wilderness" (3:14)
         await say(c, 'finished');
-        c.objective('Speak to your brethren.');
+        c.objective('Speak to your brethren.', 'Your brethren');
         await c.act(...at(laman), 4.5, 'Answer your brethren');
         c.objective(null);
         await part(c, '3:15-said');
@@ -472,7 +472,7 @@ export function story(g) {
         await c.chapter('Act Two', 'Our Gold and Our Silver', '1 Nephi 3');
         await say(c, 'gather');
         followMe();
-        c.objective("Go into your father's house, by its door.");
+        c.objective("Go into your father's house, by its door.", 'Your father’s house');
         await c.reach(...lehiDoorIn, 1.7, { via: [H(0, 14), lehiYard, lehiDoorOut] });
         // his brothers come in after him by the door, and stand about the room
         const brothers = ['laman', 'lemuel', 'sam'];
@@ -486,7 +486,7 @@ export function story(g) {
         // the silver by Lemuel, the precious things by Nephi. What is still to gather is listed, and marked.
         const left = new Set(Object.keys(riches));
         while (left.size) {
-          c.objective('Gather your gold, and your silver, and your precious things.', Object.entries(riches).map(([name, r]) => ({ label: r.name, done: !left.has(name) })));
+          c.objective('Gather your gold, and your silver, and your precious things.', 'Gold and silver', Object.entries(riches).map(([name, r]) => ({ label: r.name, done: !left.has(name) })));
           let near = null;
           await c.until(() => {
             const [first] = [...left].sort((a, b) => from(riches[a].at) - from(riches[b].at));
@@ -503,14 +503,14 @@ export function story(g) {
           c.toast(riches[near].taken, '', 3);
         }
         c.lead(null);
-        c.objective('Gather your gold, and your silver, and your precious things.', Object.values(riches).map((r) => ({ label: r.name, done: true })));
+        c.objective('Gather your gold, and your silver, and your precious things.', 'Gold and silver', Object.values(riches).map((r) => ({ label: r.name, done: true })));
         await c.wait(1.2);
         c.objective(null);
         // they carry it out before him, and wait for him in the court
         const out = Promise.all(brothers.map((name, i) => who(name).stop().walk([lehiDoorIn, lehiDoorOut, H((i - 1) * 2.4, 3.5 + i)], 2.3)));
         await say(c, 'givelaban');
         await say(c, 'upagain');
-        c.objective('Go up again unto the house of Laban, inside the city.');
+        c.objective('Go up again unto the house of Laban, inside the city.', 'House of Laban');
         await c.reach(...lehiGate, 3, { via: [lehiDoorIn, lehiDoorOut] });
         // (they keep to the way he came out by: through the court's gate, not its wall)
         out.then(() => {
@@ -582,7 +582,7 @@ export function story(g) {
         for (let tries = 0; ; tries++) {
           const strong = await recall(c, remembered[tries % remembered.length]);
           const wild = leg === 'wild';
-          c.objective(wild ? 'Flee from the servants of Laban! Hide yourselves in the cavity of a rock.' : 'Flee from the servants of Laban! Out of the city, into the wilderness.');
+          c.objective(wild ? 'Flee from the servants of Laban! Hide yourselves in the cavity of a rock.' : 'Flee from the servants of Laban! Out of the city, into the wilderness.', wild ? 'Cavity of a rock' : 'Flee into the wilderness');
           g.hurry(true);
           if (strong) g.music.pluck();
           if (!wild) {
@@ -624,7 +624,7 @@ export function story(g) {
                 // out of the gate: the city is behind him, and they are not
                 if (from(past) < 13) {
                   leg = 'wild';
-                  c.objective('Hide yourselves in the cavity of a rock.');
+                  c.objective('Hide yourselves in the cavity of a rock.', 'Cavity of a rock');
                 }
               }
               // (his strength is spent, and what he carries weighs on him again)
@@ -785,7 +785,7 @@ export function story(g) {
         // "Laman and Lemuel again began to murmur" (3:31)
         await say(c, 'howcan');
         await say(c, 'fifty');
-        c.objective('Speak to your brethren.');
+        c.objective('Speak to your brethren.', 'Your brethren');
         await c.act(...at(who('laman')), 4.5, 'Speak to your brethren');
         c.objective(null);
         await fill(c, 'mightier');
@@ -814,7 +814,7 @@ export function story(g) {
         await fill(c, 'spirit');
         await c.thought('No one marks the way tonight: a light goes before you. Follow it. When you lose it, stand still a moment, and look.');
         g.guidance.lead([hide, gateOut, gateIn, C(-20, 0), C(19.5, 0), C(19.5, 14), fallen]);
-        c.objective(LED);
+        c.objective(LED, 'The light of the Spirit');
         c.lead(null);
         await c.until(() => {
           // (the autopilot goes where the light is)
@@ -894,7 +894,7 @@ export function story(g) {
         who('zoram').place(...beforeTreasury, Math.PI).face(...C(IN_CITY.treasuryDoor[0] - 6, 0));
         await c.fade(0, 1.4);
         g.guidance.lead([me(), C(19.5, 14), C(19.5, 0), C(IN_CITY.treasuryDoor[0] - 6, -1), beforeTreasury]);
-        c.objective(LED);
+        c.objective(LED, 'The light of the Spirit');
         await c.until(() => {
           if (g.auto) c.lead(g.guidance.point && { ...g.guidance.point, r: 1 });
           return from(beforeTreasury) < 6;
@@ -968,7 +968,7 @@ export function story(g) {
         // "And I also bade him that he should follow me" (4:25)
         await say(c, 'followme');
         zoram.follow(g.player, 2.4, 1.2);
-        c.objective('Go forth unto your brethren, who are without the walls.');
+        c.objective('Go forth unto your brethren, who are without the walls.', 'Without the walls');
         await c.reach(...hide, 15, { via: [doorIn, doorOut, C(19.5, 1), C(-20, 0), gateIn, gateOut] });
         g.guidance.shine(null);
       },
@@ -1006,7 +1006,7 @@ export function story(g) {
         const within = P(GATE[0] + 1, 0);
         g.hurry(true);
         for (let tries = 0; ; tries++) {
-          c.objective('Zoram flees back to the city. Come up with him before he is in at the gate, and hold him.');
+          c.objective('Zoram flees back to the city. Come up with him before he is in at the gate, and hold him.', 'Hold Zoram');
           zoram.stop();
           zoram.walk(toGate, 3.8);
           let running = true;

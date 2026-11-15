@@ -14,34 +14,42 @@ const CSS = /* css */ `
   inset: 0; opacity: 0; transition: opacity 0.6s;
   background: radial-gradient(ellipse at 50% 55%, transparent 52%, rgba(255, 196, 110, 0.18) 78%, rgba(255, 180, 90, 0.34) 100%);
 }
-/* The card: one dark panel low on the page, its corners round. Who speaks is written over the words; under them, in
-   one line, where the words are from (at the left) and the way on (at the right). */
+/* The card: a small dark panel low on the page that the picture shows through, its corners round, two thirds as wide
+   as it was (480px, or two thirds of a page narrower than that; no narrower than can be read on a phone held upright). Over the words, in one line, who speaks and where the words
+   are from; beside them, a small round button, the way on. How far it is seen through is --see (1: not at all). */
 #g-card {
-  left: 50%; bottom: max(4vh, calc(22px + env(safe-area-inset-bottom, 0px))); transform: translate(-50%, 12px);
-  width: min(720px, calc(100vw - 28px)); box-sizing: border-box;
-  padding: 16px 20px 13px; background: rgba(38, 29, 19, 0.92); border: 1px solid rgba(227, 189, 109, 0.3); border-radius: 14px;
-  color: var(--ink); opacity: 0; transition: opacity 0.35s, transform 0.35s; z-index: 9;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  --see: 0.66;
+  left: 50%; bottom: max(4vh, calc(18px + env(safe-area-inset-bottom, 0px))); transform: translate(-50%, 12px);
+  width: min(480px, max(67vw, min(340px, calc(100vw - 28px)))); box-sizing: border-box;
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 14px 11px 16px; background: rgb(30 23 15 / var(--see)); border: 1px solid rgba(227, 189, 109, 0.14); border-radius: 12px;
+  color: var(--ink); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); opacity: 0; transition: opacity 0.35s, transform 0.35s; z-index: 9;
 }
 #g-card.on { opacity: 1; transform: translate(-50%, 0); }
-#g-card .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-#g-card .who { color: var(--gold); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
-#g-card .text { font-size: 19px; line-height: 1.5; }
-#g-card.thought .text { font-style: italic; font-size: 18px; color: #efe4cc; }
+#g-card .body { flex: 1; min-width: 0; }
+#g-card .head { display: flex; align-items: baseline; flex-wrap: wrap; margin-bottom: 2px; }
+#g-card .who { color: var(--gold); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+#g-card .text { font-size: 17px; line-height: 1.45; }
+#g-card.thought .text { font-style: italic; font-size: 16px; color: #efe4cc; }
 /* what one of them says in the story's own words: upright, as speech; a little smaller than the scripture */
-#g-card.said .text { font-size: 18px; }
-#g-card .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 9px; }
+#g-card.said .text { font-size: 16px; }
 /* where the words are from. A verse quoted is named in gold; what one of them says in the story's own words, not the
    scripture's, says "from" and the verse in grey, so that it is not taken for scripture */
-#g-card .cite { color: var(--gold); font-size: 13px; letter-spacing: 0.08em; font-variant: small-caps; white-space: nowrap; }
-#g-card .cite.told { color: var(--ink); opacity: 0.55; }
-#g-card .next { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; letter-spacing: 0.04em; opacity: 0.9; white-space: nowrap; cursor: pointer; }
-#g-card .next svg { width: 9px; height: 12px; fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-#g-card .next kbd { font: inherit; font-size: 11px; line-height: 1; padding: 2px 6px 3px; border: 1px solid var(--line); border-radius: 4px; opacity: 0.8; }
-#g-card .hint { margin-top: 9px; text-align: center; font-size: 12px; letter-spacing: 0.1em; opacity: 0.55; }
-#g-card .answers { margin-top: 12px; display: grid; gap: 8px; }
+#g-card .cite { color: var(--gold); font-size: 12px; letter-spacing: 0.08em; font-variant: small-caps; white-space: nowrap; }
+#g-card .cite.told { color: var(--ink); opacity: 0.6; }
+#g-card .who:not(:empty) + .cite::before { content: '·'; margin: 0 7px; color: var(--ink); opacity: 0.6; }
+/* the way on: a small round button with an arrow in it (and, with keys, the key for it before it) */
+#g-card .next { flex: none; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+#g-card .next i {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid rgba(227, 189, 109, 0.55); background: rgba(227, 189, 109, 0.14);
+}
+#g-card .next svg { width: 8px; height: 11px; margin-left: 1px; fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#g-card .next kbd { font: inherit; font-size: 11px; line-height: 1; padding: 2px 6px 3px; border: 1px solid var(--line); border-radius: 4px; opacity: 0.7; }
+#g-card .hint { margin-top: 8px; text-align: center; font-size: 12px; letter-spacing: 0.1em; opacity: 0.55; }
+#g-card .answers { margin-top: 9px; display: grid; gap: 7px; }
 #g-card .answer {
-  padding: 9px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 17px; line-height: 1.4; opacity: 0.72;
+  padding: 8px 13px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; line-height: 1.4; opacity: 0.78;
   pointer-events: auto; cursor: pointer; transition: opacity 0.15s, background 0.15s, border-color 0.15s;
 }
 #g-card .answer.at { opacity: 1; border-color: var(--gold); background: rgba(227, 189, 109, 0.14); }
@@ -52,29 +60,44 @@ const CSS = /* css */ `
 #g-card .answers.row .answer b { display: none; }
 #g-toast .from { display: block; margin-top: 2px; text-align: center; font-size: 12px; letter-spacing: 0.08em; font-variant: small-caps; opacity: 0.55; }
 #g-toast .who { display: block; margin-bottom: 1px; color: var(--gold); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
-/* What to do is said quietly: a thin dark ground with a gold edge, the word Task over it, and no frame. */
+/* What to do, at the top left. It is said once in full, "New task" over it, and is then drawn in to a small pill
+   with a few words of it; pressing the pill (or T) says it in full again for a while. Both are a thin dark ground. */
 #g-objective {
-  left: 20px; top: 20px; width: max-content; max-width: min(400px, calc(100vw - 40px)); box-sizing: border-box;
-  padding: 8px 16px 10px 13px; background: rgba(24, 18, 12, 0.5); border-left: 3px solid var(--gold);
-  border-radius: 4px; color: var(--ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); transform-origin: left top; text-wrap: balance;
+  left: calc(16px + env(safe-area-inset-left, 0px)); top: calc(14px + env(safe-area-inset-top, 0px));
+  width: max-content; max-width: min(400px, calc(100vw - 32px)); box-sizing: border-box;
+  color: var(--ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   opacity: 0; transform: translateX(-12px); transition: opacity 0.5s, transform 0.5s;
 }
-#g-objective.on { opacity: 1; transform: none; }
-#g-objective .label { color: var(--gold); font-size: 13px; font-weight: bold; letter-spacing: 0.24em; text-transform: uppercase; margin-bottom: 2px; }
-#g-objective .text { font-size: 17px; line-height: 1.35; letter-spacing: 0.01em; }
-#g-objective ul { list-style: none; margin: 8px 0 1px; padding: 7px 0 0; border-top: 1px solid var(--line); display: grid; gap: 4px; font-size: 15px; }
+#g-objective.on { opacity: 1; transform: none; pointer-events: auto; cursor: pointer; }
+#g-objective .full, #g-objective .chip { background: rgba(24, 18, 12, 0.6); transform-origin: left top; }
+#g-objective .full { display: none; padding: 7px 15px 9px 12px; border-radius: 10px; text-wrap: balance; }
+#g-objective .chip { display: flex; align-items: center; gap: 8px; padding: 6px 13px 7px 11px; border-radius: 999px; font-size: 14px; }
+#g-objective.open .full { display: block; animation: g-drawn 0.25s ease-out; }
+#g-objective.open .chip { display: none; }
+#g-objective:not(.open) .chip { animation: g-drawn 0.25s ease-out; }
+#g-objective .chip::before, #g-objective .label::before {
+  content: ''; flex: none; display: inline-block; width: 7px; height: 7px; border: 1.5px solid var(--gold); transform: rotate(45deg);
+}
+#g-objective .chip::before { background: var(--gold); }
+#g-objective .label::before { margin: 0 9px 1px 2px; }
+#g-objective .chip span { max-width: 15em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#g-objective .chip kbd { font: inherit; font-size: 10px; line-height: 1; padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; opacity: 0.6; }
+#g-objective .label { color: var(--gold); font-size: 11px; font-weight: bold; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1px; }
+#g-objective .text { font-size: 16px; line-height: 1.35; letter-spacing: 0.01em; }
+#g-objective ul { list-style: none; margin: 7px 0 1px; padding: 6px 0 0; border-top: 1px solid var(--line); display: grid; gap: 4px; font-size: 14px; }
 #g-objective li { display: flex; align-items: baseline; gap: 10px; }
 #g-objective li::before { content: '◇'; color: var(--gold); width: 1em; text-align: center; }
 #g-objective li.done { color: rgba(244, 234, 214, 0.62); }
 #g-objective li.done::before { content: '✓'; }
+@keyframes g-drawn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
 /* a new thing to do draws the eye once: the panel swells and glows, and settles */
-#g-objective.new { animation: g-new 1.6s ease-out; }
+#g-objective.new .full { animation: g-new 1.6s ease-out; }
 @keyframes g-new {
   0% { transform: scale(1.06); background: rgba(104, 76, 28, 0.85); box-shadow: 0 0 0 0 rgba(227, 189, 109, 0.7); }
   35% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(227, 189, 109, 0); }
   100% { transform: none; box-shadow: 0 0 0 10px rgba(227, 189, 109, 0); }
 }
-@media (prefers-reduced-motion: reduce) { #g-objective.new { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #g-objective .full, #g-objective .chip { animation: none !important; } }
 /* Low on the screen, where the cards are: the prompt to act, and under it the verse that is read while the walk
    goes on. Each takes room only while it is shown, so the prompt sits just above whatever is under it. (What to do
    is at the top left, and the scripture's words at the bottom: the two are never in the one place.) */
@@ -296,16 +319,13 @@ const CSS = /* css */ `
   .g-screen .journeys .go { justify-items: start; grid-auto-flow: column; justify-content: start; align-items: center; }
 }
 @media (max-width: 600px) {
-  #g-card .text, #g-card.said .text, #g-card.thought .text { font-size: 16px; }
-  #g-card { padding: 14px 16px 11px; }
-  #g-card .answer { font-size: 16px; }
-  #g-objective { left: 12px; top: 12px; max-width: calc(100vw - 24px); }
+  #g-card .text, #g-card.said .text, #g-card.thought .text { font-size: 15px; }
+  #g-card { padding: 9px 12px 10px 14px; gap: 10px; }
+  #g-card .answer { font-size: 15px; }
 }
-/* On a small screen the word Task and the line share a row, so the panel is one line high where it can be. */
 @media (max-width: 600px), (max-height: 500px) {
-  #g-objective { padding: 6px 12px 7px 10px; }
-  #g-objective .label { display: inline; margin: 0 8px 0 0; font-size: 11px; letter-spacing: 0.2em; }
-  #g-objective .text { display: inline; font-size: 15px; }
+  #g-objective .full { padding: 6px 13px 7px 10px; }
+  #g-objective .text { font-size: 15px; }
   #g-objective ul { font-size: 14px; margin-top: 6px; padding-top: 6px; gap: 3px; }
 }
 `;
@@ -344,6 +364,32 @@ export function createUI({ touch = false } = {}) {
   let toastTimer = 0;
   let toastGone = 0;
   let objectiveText = null;
+  let objectiveSaid = null;
+  let objectiveShort = null;
+  let objectiveTimer = 0;
+  /** Says what to do in full, for long enough to read it (the longer the line, the longer), and then draws it in. */
+  const openObjective = (letters = 40) => {
+    clearTimeout(objectiveTimer);
+    objective.classList.add('open');
+    objectiveTimer = setTimeout(() => objective.classList.remove('open', 'new'), 3200 + letters * 45);
+  };
+  /** The pill pressed (or T): said in full again; and the full line pressed: drawn in at once. */
+  const toggleObjective = () => {
+    if (!objectiveText) return;
+    if (objective.classList.contains('open')) {
+      clearTimeout(objectiveTimer);
+      objective.classList.remove('open', 'new');
+    } else {
+      objective.classList.remove('new');
+      const label = objective.querySelector('.label');
+      if (label) label.textContent = 'Task';
+      openObjective(objectiveText.length + (objective.querySelector('ul') ? 30 : 0));
+    }
+  };
+  objective.addEventListener('click', toggleObjective);
+  addEventListener('keydown', (e) => {
+    if (e.code === 'KeyT' && !e.repeat && !e.metaKey && !e.ctrlKey && !/^(INPUT|TEXTAREA)$/.test(e.target?.tagName ?? '')) toggleObjective();
+  });
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   /** Who is speaking now ('' for no one): told to whoever asked to hear (speaker, below), for the name over his head. */
   let heardBy = null;
@@ -380,12 +426,12 @@ export function createUI({ touch = false } = {}) {
         // (a few short answers lie side by side; longer ones, one under another)
         const row = answers && answers.length <= 3 && answers.every((a) => a.length <= 12);
         const list = answers ? `<div class="answers${row ? ' row' : ''}">${answers.map((a, i) => `<div class="answer${i === at ? ' at' : ''}" data-i="${i}"><b>${i + 1}</b>${esc(a)}</div>`).join('')}</div>` : '';
-        // a card that asks has its reference beside the name, and its answers are the way on; one that is read has
-        // its reference under the words, and Next beside it
-        const head = who || (answers && cite) ? `<div class="head"><span class="who">${esc(who)}</span>${answers ? cite : ''}</div>` : '';
-        const next = `<span class="next">${touch ? '' : '<kbd>E</kbd>'}Next<svg viewBox="0 0 9 12" aria-hidden="true"><path d="M2 1.5 7 6 2 10.5"/></svg></span>`;
-        const foot = answers ? (hint ? `<div class="hint">${esc(hint)}</div>` : '') : `<div class="foot">${cite}${next}</div>`;
-        card.innerHTML = `${head}<div class="text">${esc(text)}</div>${list}${foot}`;
+        // over the words, in one line: who speaks, and where the words are from
+        const head = who || cite ? `<div class="head"><span class="who">${esc(who)}</span>${cite}</div>` : '';
+        // a card that asks has its answers for the way on; one that is read has the round button beside its words
+        const next = answers ? '' : `<span class="next" role="img" aria-label="Next">${touch ? '' : '<kbd>E</kbd>'}<i><svg viewBox="0 0 9 12" aria-hidden="true"><path d="M2 1.5 7 6 2 10.5"/></svg></i></span>`;
+        const foot = answers && hint ? `<div class="hint">${esc(hint)}</div>` : '';
+        card.innerHTML = `<div class="body">${head}<div class="text">${esc(text)}</div>${list}${foot}</div>${next}`;
         speaks(who);
         for (const a of card.querySelectorAll('.answer')) a.addEventListener('click', () => onPick?.(Number(a.dataset.i)));
       },
@@ -395,19 +441,35 @@ export function createUI({ touch = false } = {}) {
       },
     },
     /**
-     * What to do now, in a panel at the top left: a line, and under it a list of [{ label, done }] if the thing has
-     * parts. Null takes it away. A new line draws the eye once; a list that only changes does not.
+     * What to do now, at the top left: a line, and under it a list of [{ label, done }] if the thing has parts. Null
+     * takes it away. It is said in full, "New task" over it, and then drawn in to a pill with a few words of it
+     * (`short`: "Gate of Jerusalem"; the line itself, cut short, where none is given), which says it in full again
+     * when it is pressed. A new line draws the eye once; one that only changes (a part done) is said in full again,
+     * without that. Called as (text, list), (text, short) or (text, short, list).
      */
-    objective(text, list = null) {
+    objective(text, a = null, b = null) {
+      const short = typeof a === 'string' ? a : '';
+      const list = typeof a === 'string' ? b : a;
       if (text) {
         const items = list ? `<ul>${list.map((i) => `<li class="${i.done ? 'done' : ''}">${esc(i.label)}</li>`).join('')}</ul>` : '';
-        objective.innerHTML = `<div class="label">Task</div><div class="text">${esc(text)}</div>${items}`;
-        if (text !== objectiveText) {
+        const said = `${text}${items}`;
+        // (a new thing to do: another line, or the same pill named for another)
+        const fresh = short ? short !== objectiveShort : text !== objectiveText;
+        if (said !== objectiveSaid) {
+          objective.innerHTML = `<div class="full"><div class="label">${fresh ? 'New task' : 'Task'}</div><div class="text">${esc(text)}</div>${items}</div><div class="chip"><span>${esc(short || text)}</span>${touch ? '' : '<kbd>T</kbd>'}</div>`;
           objective.classList.remove('new');
-          // (reading its width starts the animation again from the beginning)
-          void objective.offsetWidth;
-          objective.classList.add('new');
+          if (fresh) {
+            // (reading its width starts the animation again from the beginning)
+            void objective.offsetWidth;
+            objective.classList.add('new');
+          }
+          openObjective(text.length + (list ? 30 : 0));
         }
+        objectiveSaid = said;
+        objectiveShort = short;
+      } else {
+        clearTimeout(objectiveTimer);
+        objectiveSaid = objectiveShort = null;
       }
       objectiveText = text || null;
       objective.classList.toggle('on', !!text);

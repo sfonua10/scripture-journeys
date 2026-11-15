@@ -332,7 +332,7 @@ export function story(g) {
         g.narration?.warm(g.reference('6:1'));
         await c.chapter('Act One', 'An Excellent Spirit', 'Daniel 6');
         await c.verse('6:1');
-        c.objective('Go out by the gate to the king’s seat, where the princes give their accounts.');
+        c.objective('Go out by the gate to the king’s seat, where the princes give their accounts.', 'The king’s seat');
         line(c, '6:2');
         await c.reach(...inCourt, 9, { via: toCourt });
       },
@@ -359,7 +359,7 @@ export function story(g) {
         let heard = 0;
         const list = () => told.map((key, i) => ({ label: EXCERPTS[key].text.replace(/^… /, '').replace(/ …$/, '').replace(/\.$/, ''), done: i < heard }));
         while (heard < givers.length) {
-          c.objective('Hear the accounts of the princes.', list());
+          c.objective('Hear the accounts of the princes.', 'Accounts of the princes', list());
           let near = null;
           await c.until(() => {
             const left = givers.filter((p) => !p.heard).sort((a, b) => from(at(a.n)) - from(at(b.n)));
@@ -376,7 +376,7 @@ export function story(g) {
           await c.wait(g.auto ? 0.4 : 1.6);
         }
         c.lead(null);
-        c.objective('Hear the accounts of the princes.', list());
+        c.objective('Hear the accounts of the princes.', 'Accounts of the princes', list());
         await c.wait(1.2);
         c.objective(null);
         await c.verse('6:4');
@@ -424,7 +424,7 @@ export function story(g) {
           g.log(`chose not to pray (try ${tries + 1})`);
           await part(c, '6:10-a');
         }
-        c.objective('Go into your house.');
+        c.objective('Go into your house.', 'Your house');
         lineOf(c, '6:10-a');
         await c.reach(...doorIn, 1.8, { via: [doorOut] });
         lineOf(c, '6:10-b');
@@ -432,7 +432,7 @@ export function story(g) {
         // more, and a part of what he did is read.
         const HOURS = [7.6, 12.4, 17.6];
         for (let time = 0; time < 3; time++) {
-          c.objective('Kneel at the open window, toward Jerusalem.', ['In the morning', 'At noon', 'At evening'].map((label, i) => ({ label, done: i < time })));
+          c.objective('Kneel at the open window, toward Jerusalem.', 'The open window', ['In the morning', 'At noon', 'At evening'].map((label, i) => ({ label, done: i < time })));
           await c.act(...mat, 1.5, 'Kneel and pray');
           c.objective(null);
           g.standAt(...mat, yawTo(mat, window_));
@@ -543,7 +543,7 @@ export function story(g) {
         g.burden(2.4);
         g.music.drum(0.22);
         lineOf(c, '6:16-a');
-        c.objective('Go with the king’s men to the den.');
+        c.objective('Go with the king’s men to the den.', 'The den');
         await c.reach(...rampFoot, 3.4, { via: [P(ku + 2, kv + 22)] });
         c.objective(null);
         // (the casting in is between one picture and the next)
@@ -630,7 +630,7 @@ export function story(g) {
         const still = Array.from({ length: lions.count }, () => false);
         const count = () => still.filter(Boolean).length;
         while (count() < lions.count) {
-          c.objective(`Walk among the lions. ${count() ? `${count()} of ${lions.count} lie still.` : 'Their mouths are shut.'}`);
+          c.objective(`Walk among the lions. ${count() ? `${count()} of ${lions.count} lie still.` : 'Their mouths are shut.'}`, 'Among the lions');
           let near = -1;
           await c.until(() => {
             light();
@@ -652,7 +652,7 @@ export function story(g) {
           g.music.pluck();
         }
         c.lead(null);
-        c.objective(`Walk among the lions. ${lions.count} of ${lions.count} lie still.`);
+        c.objective(`Walk among the lions. ${lions.count} of ${lions.count} lie still.`, 'Among the lions');
         await c.until(() => (light(), c.time - came > 0) && Array.from({ length: lions.count }, (_, i) => lions.at(i).down).every((d) => d > 0.9));
         c.objective(null);
         // He is safe among them; and above, the king does not sleep (6:18).
@@ -714,7 +714,7 @@ export function story(g) {
         await part(c, '6:20-said');
         g.view(null);
         c.freeze(false);
-        c.objective('Answer the king.');
+        c.objective('Answer the king.', 'Answer the king');
         await c.act(...under, 3.2, 'Answer the king');
         c.objective(null);
         c.freeze(true);
@@ -761,7 +761,7 @@ export function story(g) {
         await c.verse('6:24');
         await c.fade(0, 1.2);
         // the king goes to his seat, and writes to all people
-        c.objective('Go with the king to his seat.');
+        c.objective('Go with the king to his seat.', 'The king’s seat');
         const seated = king.walk([P(ku + 3, kv + 12), kingAt], 2.2).then(() => king.face(...P(ku, kv + 16)));
         lineOf(c, '6:25-a');
         await c.reach(...P(ku, kv + 10), 3.2);
