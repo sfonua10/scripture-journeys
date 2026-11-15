@@ -14,7 +14,7 @@
 //   --voice <id> (or ELEVENLABS_VOICE_ID)   --model <id> (eleven_multilingual_v2)   --keep <n> credits back (300)
 //   --left <n>: suppose n credits are left (with --dry, to see what a smaller allowance would leave out)
 //   --plain: send the names as they are spelt, not as they are said (NAMES, below)
-//   --story <id>: the journey to make them for (STORIES, below): plates-of-brass unless said, or fiery-furnace
+//   --story <id>: the journey to make them for (STORIES, below): plates-of-brass unless said
 //
 // Who reads what. What is told is read by the narrator (--voice). What someone says, on a card under their name, is
 // read in that one's own voice, where the journey gives them one (its `cast`, below: Nephi, Lehi, Sariah, Laban …);
@@ -112,12 +112,29 @@ const STORIES = {
     scripture: ['src/game/scripture-daniel.js', 'daniel'],
     key: ['3:1', '3:6', '3:12', '3:15', '3:16-said', '3:17', '3:18', '3:25-said', '3:27', '3:28-said'],
     names: { Nebuchadnezzar: 'Neb-uh-kud-nezz-er', Shadrach: 'Shay-drak', Meshach: 'Mee-shak', Abednego: 'Uh-bed-nih-go', Chaldeans: 'Kal-dee-uns', Dura: 'Doo-ruh' },
+    // What is told is read by the narrator; who speaks, speaks in a voice of their own (the names are
+    // scripture-daniel.js's SPEAKERS). The fourth in the fire says nothing, and is given no voice.
+    cast: {
+      Nebuchadnezzar: 'pNInz6obpgDQGcFmaJgB', // Adam: a man, dominant and firm
+      // (the three answer as one, 3:16–18: one voice, a young man's, as Nephi's is in his own journey)
+      'Shadrach, Meshach, and Abednego': 'TX3LPaxmHKxFdv7VOQHJ', // Liam: a young man
+      'The herald': 'onwK4e9ZLuTAKqWW03F9', // Daniel: a man, steady and formal, as one who cries aloud
+      'Certain Chaldeans': 'N2lVS1w4EtoT3dr4eOWO', // Callum: a man, rough
+      'The king’s counsellors': 'cjVigY5qzO86Huf0OWal', // Eric: a man, smooth
+    },
   },
   'lions-den': {
     file: 'src/game/lions-den.js',
     scripture: ['src/game/scripture-daniel.js', 'daniel'],
     key: ['6:4', '6:5-said', '6:7', '6:10', '6:11', '6:14', '6:16-said', '6:18', '6:20-said', '6:22', '6:23', '6:26', '6:27'],
     names: { Darius: 'Duh-rye-us', Medes: 'Meeds', Cyrus: 'Sye-rus' },
+    // A lifetime after the furnace, and none of its people: Daniel an old man, a king who is his friend, and the
+    // men who seek occasion against him.
+    cast: {
+      Daniel: 'pqHfZKP75CvOlQylNhV4', // Bill: an old man
+      Darius: 'JBFqnCBsd6RMkjVDRZzb', // George: a man, grave and warm
+      'The presidents and princes': 'cjVigY5qzO86Huf0OWal', // Eric: a man, smooth
+    },
   },
   jonah: {
     file: 'src/game/jonah.js',

@@ -81,7 +81,7 @@ A card of what someone says has their name over it, and under the name only what
 | Two: Before the King | 3:13–18 | The mighty men take you to the king's seat. As he names the furnace you see it. Answer him: fill in "But if ___". |
 | Three: In the Midst of the Fire | 3:19–30 | The furnace is heated seven times more; you are bound and led to it, and on the way remember that "our God whom we serve is ___ to deliver us". In the fire the fourth comes to walk with you; then, as the king saw it, count them. Come forth, and go among the princes and counsellors as the four things they saw (3:27) are told. The king blesses God. |
 
-Four times a verse is shown with a word left out, to be filled in from three, and is then read whole; a wrong answer costs nothing. The fourth in the fire is shown as the king saw him, "like the Son of God" (3:25): a figure in white, in light, who says and does nothing the text does not, and is not seen once they have come forth. The men slain by the flame (3:22) are read of in the dark, not shown. There is no score and no other ending. It has no recorded reading yet (35 recordings, about 4,900 characters, are listed by `node tools/narrate.mjs --story fiery-furnace --dry`); the cards are read on the screen.
+Four times a verse is shown with a word left out, to be filled in from three, and is then read whole; a wrong answer costs nothing. The fourth in the fire is shown as the king saw him, "like the Son of God" (3:25): a figure in white, in light, who says and does nothing the text does not, and is not seen once they have come forth. The men slain by the flame (3:22) are read of in the dark, not shown. There is no score and no other ending. It is read aloud (35 recordings, made by `node tools/narrate.mjs --story fiery-furnace`): what is told by the narrator, and the king, the three (who answer as one, in one voice), the herald, the Chaldeans and the king's counsellors each in a voice of their own (the `cast` in `tools/narrate.mjs`).
 
 ### Babylon, and how sure we are of it
 
@@ -109,7 +109,7 @@ It is told as the Daniel 3 journey is: what is said is a card under the speaker'
 | Three: The Den of Lions | 6:16–18 | The king's men bring you to the den. From its floor you look up to its mouth as the king speaks, and the stone is laid upon it and the light goes. In the dark the lions prowl, their eyes shining. Then there is light, and one in white standing in it, and every lion's mouth is shut. Walk among the lions: each one you come to lies down. The king's sleepless night is read as you rest among them. |
 | Four: The Living God | 6:19–28 | Very early in the morning the stone is drawn off and the king cries down to you. Answer him: fill in "hath shut the lions' ___". You are taken up: fill in "because he ___ in his God". Go with the king to his seat, where he sends his writing to all people. |
 
-Four times a verse is shown with a word left out, as in the Daniel 3 journey; a wrong answer costs nothing. There is no score and no other ending. It has no recorded reading yet (45 recordings, about 5,200 characters, are listed by `node tools/narrate.mjs --story lions-den --dry`).
+Four times a verse is shown with a word left out, as in the Daniel 3 journey; a wrong answer costs nothing. There is no score and no other ending. It is read aloud (45 recordings, made by `node tools/narrate.mjs --story lions-den`): what is told by the narrator, and Daniel, Darius, and the presidents and princes each in a voice of their own.
 
 What is shown, and what is not:
 
