@@ -385,7 +385,8 @@ export function buildScenery(b: LevelBuilder, physics: Physics): Scenery {
   return {
     casters,
     poles: [at(16.2, 15.4), at(18.6, 16.2)],
-    branches: [at(13.2, -25.6), at(24.6, -29.4)],
+    // in the morning shadow of the trees, which falls to the north-west of them
+    branches: [at(11.6, -28.8), at(20.4, -31.8)],
     cloth: at(-20.2, 21.4),
     stones: [at(-5.4, 3.8, 0.3), at(-6.5, 2.5, 0.3), at(-4.7, 5.2, 0.3), at(-4.6, -5.2, 0.3)],
     scrolls: [at(-5.4, -21.3, 0.95), V(26.7, hillY(25, -5) + 4.35, -5.3), at(-31.6, -16.2, 1.0)],
@@ -901,6 +902,8 @@ export class Gourd {
     });
     this.leafMesh.instanceMatrix.needsUpdate = true;
     if (this.leafMesh.instanceColor) this.leafMesh.instanceColor.needsUpdate = true;
+    // a living leaf lets the light through; a dead one does not
+    (this.leafMesh.material as THREE.MeshLambertMaterial).emissive.set(0x1c3c0e).multiplyScalar(1 - smoothstep(0.1, 0.7, w));
     this.stems.forEach((st, i) => {
       const k = clamp01((g - st.born) / 0.05);
       _dir.subVectors(st.b, st.a);
@@ -1063,7 +1066,8 @@ export function buildCity(crowd: number): FarCity {
       if (h > 19) lampAt.push(x + w / 2 + 0.6, y0 + h - rng.range(7, 12), z + rng.range(-4, 4));
     }
     // lamps along the wall and at the gate
-    for (let z = -290; z <= 290; z += 15) lampAt.push(wallX + 5.2, y0 + 15, z + rng.range(-3, 3));
+    for (let z = -296; z <= 296; z += 7.5) lampAt.push(wallX + 5.2, y0 + rng.pick([15, 15, 11, 19]), z + rng.range(-2, 2));
+    for (let z = -300; z <= 300; z += 30) lampAt.push(wallX + 9.2, y0 + 21, z - 2.5, wallX + 9.2, y0 + 21, z + 2.5);
     for (const s of [-1, 1]) lampAt.push(wallX + 12.9, y0 + 9, s * 6.6, wallX + 12.9, y0 + 22, s * 13);
     // palms and gardens outside the wall, along the water
     for (let i = 0; i < 46; i++) {
@@ -1130,7 +1134,7 @@ export function buildCity(crowd: number): FarCity {
   const peopleGeo = new THREE.BufferGeometry();
   const peoplePos = new Float32Array(count * 3);
   peopleGeo.setAttribute('position', new THREE.BufferAttribute(peoplePos, 3));
-  const people = new THREE.Points(peopleGeo, new THREE.PointsMaterial({ color: 0x4a3a2e, map: dotTexture(), alphaTest: 0.4, size: 2.4, sizeAttenuation: true, fog: true }));
+  const people = new THREE.Points(peopleGeo, new THREE.PointsMaterial({ color: 0x4a3a2e, map: dotTexture(), alphaTest: 0.4, size: 1.3, sizeAttenuation: true, fog: true }));
   people.frustumCulled = false;
   group.add(people);
 

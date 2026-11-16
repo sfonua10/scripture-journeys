@@ -382,7 +382,7 @@ export class Plant extends Chapter {
       this.heat = Math.max(0, this.heat - dt * 0.2);
       g.hud.meter('heat', null);
     } else {
-      const rise = (g.story ? 0.027 : 0.04) * force * (1 - this.shade);
+      const rise = (g.story ? 0.04 : 0.065) * force * (1 - this.shade);
       // in the east wind there is no cool anywhere, only less heat
       const scorch = this.phase === 'wind' ? 0.016 + 0.05 * clamp01((this.windClock - 30) / 10) : 0;
       const cool = this.phase === 'wind' ? 0 : 0.2 * Math.max(this.shade, 1 - smoothstep(0, 0.1, force)) - 0.02;
@@ -849,8 +849,10 @@ export class Plant extends Chapter {
     yield 1.4;
     yield g.hud.verse(cite('4:10'), { block: true });
     yield 0.5;
-    g.cam.setShot({ pos: V(5.4, 2.7, 1.2), look: V(-170, -12.5, 2), fov: 15 }, 16);
-    yield 2.2;
+    // past the dead vine, to what he has been watching: the city, its people on the road, the herds
+    g.cam.setShot({ pos: V(-3.8, 1.9, 1.7), look: V(-170, -10.5, -6), fov: 40 }, 0);
+    g.cam.setShot({ pos: V(-4.4, 2.0, 1.5), look: V(-170, -12.6, 4), fov: 17 }, 20);
+    yield 2.4;
     yield g.hud.verse(cite('4:11'), { block: true });
     yield 2.2;
   }
