@@ -220,7 +220,7 @@ export class Nineveh extends Chapter {
     }
 
     // the word crossing the whole city at the close: a ring of light that runs out over the roofs
-    this.wave = new THREE.Mesh(new THREE.RingGeometry(0.95, 1, 128), new THREE.MeshBasicMaterial({ color: 0xfff0c8, transparent: true, opacity: 0.5, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false }));
+    this.wave = new THREE.Mesh(new THREE.RingGeometry(0.95, 1, 128), new THREE.MeshBasicMaterial({ color: 0xfff0c8, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false }));
     this.wave.rotation.x = -Math.PI / 2;
     this.wave.position.set(TOP.x, 1.2, TOP.z);
     this.wave.visible = false;

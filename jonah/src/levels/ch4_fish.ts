@@ -389,6 +389,8 @@ export class Fish extends Chapter {
   start() {
     const g = this.g;
     g.touch.setSlide(true, 'Dive');
+    // nothing in the deep or the fish is used: the button comes only if something is in reach
+    g.touch.idleAction = null;
     g.audio.play('fish');
     g.run(() => this.story());
   }

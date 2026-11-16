@@ -233,6 +233,7 @@ export class Game implements MenuHost {
     this.cam.frameTilt = 0.3;
     this.audio.quiet();
     this.touch.setSlide(false);
+    this.touch.idleAction = 'Use';
     this.touch.setJump('Jump');
   }
 

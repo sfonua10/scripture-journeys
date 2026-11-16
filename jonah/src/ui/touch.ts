@@ -138,13 +138,18 @@ export class TouchControls {
     this.slide.textContent = label;
   }
 
+  /** The Action button's word when nothing is in reach; null puts it away then. */
+  idleAction: string | null = 'Use';
+
   setJump(label: string) {
     this.jump.textContent = label;
   }
 
   /** The Action button's word and whether there is something to use. */
   setAction(label: string | null, progress = 0) {
-    const text = label ?? 'Use';
+    // a chapter with nothing to use puts the button away until something is in reach
+    this.action.classList.toggle('off', label === null && this.idleAction === null);
+    const text = label ?? this.idleAction ?? 'Use';
     if (text !== this.actionLabel) {
       this.actionLabel = text;
       // keep it to a word or two: the button is small
