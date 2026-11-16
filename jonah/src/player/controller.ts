@@ -106,6 +106,8 @@ export class Player {
   climbZones: ClimbZone[] = [];
   interactables: Interactable[] = [];
   canSlide = true;
+  /** While above 0 he is kept sliding at about this speed (a long slope): steered by the stick, Jump still hops. */
+  slideHold = 0;
   canGrab = true;
   canCarry = true;
   /** Below this the player has fallen out of the level. */
@@ -445,7 +447,7 @@ export class Player {
         this.onStep(this.surface, sp / this.runSpeed);
       }
       this.figure.phase += (sp * dt) / (stride * 2);
-      if (inp.slide.pressed && this.canSlide && !carrying && sp > 3.2) this.enterSlide();
+      if (((inp.slide.pressed && sp > 3.2) || this.slideHold > 0) && this.canSlide && !carrying) this.enterSlide();
     } else {
       this.state = 'air';
       this.airTime += dt;
@@ -619,18 +621,19 @@ export class Player {
   private moveSlide(dt: number) {
     this.slideTimer -= dt;
     const sp = this.speed2D;
-    const next = approach(sp, 4.6, 6.5 * dt);
+    const held = this.slideHold > 0;
+    const next = held ? approach(sp, this.slideHold, 14 * dt) : approach(sp, 4.6, 6.5 * dt);
     if (sp > 0.01) {
-      // a little steering
+      // a little steering (more of it on a long slope)
       const d = _d.set(this.vel.x / sp, 0, this.vel.z / sp);
-      d.addScaledVector(this.wish, this.wishMag * 1.6 * dt).normalize();
+      d.addScaledVector(this.wish, this.wishMag * (held ? 2.6 : 1.6) * dt).normalize();
       this.vel.x = d.x * next;
       this.vel.z = d.z * next;
       this.yaw = Math.atan2(d.x, d.z);
     }
     this.vel.y = Math.max(-34, this.vel.y - this.gravity * this.fallMultiplier * dt);
     _v.set(this.vel.x + this.push.x, this.vel.y, this.vel.z + this.push.z).multiplyScalar(dt);
-    if (this.grounded) _v.y = -0.02;
+    if (this.grounded) _v.y = held ? -0.02 - sp * dt * 0.6 : -0.02;
     const moved = this.sweep(_v);
     this.pos.add(moved);
     this.grounded = this.cc.computedGrounded();
@@ -641,7 +644,7 @@ export class Player {
     this.stepDist += sp * dt;
     const room = this.headroom();
     // (the body takes a step to settle into its smaller shape, so a moment in the air is not a fall)
-    const wantsUp = this.slideTimer <= 0 || this.buffer > 0 || this.slideAir > 0.12 || sp < 1;
+    const wantsUp = held ? this.buffer > 0 && this.grounded : this.slideTimer <= 0 || this.buffer > 0 || this.slideAir > 0.12 || sp < 1;
     if (wantsUp && room) {
       this.setSmall(false);
       this.state = this.grounded ? 'ground' : 'air';
