@@ -1145,7 +1145,7 @@ export class Nineveh extends Chapter {
     this.phase = 'call';
     g.hud.cinema(true);
     p.lock('idle');
-    g.cam.setShot({ pos: V(6.5, 2.6, 71), look: V(-1.5, 6.2, 40), fov: 46 }, 0);
+    g.cam.setShot(this.shot(V(6.5, 2.6, 71), V(-1.5, 6.2, 40), 46, 1.4), 0);
     yield 1.4;
     yield g.hud.verse(citeRange('3:1', '3:2'), { block: true });
     g.cam.setShot(null, 1.6);
@@ -1159,10 +1159,10 @@ export class Nineveh extends Chapter {
     // through the gate: the city opens before him
     g.hud.cinema(true);
     p.lock('idle');
-    g.cam.setShot({ pos: V(-3, 12.5, 43), look: V(1.5, 2, 6), fov: 56 }, 1.8);
+    g.cam.setShot(this.shot(V(-3, 12.5, 43), V(1.5, 2, 6), 56, 1), 1.8);
     g.audio.bed('crowd', 0.5);
     yield 0.8;
-    g.cam.setShot({ pos: V(2, 14.5, 40), look: V(0, 3, -30), fov: 52 }, 5);
+    g.cam.setShot(this.shot(V(2, 14.5, 40), V(0, 3, -30), 52, 1), 5);
     yield g.hud.verse(part('3:3', 'Now Nineveh'), { seconds: 5.2 });
     g.cam.setShot(null, 1.4);
     p.unlock();
@@ -1266,9 +1266,9 @@ export class Nineveh extends Chapter {
     this.far.sweep(TOP.x, TOP.z, WAVE);
     this.wave.visible = true;
     this.waveT = 0;
-    g.cam.setShot({ pos: V(0, 27, -24), look: V(0, 3, -50), fov: 52 }, 2.2);
+    g.cam.setShot(this.shot(V(0, 27, -24), V(0, 3, -50), 52, 1.3), 2.2);
     yield 2.6;
-    g.cam.setShot({ pos: V(38, 50, 30), look: V(-3, 0, -38), fov: 50 }, 6.5);
+    g.cam.setShot(this.shot(V(38, 50, 30), V(-3, 0, -38), 50, 1.3), 6.5);
     yield g.hud.verse(cite('3:5'), { block: true });
     yield* waitFor(() => this.crowd.count().turned >= all.total, 9);
     g.hud.meter('souls', null);
@@ -1278,8 +1278,8 @@ export class Nineveh extends Chapter {
     for (const f of this.court) f.root.visible = f !== this.kingSack;
     const run = this.runner;
     run.root.position.set(0.4, 0, -78.2);
-    g.cam.setShot({ pos: V(6.2, 5.0, -82.6), look: V(-0.5, 4.5, -91), fov: 42 }, 0);
-    g.cam.setShot({ pos: V(5.6, 5.0, -84), look: V(-0.3, 4.6, -91), fov: 40 }, 6);
+    g.cam.setShot(this.shot(V(6.2, 5.0, -82.6), V(-0.5, 4.5, -91), 42, 1.25), 0);
+    g.cam.setShot(this.shot(V(5.6, 5.0, -84), V(-0.3, 4.6, -91), 40, 1.25), 6);
     g.run(() => this.walk(run, [V(0.4, 3, -82.2), V(2.1, 3, -86.6)], 3.2, 'bow'));
     const read = g.hud.verse(cite('3:6'), { block: true });
     yield 2.6;
@@ -1289,7 +1289,7 @@ export class Nineveh extends Chapter {
     for (const n of this.nobles) n.pose = 'talk';
     yield 0.9;
     // and he laid his robe from him, and covered him with sackcloth
-    g.cam.setShot({ pos: V(4.6, 5.6, -86.2), look: V(-0.2, 4.5, -91.2), fov: 38 }, 1.6);
+    g.cam.setShot(this.shot(V(4.6, 5.6, -86.2), V(-0.2, 4.5, -91.2), 38), 1.6);
     yield 0.9;
     this.kingSack.root.position.copy(this.king.root.position);
     this.kingSack.root.rotation.y = 0;
@@ -1312,7 +1312,7 @@ export class Nineveh extends Chapter {
     for (const n of this.nobles) n.pose = 'bow';
     yield 1.0;
     // and sat in ashes
-    g.cam.setShot({ pos: V(-3.8, 4.5, -82.2), look: V(0.3, 3.8, -87.2), fov: 42 }, 2.6);
+    g.cam.setShot(this.shot(V(-3.8, 4.5, -82.2), V(0.3, 3.8, -87.2), 42), 2.6);
     yield* this.walk(this.kingSack, [V(0, 3.6, -89.5), V(0, 3, -88.5), V(0, 3, -86.6)], 3.4, 'idle');
     this.kingSack.root.rotation.y = 0.25;
     this.kingSack.pose = 'sit';
@@ -1334,10 +1334,10 @@ export class Nineveh extends Chapter {
       h.pose = 'cry';
       h.snap();
     }
-    g.cam.setShot({ pos: V(-5.2, 6.6, -66.6), look: V(0.6, 5.6, WALL_C), fov: 46 }, 0);
+    g.cam.setShot(this.shot(V(-5.2, 6.6, -66.6), V(0.6, 5.6, WALL_C), 46, 1), 0);
     g.audio.shout(0.9, 0.9);
     yield g.hud.verse(part('3:7', undefined, 'his nobles'), { seconds: 5 });
-    g.cam.setShot({ pos: V(4.6, 7.4, -67.4), look: V(-0.4, 5.2, WALL_C), fov: 44 }, 9);
+    g.cam.setShot(this.shot(V(4.6, 7.4, -67.4), V(-0.4, 5.2, WALL_C), 44, 1), 9);
     g.audio.shout(1.05, 0.9);
     const who = 'The decree of the king and his nobles';
     yield g.hud.verse(part('3:7', 'Let neither man'), { who, block: true });
@@ -1347,8 +1347,8 @@ export class Nineveh extends Chapter {
 
     // ---- and God saw their works
     for (const h of heralds) h.pose = 'kneel';
-    g.cam.setShot({ pos: V(-40, 44, 22), look: V(4, 0, -52), fov: 48 }, 0);
-    g.cam.setShot({ pos: V(-30, 54, 30), look: V(4, 0, -56), fov: 46 }, 14);
+    g.cam.setShot(this.shot(V(-40, 44, 22), V(4, 0, -52), 48, 1.3), 0);
+    g.cam.setShot(this.shot(V(-30, 54, 30), V(4, 0, -56), 46, 1.3), 14);
     g.audio.play('calm');
     g.run(() => tween(8, (t) => (this.dusk = t)));
     yield 1.2;
@@ -1358,6 +1358,15 @@ export class Nineveh extends Chapter {
     this.phase = 'done';
     g.hud.cinema(false);
     g.complete(every);
+  }
+
+  /**
+   * A staged picture. They are composed for a wide screen; on a tall one the camera stands further back along the
+   * same line (where there is room: `back`) and looks with a wider eye, so that what matters stays in the frame.
+   */
+  private shot(pos: THREE.Vector3, look: THREE.Vector3, fov: number, back = 1.5): Shot {
+    if (this.g.engine.camera.aspect >= 1) return { pos, look, fov };
+    return { pos: look.clone().add(pos.clone().sub(look).multiplyScalar(back)), look, fov: Math.min(80, fov * 1.5) };
   }
 
   /** A figure walks a line of points in so many seconds, then takes a pose. */
@@ -1575,8 +1584,8 @@ export class Nineveh extends Chapter {
         this.quarterShown = d;
       }
     }
-    // in Story, those still to hear are pointed out once most of a quarter has turned
-    if (g.story && this.canCry) this.pointStragglers();
+    // those still to hear are pointed out: in Story once most of a quarter has turned, otherwise only the last few
+    if (this.canCry) this.pointStragglers();
   }
 
   private pointStragglers() {
@@ -1584,7 +1593,8 @@ export class Nineveh extends Chapter {
     const p = g.player.pos;
     const d = districtOf(zoneOf(p.x, p.z));
     const c = this.crowd.count(d);
-    const show = c.reached / Math.max(1, c.total) > 0.6 && c.reached < c.total;
+    const left = c.total - c.reached;
+    const show = left > 0 && (g.story ? c.reached / Math.max(1, c.total) > 0.6 : left <= 4);
     if (!show) {
       if (this.stragglers) g.hud.marker('straggler', null);
       this.stragglers = false;
