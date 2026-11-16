@@ -56,6 +56,8 @@ export interface Focus {
   /** 0..1 while a hold is in progress. */
   progress: number;
   pos: THREE.Vector3;
+  /** Names the action on the touch button without putting up the prompt bubble (an action always to hand). */
+  quiet?: boolean;
 }
 
 const UP = new THREE.Vector3(0, 1, 0);
