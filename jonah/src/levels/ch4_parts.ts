@@ -587,7 +587,7 @@ export class Weeds {
         const h = zn.height * rng.range(0.8, 1.06);
         _p.set(zn.x + Math.cos(a) * r, zn.y, zn.z + Math.sin(a) * r);
         _q.setFromEuler(_e.set(zn.hangs ? Math.PI : 0, rng.range(0, TAU), 0));
-        _s.set(rng.range(0.5, 0.95), h, 1);
+        _s.set(rng.range(0.7, 1.3), h, 1);
         this.mesh.setMatrixAt(n, _m.compose(_p, _q, _s));
         this.mesh.setColorAt(n, _c.set(colors[rng.int(0, colors.length - 1)]).multiplyScalar(rng.range(0.8, 1.15)));
         n++;

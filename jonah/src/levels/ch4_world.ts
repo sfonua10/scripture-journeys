@@ -370,13 +370,35 @@ export function buildBelly(physics: Physics): Belly {
     b.cyl(BX + x, 2, z, 0.55, 0.8, 18, 0x9087b0, { seg: 8, noLedge: true, shade: 0.3, noShadow: true });
     for (let i = 0; i < 6; i++) glow.push({ pos: V(BX + x + Math.cos(i) * 0.9, 0.4 + i * 0.7, z + Math.sin(i) * 0.9), color: TEAL[i % 3], size: 0.4, sec: 5 });
   }
-  // the throat: a rise out of the water, and three ledges
-  const flesh = 0x7a6aa6;
-  b.ramp(BX, -1.2, 150, 11, 2.2, 8, flesh, { shade: 0.2 });
-  b.block(BX, -1.2, 156.25, 11, 2.2, 4.5, flesh, { shade: 0.2 });
-  b.block(BX, -1.2, 160.25, 17, 3.4, 3.5, 0x8272ae, { shade: 0.25 });
-  b.block(BX, -1.2, 163.75, 17, 4.6, 3.5, 0x8a7ab6, { shade: 0.25 });
-  b.block(BX, -1.2, 172, 17, 5.8, 13, 0x9282be, { shade: 0.25 });
+  // the throat: a rise out of the water, and three ledges, paler toward the way out
+  const steps: [number, number, number, number, number][] = [
+    // z of the middle, length, top, width, colour
+    [156.25, 4.5, 1.0, 11, 0x7466a4],
+    [160.25, 3.5, 2.2, 17, 0x8274ae],
+    [163.75, 3.5, 3.4, 17, 0x9484b8],
+    [172, 13, 4.6, 17, 0xa898c4],
+  ];
+  b.ramp(BX, -1.2, 150, 11, 2.2, 8, 0x6a5c9c, { shade: 0.2 });
+  for (const [z, len, top, wide, col] of steps) {
+    b.block(BX, -1.2, z, wide, top + 1.2, len, col, { shade: 0.3, jitter: 0.03 });
+    const front = z - len / 2;
+    // a soft lip along each rise, lights living in its face, and folds at its ends
+    for (let x = -wide / 2 + 0.8; x < wide / 2; x += 1.55) {
+      b.ball(BX + x + rng.range(-0.2, 0.2), top - 0.16, front + 0.08, rng.range(0.55, 0.8), pale, { squash: V(1.25, 0.34, 0.7), detail: 1, shade: 0.1 });
+      if (rng.chance(0.75)) glow.push({ pos: V(BX + x + rng.range(-0.4, 0.4), top - rng.range(0.35, 0.95), front - 0.12), color: rng.pick(z > 165 ? PEARL : MAGENTA), size: rng.range(0.3, 0.55), sec: z > 165 ? 8 : 7 });
+    }
+    for (const side of [-1, 1]) {
+      const wx = Math.min(wide / 2, bellyHalf(z) - 0.6);
+      b.cyl(BX + side * (wx - 0.5), top + 0.9, z - len / 2 + 1, 0.12, 0.62, 1.9, pale, { seg: 6, collide: false, shade: 0.3 });
+      b.cyl(BX + side * (wx - 1.5), top + 0.55, z - len / 2 + 2.1, 0.08, 0.42, 1.2, pale, { seg: 6, collide: false, shade: 0.3 });
+    }
+  }
+  // the way out: a ring of pale folds at the far end, shut until it is time
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * TAU;
+    b.ball(BX + Math.cos(a) * 3.4, 7.6 + Math.sin(a) * 2.6, 181.5, 2.3, 0xc8b8dc, { squash: V(1, 1, 0.5), detail: 1, shade: 0.2, noShadow: true });
+    glow.push({ pos: V(BX + Math.cos(a) * 2.2, 7.6 + Math.sin(a) * 1.7, 180.2), color: PEARL[i % 3], size: 0.7, sec: 8 });
+  }
 
   // ---- veils
   const veils: (RAPIER.Collider | null)[] = VEILS.map((z) => b.wall(BX, 2, z, 30, 24, 0.5));
@@ -389,6 +411,8 @@ export function buildBelly(physics: Physics): Belly {
       const top = bellyRoof(x, zz) + 0.2;
       weeds.push({ x: BX + x, z: zz, y: top, height: top + 1.7, radius: 1.75, hangs: true });
     }
+    // lights mark the gap in the row
+    for (const side of [-1, 1]) for (let i = 0; i < 4; i++) glow.push({ pos: V(BX + gap + side * 1.5, 0.35 + i * 0.75, z), color: i % 2 ? 0x8ffff0 : 0xffffff, size: 0.5, sec: 3 });
   }
 
   // ---- lights that live here, asleep until the words wake them

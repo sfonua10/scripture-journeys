@@ -19,7 +19,7 @@
 import * as THREE from 'three';
 import type { Quality } from '../core/quality';
 import { tween, type Routine } from '../core/script';
-import { TAU, clamp01, damp, ease, lerp, smoothstep } from '../core/util';
+import { TAU, clamp, clamp01, damp, ease, lerp, smoothstep } from '../core/util';
 import type { Bot } from '../game/bot';
 import { Chapter } from '../game/chapter';
 import { cite, part } from '../game/verses';
@@ -31,7 +31,7 @@ import { dotTexture } from '../gfx/textures';
 import type { Shot } from '../player/camera';
 import type { Water } from '../player/controller';
 import { Flecks, GlowField, GreatFish, Jellies, WaterSheet, Weeds, type JellySpec, type WeedZone } from './ch4_parts';
-import { BX, FLOOR_Y, LEES, MEET, PEARLS, ROOMS, SCROLL_DEEP, SEC_NIGHT, SHELF, SILL, SLABS, SLAB_T, SPAR_TOP, STONES, SX, VEILS, WEED_ROWS, buildBelly, buildDeep, buildShore, shoreY, type Belly, type Deep } from './ch4_world';
+import { BX, FLOOR_Y, HOLE, LEES, MEET, PEARLS, ROOMS, SCROLL_DEEP, SEC_NIGHT, SHELF, SILL, SLABS, SLAB_T, SPAR_TOP, STONES, SX, VEILS, WEED_ROWS, buildBelly, buildDeep, buildShore, shoreY, type Belly, type Deep } from './ch4_world';
 
 type Phase = 'sink' | 'fish' | 'belly' | 'stones' | 'weeds' | 'tide' | 'turn' | 'vow' | 'shore' | 'done';
 const ORDER: Phase[] = ['sink', 'fish', 'belly', 'stones', 'weeds', 'tide', 'turn', 'vow', 'shore', 'done'];
@@ -150,7 +150,7 @@ export class Fish extends Chapter {
     // ---- the deep
     this.deep = buildDeep(g.physics);
     g.root.add(this.deep.group);
-    this.deepWeeds = new Weeds(this.deep.weeds, [0x3f8a52, 0x56963e, 0x2f7a62, 0x6a8a34], 9, q.level === 'low' ? 5 : 8);
+    this.deepWeeds = new Weeds(this.deep.weeds, [0x3f8a52, 0x56963e, 0x2f7a62, 0x6a8a34], 9, q.level === 'low' ? 6 : 11);
     g.root.add(this.deepWeeds.mesh);
     this.deepGlow = new GlowField(this.deep.glow, 1);
     this.deepGlow.lit[0] = 1;
@@ -175,7 +175,7 @@ export class Fish extends Chapter {
     // ---- the belly of the fish
     this.belly = buildBelly(g.physics);
     g.root.add(this.belly.group, this.belly.flotsam.mesh);
-    this.bellyWeeds = new Weeds(this.belly.weeds, [0x2f8a72, 0x3a7a8a, 0x4a6a9a], 14, q.level === 'low' ? 6 : 9);
+    this.bellyWeeds = new Weeds(this.belly.weeds, [0x2f8a72, 0x3a7a8a, 0x4a6a9a], 14, q.level === 'low' ? 6 : 10);
     g.root.add(this.bellyWeeds.mesh);
     this.bellyGlow = new GlowField(this.belly.glow, 0.05);
     g.root.add(this.bellyGlow.object);
@@ -280,7 +280,15 @@ export class Fish extends Chapter {
       grade.bloom = 0.8;
       grade.threshold = 0.7;
       grade.exposure = 1.12;
-      g.cam.hint = () => ({ pitch: 0.8, dist: 7.6, strength: 1.3 });
+      // look down the shaft where it is open above him; under a shelf, look along the room instead
+      g.cam.hint = (at) => {
+        let room = 99;
+        for (const s of SLABS) {
+          const under = s.y - SLAB_T / 2;
+          if (under > at.y && under - at.y < room && !(Math.abs(at.x - s.x) < HOLE - 0.4 && Math.abs(at.z - s.z) < HOLE - 0.4)) room = under - at.y;
+        }
+        return { pitch: clamp((room - 2.4) / 7.5, 0.14, 0.8), dist: 7, strength: 1.3 };
+      };
       g.audio.bed('deep', 0.7);
       g.audio.bed('waves', 0);
       g.audio.bed('wind', 0);
