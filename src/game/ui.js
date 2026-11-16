@@ -234,6 +234,10 @@ const CSS = /* css */ `
 .g-screen .box { padding: 24px 0; }
 /* the list of journeys: plain, over the painting dimmed right down, so that the rows are what is looked at */
 #g-title { background: rgba(14, 10, 6, 0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+/* one journey's name and a button to begin it (a journey opened by its own address), over the land dimmed */
+#g-begin { background: rgba(14, 10, 6, 0.72); }
+#g-begin .sub { margin-bottom: 10px; }
+#g-begin button { margin-top: 26px; min-width: 180px; padding: 13px 26px; border-radius: 8px; }
 #g-title h1 { font-size: 14px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--gold); margin: 0; }
 .g-screen .journeys { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 10px; text-align: left; }
 .g-screen .journeys li {
@@ -361,6 +365,7 @@ export function createUI({ touch = false } = {}) {
   const chapter = el('div', 'g-chapter');
   const title = el('div', 'g-title', 'g-screen');
   const end = el('div', 'g-end', 'g-screen');
+  const begin = el('div', 'g-begin', 'g-screen');
   let toastTimer = 0;
   let toastGone = 0;
   let objectiveText = null;
@@ -631,6 +636,25 @@ export function createUI({ touch = false } = {}) {
     },
     hideTitle() {
       title.classList.remove('on');
+    },
+    /**
+     * One journey's name and a button to begin it, for a journey opened by its own address: the browser lets sound
+     * start only from a touch or a click, and this is the one asked for. `go` is called in the press itself (a
+     * browser counts only what is done there, not what follows a moment after); resolves when it has been pressed.
+     */
+    begin({ title: name, ref, label = 'Begin', go = null }) {
+      begin.innerHTML = `<div class="box"><div class="sub">${esc(ref)}</div><h1>${esc(name)}</h1><button>${esc(label)}</button></div>`;
+      begin.classList.add('on');
+      const btn = begin.querySelector('button');
+      // (to hand for Enter where there are keys; a finger needs no ring drawn round it)
+      if (window.matchMedia?.('(hover: hover)').matches) btn.focus({ preventScroll: true });
+      return new Promise((done) => {
+        btn.addEventListener('click', () => {
+          go?.();
+          begin.classList.remove('on');
+          done();
+        });
+      });
     },
     /**
      * The end of a journey: its name, the verse it is from, one thing to talk about together, and the ways on.

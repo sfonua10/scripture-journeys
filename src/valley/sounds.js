@@ -117,10 +117,27 @@ export function createSounds(base = './audio/') {
         buffers.crickets ??= makeCrickets(ctx);
       }
     },
+    /**
+     * Wakes the sound where the browser holds it back. A browser lets sound begin only from a touch, a click or a
+     * key, so this is called from each of them (main.js); a phone also stops it when the page is left (its state is
+     * then 'interrupted', not 'suspended'), and the next touch gives it back.
+     */
+    wake() {
+      if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+    },
+    /**
+     * Whether sound can be heard now: asked before a journey begins by itself, with no touch on this page to let
+     * the sound start (a journey opened by its own address). Where there is no sound at all, there is none to wait on.
+     */
+    async allowed(wait = 300) {
+      if (!ctx) return true;
+      if (ctx.state !== 'running') await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, wait))]);
+      return ctx.state === 'running';
+    },
     /** Call from a click. */
     start() {
       if (!ctx) return;
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state !== 'running') ctx.resume().catch(() => {});
       if (begun) return;
       begun = true;
       for (const name of LOOPS) {

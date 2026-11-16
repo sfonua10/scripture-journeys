@@ -265,6 +265,7 @@ node tools/story.mjs --beat a3 --snap "4:6,4:9" --quality medium --out shots/sto
 node tools/look.mjs city:120,0,0,4,50 --out shots/work                               # a still from any place (u, v, turn, pitch, fov)
 node tools/touch.mjs                                                                 # the touch controls, on a phone-sized touch page
 node tools/narration-check.mjs                                                       # the reading aloud, with a stand-in recording
+node tools/sound-check.mjs                                                           # a journey opened by its own address is heard: a button to begin it where sound waits on a touch
 node tools/narrate.mjs --cast                                                        # who reads what in the first journey: each speaker's voice
 node tools/fps.mjs --query "quality=medium&beat=a2-laban"                            # frame rate
 node tools/story.mjs --query "story=fiery-furnace"                                   # the Daniel journey, to its end

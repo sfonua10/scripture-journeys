@@ -804,6 +804,8 @@ function setWind(speed) {
   field.setWind(wind.angle, wind.speed);
 }
 
+// (a browser lets sound begin only from a touch, a click or a key: any of them wakes it, wherever on the page it lands)
+for (const type of ['touchend', 'click', 'keydown']) addEventListener(type, () => sounds.wake(), { capture: true, passive: true });
 canvas.addEventListener('click', () => {
   sounds.start();
   if (touch) return;
@@ -1328,6 +1330,17 @@ function openJourney(id, go) {
       const bare = new URL(location.href);
       bare.searchParams.delete('go');
       history.replaceState(null, '', bare);
+      // A journey that begins by itself has had no touch on this page, and without one a browser lets no sound start:
+      // on a phone the journey went on unheard (a journey opened by its own address, or the first visit). Where the
+      // sound is held back so, the journey's name is shown with a button to begin it, and the press starts the sound.
+      if (!(await sounds.allowed())) {
+        ui.fade(0, 0);
+        document.body.classList.add('menu');
+        await ui.begin({ title: journey.title, ref: journey.ref, label: pick.go === 'continue' && director.saved() ? 'Continue' : 'Begin', go: () => sounds.start() });
+        document.body.classList.remove('menu');
+        ui.fade(1, 0.6);
+        if (!touch) canvas.requestPointerLock?.()?.catch?.(() => {});
+      }
     } else {
       ui.fade(0, 0);
       document.body.classList.add('menu');
