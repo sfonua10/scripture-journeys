@@ -122,7 +122,11 @@ export class TouchControls {
     canvas.addEventListener('pointercancel', end);
   }
 
+  /** Whether the thumb controls are on screen. */
+  shown = false;
+
   show(on: boolean) {
+    this.shown = on;
     if (on === this.enabled) return;
     this.enabled = on;
     this.root.classList.toggle('on', on);

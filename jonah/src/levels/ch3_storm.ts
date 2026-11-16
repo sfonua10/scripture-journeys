@@ -1058,7 +1058,7 @@ export class Storm extends Chapter {
     for (let i = 0; i < 6; i++) {
       const z = -9 + i * 3.6 + this.rng.range(-1, 1);
       this.ship.toWorld(_v.set(side * (hullHalf(z, 0.8) + 0.2), 1.2, z), _w);
-      g.fx.emit(_w, { count: n, color: 0xc8d8d8, color2: 0x8fb0b0, speed: 12, speedVar: 0.6, dir: V(-side, 0.55, 0), spread: 0.45, life: 1.2, gravity: 13, size: 0.42, opacity: 0.75, radius: 1.4, grow: 1.6, drag: 0.6 });
+      g.fx.emit(_w, { count: n, color: 0xc8d8d8, color2: 0x8fb0b0, speed: 12, speedVar: 0.6, dir: V(-side, 0.55, 0), spread: 0.45, life: 1.2, gravity: 13, size: 0.2, opacity: 0.65, radius: 1.6, grow: 1.4, drag: 0.6 });
     }
   }
 
@@ -1259,7 +1259,7 @@ export class Storm extends Chapter {
       this.sprayT = 1.1;
       for (const side of [1, -1]) {
         ship.toWorld(_v.set(side * 1.6, 0.6, 11.3), _w);
-        g.fx.emit(_w, { count: Math.round(34 * g.quality.particles) + 8, color: 0xcfdcdc, color2: 0x9fb8b8, speed: 9, speedVar: 0.5, dir: V(side * 0.7, 1, -0.5), spread: 0.5, life: 1.3, gravity: 11, size: 0.4, opacity: 0.6, radius: 1, grow: 1.8, drag: 0.5 });
+        g.fx.emit(_w, { count: Math.round(70 * g.quality.particles) + 12, color: 0xcfdcdc, color2: 0x9fb8b8, speed: 9, speedVar: 0.5, dir: V(side * 0.7, 1, -0.5), spread: 0.5, life: 1.3, gravity: 11, size: 0.17, opacity: 0.5, radius: 1.2, grow: 1.3, drag: 0.5 });
       }
       if (!below) g.audio.splash(1.4);
     }
@@ -1303,6 +1303,9 @@ export class Storm extends Chapter {
 
     // ---- the crew
     for (const s of this.crew) s.update(dt);
+    // a man the camera has backed into is not drawn, rather than seen from inside
+    const cl = ship.group.worldToLocal(_v.copy(g.engine.camera.position));
+    for (const s of [...this.crew, this.master]) s.fig.root.visible = Math.hypot(cl.x - s.pos.x, cl.z - s.pos.z) > 0.95 || Math.abs(cl.y - s.pos.y - 0.9) > 1.6;
     this.master.update(dt);
     for (const s of [...this.crew, this.master]) {
       if (!s.overboard) continue;

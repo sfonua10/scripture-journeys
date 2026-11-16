@@ -529,7 +529,8 @@ export class Game implements MenuHost {
       _v.y += 1;
       this.scrolls.update(dt, _v);
       const focus = this.promptOverride ?? (p.locked ? null : p.focus);
-      this.hud.prompt(focus);
+      // under a thumb the Action button itself says what it does: a second label over the player is in the way
+      this.hud.prompt(this.touch.shown ? null : focus);
       this.touch.setAction(focus?.prompt ?? null, focus?.progress ?? 0);
       if (this.patchTest) {
         if (!this.testPos) this.testPos = p.pos.clone();
