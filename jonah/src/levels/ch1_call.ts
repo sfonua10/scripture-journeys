@@ -730,6 +730,32 @@ export class Call extends Chapter {
     b.block(0, Y + PLAIN + 5.2, 539.4, 6, 3.4, 4.2, stone, { ...off, mat: 'plaster' });
     b.box(0, Y + PLAIN + 2.6, 538.2, 5.2, 5.2, 0.2, 0x3a2a1e, { ...off, shade: 0 });
     for (let i = 0; i < 18; i++) t.palm(rng.sign() * rng.range(9, 96), PLAIN, i % 3 === 0 ? rng.range(526, 537) : jz + rng.range(-34, 50), rng.range(8, 13));
+    // the last stretch of road before the gate: dry-stone walls along it, olive yards and a vineyard behind them,
+    // stones at the verge, so the walk to the gate has something beside it
+    const wallStone = [0xb8a888, 0xc2b08e, 0xad9c7e];
+    for (const sgn of [-1, 1]) {
+      for (let z = 491; z < 534; ) {
+        const len = rng.range(5, 9);
+        b.block(sgn * rng.range(7.2, 7.8), Y + PLAIN - 0.1, z + len / 2, 0.8, rng.range(0.6, 0.85), len, rng.pick(wallStone), { collide: false, mat: 'stone', shade: 0.3, jitter: 0.06 });
+        z += len + (rng.chance(0.3) ? rng.range(1.5, 3) : 0.1);
+      }
+      for (let i = 0; i < 9; i++) b.ball(sgn * rng.range(5.8, 6.8), Y + PLAIN + 0.1, rng.range(492, 534), rng.range(0.18, 0.42), rng.pick(wallStone), { collide: false, noShadow: true, detail: 0, squash: V(1.3, 0.7, 1.1), jitter: 0.15 });
+    }
+    // olive yards on the one side, in rows
+    for (let x = -11; x > -40; x -= 6.5) for (let z = 494; z < 532; z += 7) t.olive(x + rng.range(-1, 1), PLAIN - 0.05, z + rng.range(-1, 1), rng.range(1.1, 1.6), x < -24);
+    // a vineyard on the other: low rows of vines on a wire
+    for (let x = 11; x < 36; x += 2.6) {
+      for (let z = 494; z < 532; z += 1.9) {
+        if (rng.chance(0.12)) continue;
+        b.ball(x, Y + PLAIN + 0.55, z, rng.range(0.42, 0.6), rng.pick([0x6f7d45, 0x7a8a4c, 0x66753f]), { collide: false, noShadow: x > 22, detail: 0, squash: V(0.8, 0.9, 1.3), jitter: 0.12 });
+      }
+      b.box(x, Y + PLAIN + 0.6, 513, 0.06, 0.06, 38, 0x6a5540, { collide: false, noShadow: true });
+    }
+    // a watchtower of field stones in the vineyard, and a booth of branches by the olives
+    b.cyl(24, Y + PLAIN + 1.6, 520, 1.9, 2.2, 3.2, 0xb8a888, { collide: false, mat: 'stone', seg: 8, shade: 0.3, jitter: 0.05 });
+    b.box(24, Y + PLAIN + 3.4, 520, 3.4, 0.2, 3.4, 0x8a7a52, { collide: false, mat: 'wood', rotY: 0.3 });
+    for (const [dx, dz] of [[-1.3, -1.1], [1.3, -1.1], [-1.3, 1.1], [1.3, 1.1]]) b.post(-15 + dx, Y + PLAIN, 506 + dz, 0.07, 2.1, 0x6a5540, { collide: false, mat: 'wood', seg: 4 });
+    b.box(-15, Y + PLAIN + 2.15, 506, 3.2, 0.35, 2.8, 0x7d8a52, { collide: false, jitter: 0.2, rotY: 0.1 });
     // the shore, the quay, the mole
     b.box(0, Y + PLAIN - 2.4, 668, 3400, 4, 60, 0xe6d6a8, { ...off, mat: 'sand', shade: 0, jitter: 0, rot: new THREE.Euler(0.06, 0, 0) });
     b.box(0, Y + PLAIN - 1.6, 652, 150, 4, 12, 0xbcae92, { ...off, mat: 'stone', shade: 0.2 });
