@@ -1003,7 +1003,7 @@ export class Nineveh extends Chapter {
     };
     this.king = mk(KING, 0, 3.95, -92.0, 0, 'sit');
     this.kingSack = mk(KING_SACK, 0, 3.6, -91, 0, 'idle');
-    this.nobles = [mk(NOBLE_A, -4.4, 3, -88.3, 0.7, 'idle'), mk(NOBLE_B, 4.4, 3, -88.5, -0.7, 'idle')];
+    this.nobles = [mk(NOBLE_A, -4.4, 3, -88.3, 0.7, 'idle'), mk(NOBLE_B, 5.4, 3, -90.8, -0.9, 'idle')];
     this.runner = mk(RUNNER, 0, 0, -78, Math.PI, 'idle');
     // the robe he lays from him, and the crown
     this.robe = buildMesh((b) => {

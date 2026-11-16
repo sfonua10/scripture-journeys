@@ -33,8 +33,9 @@ is left (the count is on screen by quarter) and works out how to reach them: clo
   for each metre of height, and goes over walls. The tower's top reaches 27 m.
 - The word passes on from each soul to those within 3.3 m (2.45 m in the market), but never through a wall unless
   a gate between the two spaces stands open.
-- High places: the roof by the square (outer stair), the dyer's roof and the granary in the market, the khan's wall
-  (reached by a jump from the dyer's roof), the three stages of the tower.
+- High places: the roof by the square (outer stair), the dyer's roof and the granary in the market, the three stages
+  of the tower. (The khan can also be got into from the dyer's roof: the bot once did it by accident. Its bar lifts
+  from inside too.)
 - Scroll pieces: across the gap between two roofs by the gate (Jeremiah 18:7); on the khan's sleeping floor, up by the
   bales (Jeremiah 18:8); on the west side of the tower's second stage (Matthew 12:41).
 - Challenge: every soul in the three quarters has heard, by his own crying and their telling, when he cries from the
@@ -93,5 +94,4 @@ No console errors.
 - On the stairs his feet sink up to a tread's height into the steps (the collider is the slope under the treads).
 - People do not collide; they step aside from him, and a walker can pass through a stall post.
 - A person standing on a stall's table under its awning can be wedged for a moment (the bot once was).
-- In the first palace picture one noble stands close to the lens on a wide screen.
 - The wave of light at the close is drawn over everything (no depth test), so it shows through the tower.
