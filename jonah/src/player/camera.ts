@@ -178,7 +178,12 @@ export class CameraRig {
       }
       pos.lerp(sp, w);
       look.lerp(sl, w);
-      if (shot.fov) fov += (shot.fov - this.baseFov) * w;
+      // a staged shot is framed for a wide screen: on a tall one the lens opens so the picture still holds its people
+      const aspect = this.camera.aspect;
+      const open = aspect < 1.25 ? Math.min(2.2, 1.25 / aspect) : 1;
+      const want = shot.fov ?? this.baseFov;
+      const wide = open > 1 ? Math.min(84, (Math.atan(Math.tan((want * Math.PI) / 360) * open) * 360) / Math.PI) : want;
+      fov += (wide - this.baseFov) * w;
       _up.lerp(UP, w * 0.5).normalize();
     }
 

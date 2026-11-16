@@ -1143,6 +1143,10 @@ body {
     padding: 13px 16px 12px;
     bottom: calc(27% + var(--safe-b));
   }
+  /* in a staged scene the thumb controls are away, so the words can sit under the picture */
+  .cinema .banner {
+    bottom: calc(3.5% + var(--safe-b));
+  }
   .prompt {
     bottom: calc(43% + var(--safe-b));
   }
@@ -1156,7 +1160,7 @@ body {
     top: calc(104px + var(--safe-t));
   }
   .toast {
-    top: calc(160px + var(--safe-t));
+    top: calc(108px + var(--safe-t) + var(--meters, 1) * 50px);
   }
 }
 @media (max-height: 480px) {

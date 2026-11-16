@@ -352,6 +352,7 @@ export class Hud {
   cinema(on: boolean) {
     this.cinemaOn = on;
     this.barsEl.classList.toggle('on', on);
+    this.root.classList.toggle('cinema', on);
     this.markersEl.style.opacity = on ? '0' : '1';
     this.objectiveEl.style.opacity = on ? '0' : '';
     this.metersEl.style.opacity = on ? '0' : '';
