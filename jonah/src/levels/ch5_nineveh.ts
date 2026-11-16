@@ -15,8 +15,10 @@
 // verses 7–9. The word of the LORD (2) and what God saw (10) are shown only as the verses.
 //
 // The game's own: that Jonah cries it quarter by quarter and from high places; that walls and the din of a market
-// keep the word from carrying, and gates can be opened for it; that the player sees the king. Nothing here goes
-// against the account, and no speech is invented for anyone.
+// keep the word from carrying, and gates can be opened for it; that the player sees the king. The staging of the
+// close is also the game's: the one who brings word runs up the palace stair, the ashes are a heap in the king's own
+// court, and two of his nobles cry the decree from the wall above the palace doors. Nothing here goes against the
+// account, and no speech is invented for anyone: every word shown or spoken is the verse.
 import * as THREE from 'three';
 import type { RAPIER } from '../core/physics';
 import { tween, waitFor, type Routine } from '../core/script';
@@ -525,8 +527,8 @@ export class Nineveh extends Chapter {
     b.box(-5.5, 2.2, 20, 2.5, 0.12, 0.12, C.wood, { mat: 'wood', collide: false });
     this.palm(b, -7.6, 14.8, 6.2);
     this.palm(b, 7.4, 25.6, 5.4);
-    this.stall(b, 5.2, 15.2, Math.PI, 0xc7502f, 0);
-    this.stall(b, -4.4, 25.6, 0, 0x2f8ca0, 1);
+    this.stall(b, 5.2, 15.2, 0, 0xc7502f, 0);
+    this.stall(b, -4.4, 25.6, Math.PI, 0x2f8ca0, 1);
 
     // ---- behind them, houses to the walls; a lane leads west from the square to a small court
     this.fill(b, -42, 7, -31, 37.5);
@@ -653,6 +655,47 @@ export class Nineveh extends Chapter {
     b.block(20.5, 0, -14, 3.6, 0.5, 1.1, 0x9a8a78, { mat: 'stone' });
     b.box(20.5, 0.5, -14, 3.2, 0.04, 0.7, 0x3f8aa0, { collide: false, jitter: 0, shade: 0 });
     this.palm(b, 17, -25.5, 5.2);
+    // the travellers' things: rugs, a tent against the south wall, packs, a fire ringed with stones
+    const flat = { mat: 'weave', collide: false, jitter: 0.02, shade: 0.06 } as const;
+    for (const [x, z, w, d, c, r] of [
+      [22.4, -24.4, 2.6, 1.7, 0xa83a2e, 0.1],
+      [24.8, -23, 1.6, 2.4, 0x2f6aa0, -0.25],
+      [20.6, -22.2, 1.5, 2.2, 0xcf9a3a, 0.4],
+      [26.2, -25.6, 2.2, 1.4, 0x7a3a8a, 0.05],
+    ]) {
+      b.box(x, 0.025, z, w, 0.05, d, c, { ...flat, rotY: r });
+      b.box(x, 0.03, z, w * 0.7, 0.05, d * 0.7, 0xe8dcc0, { ...flat, rotY: r });
+      b.box(x, 0.035, z, w * 0.42, 0.05, d * 0.42, c, { ...flat, rotY: r });
+    }
+    for (const x of [18.2, 22.6]) {
+      b.post(x, 0, -24.4, 0.06, 2.0, C.wood, { mat: 'wood', collide: false });
+    }
+    b.box(20.4, 2.3, -26.2, 5.2, 0.07, 3.4, 0xb0282a, { mat: 'cloth', collide: false, doubleSide: true, rot: new THREE.Euler(-0.36, 0, 0) });
+    b.box(20.4, 2.33, -26.2, 0.7, 0.07, 3.4, 0xe8dcc0, { mat: 'cloth', collide: false, rot: new THREE.Euler(-0.36, 0, 0) });
+    for (const [x, z, sx, sy, sz] of [
+      [18.4, -26.6, 1.1, 0.7, 0.8],
+      [19.6, -26.8, 0.9, 0.5, 0.7],
+      [18.6, -26.5, 0.8, 0.45, 0.6],
+      [25.2, -15.4, 1.2, 0.7, 0.8],
+      [26.3, -15.2, 0.9, 0.55, 0.7],
+    ]) {
+      b.block(x, sy === 0.45 ? 0.7 : 0, z, sx, sy, sz, sy > 0.6 ? 0xb09a6a : 0xa88254, { mat: 'weave', collide: sy !== 0.45, rotY: x * 0.3 });
+    }
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * TAU;
+      b.ball(22.6 + Math.cos(a) * 0.62, 0.1, -20 + Math.sin(a) * 0.62, 0.2, 0x8a8076, { detail: 0, collide: false, jitter: 0.1 });
+    }
+    b.ball(22.6, 0.08, -20, 0.42, 0x3a3430, { detail: 0, squash: V(1, 0.3, 1), collide: false });
+    b.ball(22.6, 0.2, -20, 0.2, 0xff8a30, { detail: 0, jitter: 0, shade: 0, collide: false });
+    // water jars by the trough
+    for (const [x, z] of [
+      [18.2, -13.6],
+      [18.9, -12.9],
+      [23, -13.4],
+    ]) {
+      b.cyl(x, 0.34, z, 0.27, 0.15, 0.68, 0xb8683a, { seg: 7, collide: false });
+      b.cyl(x, 0.74, z, 0.13, 0.2, 0.14, 0x9a5a34, { seg: 7, collide: false });
+    }
     for (let i = 0; i < 4; i++) b.post(29.2, 2, -26 + i * 4.6, 0.12, 2.3, C.wood, { mat: 'wood', collide: false });
     b.box(30.3, 4.34, -19, 2.9, 0.08, 17.4, 0xb8683a, { mat: 'cloth', collide: false, doubleSide: true });
 
@@ -660,7 +703,7 @@ export class Nineveh extends Chapter {
     this.fill(b, -42, -29.4, -32.4, 3.4, { door: 'e' });
     this.fill(b, 32.8, -29.4, 42, 3.4, { door: 'w' });
     this.palm(b, 6.6, -14, 5.8);
-    this.palm(b, -6.8, -25, 5.2);
+    this.palm(b, -6.4, -13.5, 5.2);
   }
 
   /** Where the stalls stand: x, z, which way the front looks. */
@@ -676,8 +719,8 @@ export class Nineveh extends Chapter {
     [-19, -22.5, Math.PI],
     [-10, -20, Math.PI / 2],
     [9.6, -21, -Math.PI / 2],
-    [-24, -27, Math.PI],
-    [-15.5, -27, Math.PI],
+    [-24, -27, 0],
+    [-15.5, -27, 0],
     [9.6, -27, -Math.PI / 2],
   ];
 
@@ -880,8 +923,8 @@ export class Nineveh extends Chapter {
     c.line(-3.3, 36, -3.3, 28, N(4), 0.9, 0, 0, LOOK_GATE);
     c.line(3.3, 36, 3.3, 28, N(4), 0.9, 0, 0, LOOK_GATE);
     c.cluster(-5.5, 20, N(9), 2.9, 0, 0, LOOK_GATE, { free: (x, z) => Math.hypot(x + 5.5, z - 20) > 1.5 });
-    c.cluster(5, 17.5, N(7), 2.2, 0, 0, LOOK_GATE, { face: Math.PI });
-    c.cluster(-4.4, 23.2, N(6), 1.9, 0, 0, LOOK_GATE, { face: 0 });
+    c.cluster(5, 18.2, N(7), 2.2, 0, 0, LOOK_GATE, { face: Math.PI, free: (_x, z) => z > 16.7 });
+    c.cluster(-4.4, 22.9, N(6), 1.9, 0, 0, LOOK_GATE, { face: 0, free: (_x, z) => z < 24.1 });
     c.cluster(1, 21.5, N(5), 2.4, 0, 0, LOOK_GATE);
     c.line(-3.2, 13, -3.2, 7.5, N(3), 0.8, 0, 0, LOOK_GATE);
     c.line(3.2, 13, 3.2, 7.5, N(3), 0.8, 0, 0, LOOK_GATE);
@@ -1005,7 +1048,7 @@ export class Nineveh extends Chapter {
         at,
         it: {
           pos: at,
-          radius: 2.0,
+          radius: 2.6,
           prompt: 'Hold to lift the bar',
           hold: 1.3,
           pose: 'pull',
@@ -1052,19 +1095,20 @@ export class Nineveh extends Chapter {
   private buildToys() {
     const t = this.g.toys;
     // things to take up, carry, stack and knock about in the market and the square
-    t.jar(-8.2, 0.45, 2.2);
-    t.jar(-7.4, 0.45, 2.9);
-    t.basket(-21.6, 0.3, 2.4);
+    // (kept clear of where people stand: by a toy the button takes it up, and he cannot cry with his arms full)
+    t.jar(-6.6, 0.45, 3.4);
+    t.jar(-5.9, 0.45, 2.9);
+    t.basket(-22.3, 0.3, 3.3);
     t.crate(-13.4, 0.45, -3.4, 0.8, 0.3);
     t.crate(-13.2, 1.3, -3.5, 0.7, 0.1);
-    t.barrel(6.4, 0.5, -4.2);
-    t.basket(6.6, 0.3, -24.4);
-    t.jar(-6.6, 0.45, -17.4);
+    t.barrel(5.6, 0.5, -4.4);
+    t.basket(12.2, 0.3, -24);
+    t.jar(-5.2, 0.45, -15.4);
     t.sack(-22, 0.35, -17);
-    t.crate(-21.4, 0.45, -24.6, 0.8, 0.5);
-    t.barrel(-12.6, 0.5, -24.4);
-    t.jar(7.4, 0.45, 13.4);
-    t.basket(-8, 0.3, 24.4);
+    t.crate(-30.6, 0.45, -24.4, 0.8, 0.5);
+    t.barrel(-11.6, 0.5, -27.8);
+    t.jar(7.6, 0.45, 13.2);
+    t.basket(-8.7, 0.3, 25.2);
     t.crate(24.6, 0.45, -12.2, 0.8, 0.2);
   }
 
@@ -1138,7 +1182,7 @@ export class Nineveh extends Chapter {
     g.hud.marker('square', null);
     yield 2.8;
     this.setObjective('The word passes from one to another', () => this.left(0));
-    yield* waitFor(() => this.frac(0, 0) > 0.7, 26);
+    yield* waitFor(() => this.frac(0, 0) > 0.7 || p.pos.z < ARCH_A - 1.5, 26);
     // the garden wall
     if (this.zoneLeft(1) > 0) {
       g.hud.toast('A wall keeps the word from the house beyond', 3.4);
@@ -1561,16 +1605,23 @@ export class Nineveh extends Chapter {
     const crowd = this.crowd;
     const self = this;
     function* cry(): Routine {
-      if (!(self.free && self.cool <= 0)) {
-        yield 0.5;
-        if (!(self.free && self.cool <= 0)) b.note(`cannot cry at (${p.pos.x.toFixed(1)}, ${p.pos.y.toFixed(1)}, ${p.pos.z.toFixed(1)}): canCry ${self.canCry} state ${p.state} locked ${p.locked} focus ${p.focus ? p.focus.kind + ':' + p.focus.prompt : null} carried ${!!p.carried} blocking ${g.hud.blocking} cinema ${g.hud.inCinema} cool ${self.cool.toFixed(2)}`);
+      for (let i = 0; i < 3 && !self.free; i++) {
+        yield 0.4;
+        if (self.free) break;
+        // a toy is to hand and the button would take it up: set down what is carried and step clear of it
+        if (p.carried) yield* b.setDown();
+        if (p.focus) {
+          const away = Math.atan2(p.pos.x - p.focus.pos.x, p.pos.z - p.focus.pos.z) + i * 0.9;
+          yield* b.goTo(V(p.pos.x + Math.sin(away) * 1.8, p.pos.y, p.pos.z + Math.cos(away) * 1.8), { dist: 0.3, timeout: 1.5, noAssist: true });
+        }
       }
+      if (!(self.free && self.cool <= 0)) b.note(`waiting to cry at (${p.pos.x.toFixed(1)}, ${p.pos.y.toFixed(1)}, ${p.pos.z.toFixed(1)}): state ${p.state} locked ${p.locked} focus ${p.focus ? p.focus.kind + ':' + p.focus.prompt : null} carried ${!!p.carried} blocking ${g.hud.blocking} cinema ${g.hud.inCinema}`);
       yield* b.until(() => self.free && self.cool <= 0, 6, 'leave to cry');
       yield* b.tap('action', 0.1);
       yield 0.75;
     }
     /** Goes to those on his own level who have not heard in one walled space, and cries among them until all there have. */
-    function* tell(zone: number, tries = 12, ok: (s: Soul) => boolean = () => true): Routine {
+    function* tell(zone: number, tries = 12, ok: (s: Soul) => boolean = () => true, lane = 0): Routine {
       for (let i = 0; i < tries; i++) {
         yield 1.4;
         let s: Soul | null = null;
@@ -1584,6 +1635,11 @@ export class Nineveh extends Chapter {
           }
         }
         if (!s) return;
+        // among the stalls he goes by the open way up the middle, not through the tables
+        if (lane && Math.abs(s.z - p.pos.z) > 2.5) {
+          yield* b.goTo(V(Math.sign(p.pos.x || 1) * lane, 0, p.pos.z), { dist: 0.6, timeout: 6, until: () => Math.abs(p.pos.x) < lane });
+          yield* b.goTo(V(Math.sign(s.x || 1) * lane, 0, s.z), { dist: 0.6, timeout: 9 });
+        }
         yield* b.goTo(V(s.x, s.y, s.z), { dist: 2.2, timeout: 9 });
         yield* cry();
       }
@@ -1668,7 +1724,7 @@ export class Nineveh extends Chapter {
         [-13, 0, -9],
         [1, 0, -7],
       ]);
-      yield* tell(2, 14);
+      yield* tell(2, 14, undefined, 4.3);
       // the khan
       yield* path([
         [4, 0, -19],
