@@ -12,20 +12,31 @@ export const SIZES = {
   phoneWide: { width: 844, height: 390, touch: true, dpr: 2 },
 };
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2' };
 
-/** Serves dist/ (the built game) on a free port. */
-export async function serveDist() {
+/** The headers Patch's game host sends (from Patch's guide, "Preview it the way players get it"). */
+export const PATCH_HEADERS = {
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline' blob: https://fonts.googleapis.com; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'",
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), midi=(), display-capture=()',
+  'Referrer-Policy': 'no-referrer',
+  'X-Content-Type-Options': 'nosniff',
+};
+
+/** Serves dist/ (the built game) the way Patch's game host does, on a free port (or the one given). */
+export async function serveDist(port = 0) {
   const root = resolve(here, 'dist');
   if (!existsSync(join(root, 'index.html'))) throw new Error('dist/ is not built: run npm run build');
   const server = createServer((req, res) => {
     let file = normalize(join(root, decodeURIComponent(new URL(req.url, 'http://x').pathname)));
     if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
-    if (!file.startsWith(root) || !existsSync(file)) return void res.writeHead(404).end();
-    res.writeHead(200, { 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream' });
+    if (!file.startsWith(root) || !existsSync(file)) return void res.writeHead(404, PATCH_HEADERS).end('Not found');
+    res.writeHead(200, { ...PATCH_HEADERS, 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream', 'Cache-Control': 'no-cache' });
     createReadStream(file).pipe(res);
   });
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  await new Promise((r) => server.listen(port, '127.0.0.1', r));
   return { url: `http://127.0.0.1:${server.address().port}/`, close: () => server.close() };
 }
 
