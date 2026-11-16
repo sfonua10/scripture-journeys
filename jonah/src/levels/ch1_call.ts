@@ -105,16 +105,19 @@ function slopeY(u: number, z: number): number {
 const ROCKS: [number, number, number][] = [
   [-3.2, 276, 1.2],
   [3.6, 291, 1.3],
-  [0.4, 324, 1.4],
-  [-4.0, 339, 1.1],
+  [0.4, 334, 1.4],
+  [-4.0, 346, 1.1],
   [3.4, 372, 1.3],
-  [-1.8, 386, 1.2],
-  [4.2, 399, 1.1],
-  [-3.4, 433, 1.3],
-  [2.6, 448, 1.2],
+  [-1.8, 394, 1.2],
+  [4.2, 403, 1.1],
+  [-3.4, 440, 1.3],
+  [2.6, 452, 1.2],
 ];
 /** Ledges of rock that throw him into the air. */
-const HOPS = [303, 356, 414];
+const HOPS = [303, 358, 414];
+/** Low field walls across the track, to be jumped. */
+const WALLS = [320, 383, 428];
+const WALL_H = 0.72;
 const SLIDE_FROM = 251;
 const SLIDE_TO = 474;
 
@@ -148,14 +151,16 @@ interface Dove {
   seed: number;
 }
 
-const SUN = V(0.3, 0.4, -0.87).normalize();
+/** The sun at his first step, low in the east, and as it stands by the time he is on the hill: the morning wears on. */
+const SUN = V(0.2, 0.21, -0.96).normalize();
+const SUN_LATE = V(0.58, 0.62, -0.53).normalize();
 const SEA: OceanLook = {
-  deep: 0x1c5a86,
-  shallow: 0x3f98b4,
+  deep: 0x17557f,
+  shallow: 0x2f8fae,
   glow: 0x86d6cc,
   foam: 0xf6f1e2,
-  skyTop: 0x4a86c4,
-  skyHorizon: 0xf0dcb6,
+  skyTop: 0x3f7cc0,
+  skyHorizon: 0xa9cfe0,
   sunDir: SUN,
   sunColor: 0xffe2b0,
   spec: 0.5,
@@ -168,7 +173,11 @@ const _q = new THREE.Quaternion();
 const _s = new THREE.Vector3();
 const _v = new THREE.Vector3();
 const _e = new THREE.Euler();
+const _c = new THREE.Color();
+const DAWN = new THREE.Color(0xffc88c);
+const MORNING = new THREE.Color(0xffe8c4);
 const WEST = V(0, 0, 1);
+const DOWN = V(0, -1, 0);
 
 export class Call extends Chapter {
   private phase: Phase = 'call';
@@ -202,6 +211,8 @@ export class Call extends Chapter {
   private wasGrounded = true;
   private blown = 0;
   private dustT = 0;
+  private sunK = -1;
+  private sunDir = SUN.clone();
 
   // the slope
   private sliding = false;
@@ -223,7 +234,7 @@ export class Call extends Chapter {
     this.ocean.amp = 0.3;
     this.seaAt.position.set(0, 0, 1500);
     g.root.add(this.ocean.mesh);
-    g.lights = makeLights(g.engine.scene, { sunDir: SUN, sunColor: 0xffdcaa, sunIntensity: 2.7, skyColor: 0xbcd4f4, groundColor: 0xc9a273, hemiIntensity: 1.05, shadowSize: q.shadowSize, shadowRange: 34 });
+    g.lights = makeLights(g.engine.scene, { sunDir: SUN, sunColor: 0xffdcaa, sunIntensity: 2.7, skyColor: 0xbcd4f4, groundColor: 0xc9a273, hemiIntensity: 1.2, shadowSize: q.shadowSize, shadowRange: 34 });
     g.engine.setView(2600, 120, 1500, 0xf0dcb6);
     const grade = g.engine.post.grade;
     grade.tint.setRGB(1.03, 1.0, 0.95);
@@ -381,6 +392,9 @@ export class Call extends Chapter {
   /** The market lane, from under the sixth house to the vine wall. */
   private buildMarket(b: LevelBuilder, t: Town) {
     const g = this.g;
+    // (a way back up to the roofs, for one who left a scroll piece behind)
+    t.ladder(4.3, 60, LANE, 0, 0, 1);
+    t.ladder(4.3, 58, 0, roof('H5').top, 0, 1);
     // the awning he lands on, coming down from the roofs
     this.bouncer(-2.6, 2.6, 60.2, 63.8, LANE + 2.7, 13, CLOTH.terracotta, CLOTH.cream, t);
     // stalls along the walls
@@ -566,8 +580,8 @@ export class Call extends Chapter {
           arr[i * 3 + 2] = p.z - _v.z;
         });
         const u = Math.abs((us[k] + us[k + 1]) / 2);
-        if (u < 5.5) c.set(0xe4d2a6);
-        else if (u < 9.5) c.set(0xcfb884);
+        if (u < 5.5) c.set(fbm2(_v.x * 0.21, _v.z * 0.13) > 0.56 ? 0xdcc79a : 0xecdcb4);
+        else if (u < 9.5) c.set(0xcdb682);
         else c.set(tones[Math.floor(fbm2(_v.x * 0.05, _v.z * 0.05) * 9.99) % tones.length]);
         b.geo(geo, _m.makeTranslation(_v.x, _v.y, _v.z), c, { mat: 'sand', shade: 0, jitter: 0.04, noShadow: true });
       }
@@ -598,21 +612,49 @@ export class Call extends Chapter {
     }
     b.wall(0, Y + PLAIN + 8, 522, 30, 20, 0.3);
     b.solid(0, Y + PLAIN - 1.2, 500, 60, 2, 60, { surface: 'sand', noLedge: true });
+    const rng = b.rng;
+    const grey = [0xb9ab90, 0xa99c84, 0xc4b79c];
     // stones in the track
     for (const [u, z, r] of ROCKS) {
       const x = trackX(z) + u;
       const y = Y + slopeY(u, z);
-      b.cyl(x, y + 0.5, z, r * 0.72, r, 1.8, 0xb9aa8c, { mat: 'stone', seg: 7, noLedge: true, jitter: 0.08, noShadow: true, rotY: b.rng.range(0, 3) });
-      b.ball(x + r * 0.5, y + 0.2, z + r * 0.7, r * 0.6, 0xaea084, { detail: 0, jitter: 0.08, noShadow: true });
+      g.physics.cylinder({ x, y: y + 0.6, z }, 1.2, r * 0.9, undefined, { surface: 'stone', noLedge: true });
+      b.ball(x, y + r * 0.35, z, r, rng.pick(grey), { detail: 0, squash: V(1, 0.95, 0.9), jitter: 0.08, noShadow: true, rotY: rng.range(0, 3), shade: 0.3 });
+      b.ball(x + r * 0.6, y + 0.1, z + r * 0.6, r * 0.55, rng.pick(grey), { detail: 0, jitter: 0.08, noShadow: true, rotY: rng.range(0, 3), shade: 0.3 });
+      b.ball(x - r * 0.7, y + 0.05, z - r * 0.2, r * 0.4, rng.pick(grey), { detail: 0, jitter: 0.08, noShadow: true, rotY: rng.range(0, 3), shade: 0.3 });
     }
-    // ledges that throw him
+    // ledges that throw him: a shelf of rock lying across the track
     for (const z of HOPS) {
       const pitch = Math.atan2(trackY(z) - trackY(z + 2), 2);
-      b.box(trackX(z + 1.2), Y + trackY(z + 1.2) + 0.12, z + 1.2, 10.4, 0.5, 5, 0xc4b28c, { mat: 'stone', collide: false, rot: new THREE.Euler(pitch - 0.2, 0, 0), noShadow: true, jitter: 0.03 });
+      b.box(trackX(z + 1.4), Y + trackY(z + 1.4) + 0.05, z + 1.4, 11, 0.42, 5.4, 0xc9bca2, { collide: false, rot: new THREE.Euler(pitch - 0.19, 0, 0), noShadow: true, jitter: 0.03, shade: 0.3 });
+      for (const s of [-1, 1]) b.ball(trackX(z + 3) + s * 6.2, Y + slopeY(s * 6.2, z + 3) + 0.4, z + 3, 1.3, rng.pick(grey), { detail: 0, jitter: 0.08, noShadow: true, rotY: rng.range(0, 3), shade: 0.3 });
+    }
+    // field walls of piled stone across the track
+    for (const z of WALLS) {
+      const x = trackX(z);
+      const y = Y + trackY(z);
+      b.solid(x, y + WALL_H / 2 - 0.1, z, 17, WALL_H + 0.2, 0.8, { surface: 'stone', noLedge: true });
+      for (let u = -8.4; u <= 8.4; u += 0.82) {
+        const h = WALL_H + rng.range(-0.08, 0.1);
+        b.box(x + u, Y + slopeY(u, z) + h / 2 - 0.1, z + rng.range(-0.06, 0.06), 0.8, h + 0.2, rng.range(0.7, 0.9), rng.pick(grey), { collide: false, noShadow: true, jitter: 0.07, shade: 0.25, rotY: rng.range(-0.12, 0.12) });
+      }
+    }
+    // stones and scrub along the track's edges, to show how fast he goes
+    for (let z = 254; z < 488; z += rng.range(2.4, 4.6)) {
+      for (const s of [-1, 1]) {
+        if (rng.chance(0.25)) continue;
+        const u = s * rng.range(5.7, 7.2);
+        if (rng.chance(0.6)) b.ball(trackX(z) + u, Y + slopeY(u, z) + 0.1, z, rng.range(0.28, 0.6), rng.pick(grey), { detail: 0, jitter: 0.08, noShadow: true, rotY: rng.range(0, 3) });
+        else b.ball(trackX(z) + u, Y + slopeY(u, z) + 0.25, z, rng.range(0.5, 0.9), rng.pick([0x8a8f5a, 0x9a9a62, 0x7f8752]), { detail: 0, squash: V(1.2, 0.7, 1.1), jitter: 0.08, noShadow: true });
+      }
     }
     // olives and scrub on the hillside
     const t = new Town(b, Y);
-    const rng = b.rng;
+    for (let z = 262; z < 480; z += rng.range(9, 15)) {
+      const s = rng.sign();
+      const u = s * rng.range(9.5, 12);
+      t.olive(trackX(z) + u, slopeY(u, z) - 0.1, z, rng.range(1.1, 1.6), true);
+    }
     for (let i = 0; i < 90; i++) {
       const z = rng.range(250, 500);
       const u = rng.sign() * rng.range(11.5, 70);
@@ -628,7 +670,9 @@ export class Call extends Chapter {
     const off = { collide: false, noShadow: true } as const;
     // the hill and the plain
     b.block(0, Y + PLAIN, 60, 640, 68.5, 700, 0xc4b07a, { ...off, mat: 'sand', taper: 0.5, shade: 0.3, jitter: 0 });
-    b.box(0, Y + PLAIN - 2, -470, 3400, 4, 2240, 0xcdb983, { ...off, mat: 'sand', shade: 0, jitter: 0 });
+    // (the plain lies a little under the foot of the slope's sheet, so the two never fight; west of it, level with it)
+    b.box(0, Y + PLAIN - 2.5, -540, 3400, 4, 2124, 0xcdb983, { ...off, mat: 'sand', shade: 0, jitter: 0 });
+    b.box(0, Y + PLAIN - 2, 586, 3400, 4, 128, 0xcdb983, { ...off, mat: 'sand', shade: 0, jitter: 0 });
     // fields and groves on the plain, for the eye to measure by
     const fields = [0xb9b06a, 0xa9a85c, 0xd6c48a, 0x9a9c58, 0xc8b070, 0xb49a62];
     for (let i = 0; i < 70; i++) {
@@ -636,7 +680,7 @@ export class Call extends Chapter {
       const z = rng.range(300, 630);
       if (Math.abs(x) < 26 && z < 540) continue;
       if (Math.abs(x) < 95 && z > 548) continue;
-      b.box(x, Y + PLAIN + 0.3, z, rng.range(26, 70), 0.3, rng.range(22, 56), rng.pick(fields), { ...off, mat: 'sand', shade: 0, rotY: rng.range(-0.25, 0.25) });
+      b.box(x, Y + PLAIN - 0.25, z, rng.range(26, 70), 1.1, rng.range(22, 56), rng.pick(fields), { ...off, mat: 'sand', shade: 0, rotY: rng.range(-0.25, 0.25) });
     }
     for (let i = 0; i < 110; i++) {
       const x = rng.range(-420, 420);
@@ -646,9 +690,9 @@ export class Call extends Chapter {
       b.ball(x, Y + PLAIN + 1.6, z, rng.range(1.6, 2.6), rng.pick([0x7a8a5a, 0x6f8052, 0x869664]), { ...off, detail: 0, squash: V(1.2, 0.7, 1.1), jitter: 0.1 });
     }
     // the road east, pale across the plain toward the sunrise; and the road west, to Joppa
-    b.box(0, Y + PLAIN + 0.35, -900, 9, 0.3, 1200, 0xead9ae, { ...off, shade: 0, jitter: 0 });
+    b.box(0, Y + PLAIN - 0.3, -900, 9, 0.3, 1200, 0xead9ae, { ...off, shade: 0, jitter: 0 });
     b.box(0, Y + PLAIN / 2, -150, 7, 0.4, 330, 0xead9ae, { ...off, shade: 0, jitter: 0, rot: new THREE.Euler(-Math.atan2(69, 320), 0, 0) });
-    b.box(0, Y + PLAIN + 0.35, 532, 6.4, 0.3, 64, 0xead9ae, { ...off, shade: 0, jitter: 0 });
+    b.box(0, Y + PLAIN - 0.05, 530, 11, 0.3, 16.4, 0xecdcb4, { ...off, mat: 'sand', shade: 0, jitter: 0 });
     // far hills, round every side but the sea's
     for (let i = 0; i < 22; i++) {
       // (the angle is measured from due east)
@@ -658,22 +702,34 @@ export class Call extends Chapter {
       b.cyl(Math.sin(a) * d, Y + PLAIN + h / 2 - 4, -Math.cos(a) * d, h * 0.35, h * rng.range(2.4, 3.4), h, i % 2 ? 0xb6a996 : 0xa99f94, { ...off, seg: 7, shade: 0.3, jitter: 0.04, rotY: rng.range(0, 3) });
     }
     // Joppa: houses heaped on a low rise by the water, a quay, ships
+    const t = new Town(b, Y);
     const jz = 600;
-    b.cyl(0, Y + PLAIN + 3, jz + 4, 46, 96, 7, 0xc9b684, { ...off, mat: 'sand', seg: 12, shade: 0.2, jitter: 0 });
+    b.cyl(0, Y + PLAIN + 3, jz + 4, 42, 62, 7, 0xc9b684, { ...off, mat: 'sand', seg: 14, shade: 0.2, jitter: 0 });
     for (let i = 0; i < 64; i++) {
       const a = rng.range(0, 6.283);
       const d = Math.sqrt(rng.next()) * 62;
       const x = Math.cos(a) * d * 1.25;
       const z = jz + 4 + Math.sin(a) * d * 0.62;
-      const rise = 6.4 * clamp01(1 - d / 80);
+      const rise = 6.4 * clamp01((62 - Math.hypot(x, z - jz - 4)) / 20);
       const w = rng.range(6, 12);
       const dz = rng.range(6, 11);
       const h = rng.range(3.5, 8) + (rng.chance(0.1) ? 5 : 0);
-      b.block(x, Y + PLAIN + rise - 0.5, z, w, h + 0.5, dz, rng.pick(PLASTER), { ...off, mat: 'plaster', shade: 0.25 });
-      if (rng.chance(0.2)) b.ball(x, Y + PLAIN + rise + h, z, Math.min(w, dz) * 0.36, 0xf3ead2, { ...off, detail: 1, squash: V(1, 0.8, 1) });
+      t.house({ x0: x - w / 2, x1: x + w / 2, z0: z - dz / 2, z1: z + dz / 2, ground: PLAIN + rise - 0.5, top: PLAIN + rise + h, faces: x > 0 ? 'bl' : 'br', collide: false, noShadow: true, plain: true });
+      if (rng.chance(0.2)) t.dome(x, PLAIN + rise + h, z, Math.min(w, dz) * 0.36, 0xf3ead2, { noShadow: true });
+      // an awning on the side toward the road, here and there
+      else if (rng.chance(0.3)) b.box(x, Y + PLAIN + rise + 2.6, z - dz / 2 - 0.9, w * 0.6, 0.12, 1.9, rng.pick([CLOTH.terracotta, CLOTH.blue, CLOTH.ochre, CLOTH.wine, CLOTH.olive]), { ...off, mat: 'cloth', rot: new THREE.Euler(-0.25, 0, 0) });
     }
-    const t = new Town(b, Y);
-    for (let i = 0; i < 16; i++) t.palm(rng.range(-88, 88), PLAIN, jz + rng.range(-44, 34) * (i % 2 ? 1 : 0.9) + (i % 3 === 0 ? 40 : 0), rng.range(7, 11));
+    // its wall toward the land, and the gate the road comes to
+    const stone = 0xd6c39a;
+    for (const sgn of [-1, 1]) {
+      b.block(sgn * 47, Y + PLAIN, 540, 88, 5.4, 2.2, stone, { ...off, mat: 'plaster', shade: 0.25, jitter: 0.02 });
+      b.block(sgn * 5.4, Y + PLAIN, 539.4, 4.8, 8.6, 4.6, stone, { ...off, mat: 'plaster', shade: 0.25 });
+      b.block(sgn * 92, Y + PLAIN, 540, 6, 8, 6, stone, { ...off, mat: 'plaster', shade: 0.25 });
+      for (let x = 9.6; x < 89; x += 2.6) b.block(sgn * x, Y + PLAIN + 5.4, 539.2, 1.4, 0.9, 0.6, stone, { ...off, mat: 'plaster', jitter: 0.04 });
+    }
+    b.block(0, Y + PLAIN + 5.2, 539.4, 6, 3.4, 4.2, stone, { ...off, mat: 'plaster' });
+    b.box(0, Y + PLAIN + 2.6, 538.2, 5.2, 5.2, 0.2, 0x3a2a1e, { ...off, shade: 0 });
+    for (let i = 0; i < 18; i++) t.palm(rng.sign() * rng.range(9, 96), PLAIN, i % 3 === 0 ? rng.range(526, 537) : jz + rng.range(-34, 50), rng.range(8, 13));
     // the shore, the quay, the mole
     b.box(0, Y + PLAIN - 2.4, 668, 3400, 4, 60, 0xe6d6a8, { ...off, mat: 'sand', shade: 0, jitter: 0, rot: new THREE.Euler(0.06, 0, 0) });
     b.box(0, Y + PLAIN - 1.6, 652, 150, 4, 12, 0xbcae92, { ...off, mat: 'stone', shade: 0.2 });
@@ -683,7 +739,9 @@ export class Call extends Chapter {
       [-34, 668, 0.3, 1],
       [6, 672, -0.2, 1.15],
       [40, 668, 0.1, 0.9],
-      [-90, 760, 1.2, 1],
+      [-132, 694, 1.3, 1.25],
+      [118, 706, 1.9, 1.1],
+      [-210, 790, 1.2, 1],
     ]) this.farShip(b, x, z, yaw, s);
   }
 
@@ -842,7 +900,7 @@ export class Call extends Chapter {
     if (this.phase === 'call') return null;
     if (this.sliding || (z > 246 && z < 492)) {
       const heading = Math.atan2(trackX(z + 6) - trackX(z - 2), 8);
-      return { yaw: heading + Math.PI, pitch: 0.36, dist: 8.6, strength: 2.6 };
+      return { yaw: heading + Math.PI, pitch: 0.31, dist: 7.6, strength: 2.6 };
     }
     // in the lane the houses stand close: nearer and lower
     if (z > 60 && z < 123 && at.y < Y + 1) return { yaw: Math.PI, pitch: 0.3, dist: 6.2, strength: 0.8 };
@@ -900,8 +958,12 @@ export class Call extends Chapter {
       if (!this.sheltered) {
         if (g.story) {
           if (p.state === 'ground') p.speedScale = 1 - 0.38 * this.gust;
-        } else if (p.state === 'ground') p.push.set(this.gustSide * 1.0 * this.gust, 0, -2.5 * this.gust);
-        else if (p.state === 'air') p.push.set(this.gustSide * 1.5 * this.gust, 0, -4.7 * this.gust);
+        } else if (p.state === 'ground') {
+          // on his feet he is shoved back, but digs in at an edge: it is in the air that a gust carries him off
+          p.push.set(this.gustSide * 1.0 * this.gust, 0, -2.5 * this.gust);
+          _v.copy(p.pos).addScaledVector(_s.copy(p.push).normalize(), 0.8).y += 0.4;
+          if (!g.physics.raycast(_v, DOWN, 1.3)) p.push.set(0, 0, 0);
+        } else if (p.state === 'air') p.push.set(this.gustSide * 1.5 * this.gust, 0, -4.7 * this.gust);
       }
     }
 
@@ -974,6 +1036,7 @@ export class Call extends Chapter {
     } else if (p.state === 'slide') {
       // never back up the hill
       if (p.vel.z < 4) p.vel.z = 4;
+      if (z - this.lastZ < 1.5 * dt && WALLS.some((w) => Math.abs(w - z) < 1.6)) this.tell('wall', 'A wall: Space to jump it', 'A wall: jump it', 3);
       for (const h of HOPS) {
         if (this.lastZ < h && z >= h) {
           p.vel.y = 9.8;
@@ -1006,6 +1069,15 @@ export class Call extends Chapter {
     const p = g.player;
     this.sky.update(time);
     this.ocean.update(time, this.seaAt);
+    // the sun climbs as he goes
+    const sunK = this.phase === 'call' ? 0 : smoothstep(4, 236, p.pos.z);
+    if (Math.abs(sunK - this.sunK) > 0.004) {
+      this.sunK = sunK;
+      this.sunDir.lerpVectors(SUN, SUN_LATE, sunK).normalize();
+      this.sky.set({ sunDir: this.sunDir });
+      this.ocean.setLook({ sunDir: this.sunDir });
+      g.lights?.setSun(this.sunDir, _c.lerpColors(DAWN, MORNING, sunK).getHex(), lerp(2.5, 2.9, sunK));
+    }
     this.motes.update(time, g.engine.camera, g.engine.canvas.clientHeight);
     this.streaks.update(time, g.engine.camera);
     const warn = this.gustState === 'warn' ? clamp01(this.gustT / WARN) * 0.45 : 0;
@@ -1014,7 +1086,7 @@ export class Call extends Chapter {
     (this.streaks.uniforms.uVel.value as THREE.Vector3).x = this.gustSide * 5;
     const breeze = this.windOn ? 0.45 : 0.2;
     g.audio.bed('wind', clamp(breeze + blowing * 0.5 + (this.sliding ? 0.35 : 0), 0, 1));
-    g.audio.bed('crowd', p.pos.z > 58 && p.pos.z < 124 && p.pos.y < Y + 1.5 ? 0.42 : 0.08);
+    g.audio.bed('crowd', 0.42 * (1 - smoothstep(0, 46, Math.abs(p.pos.z - 91) - 30)) * (p.pos.y < Y + 1.5 ? 1 : 0.4));
     // washing
     for (const f of this.flags) f.obj.rotation.x = (0.12 + breeze * 0.25 + blowing * 0.95) * f.reach + Math.sin(time * (2.2 + blowing * 7) + f.phase) * (0.07 + blowing * 0.16);
     // awnings spring back
@@ -1113,14 +1185,14 @@ export class Call extends Chapter {
     p.teleport(L(0, 4.02, -3.5), Math.PI);
     p.lock('idle');
     // over his shoulder: the roofs, the east gate, the road east, the sun
-    g.cam.setShot({ pos: L(2.3, 6.5, 1.8), look: L(-0.6, 4.6, -30), fov: 46 }, 0);
+    g.cam.setShot({ pos: L(2.4, 6.0, 3.6), look: L(-1.2, 6.6, -30), fov: 46 }, 0);
     yield 1.6;
-    g.cam.setShot({ pos: L(1.5, 6.1, 0.2), look: L(-0.4, 4.8, -30), fov: 44 }, 7);
+    g.cam.setShot({ pos: L(1.9, 5.9, 1.6), look: L(-1.0, 6.5, -30), fov: 44 }, 7);
     yield g.hud.verse(cite('1:1'), { block: true });
     // his face, and behind him the town falling away to the west and the sea
-    g.cam.setShot({ pos: L(-1.9, 5.2, -8.2), look: L(0.3, 5.3, -3.5), fov: 40 }, 0);
+    g.cam.setShot({ pos: L(-1.9, 5.0, -8.2), look: L(0.5, 5.8, -3.5), fov: 40 }, 0);
     yield 0.4;
-    g.cam.setShot({ pos: L(-1.3, 5.3, -7.4), look: L(0.2, 5.3, -3.5), fov: 38 }, 9);
+    g.cam.setShot({ pos: L(-1.3, 5.1, -7.4), look: L(0.4, 5.8, -3.5), fov: 38 }, 9);
     yield g.hud.verse(cite('1:2'), { block: true });
     yield 0.7;
     // he turns his back on the east
@@ -1207,7 +1279,7 @@ export class Call extends Chapter {
     this.lastZ = p.pos.z;
     g.hud.objective('Go down to Joppa', 'Down the hill');
     yield () => p.pos.z > SLIDE_FROM + 4;
-    this.tell('steer', 'Steer round the stones · Space to hop', 'Steer round the stones · Jump to hop', 5);
+    this.tell('steer', 'Steer round the stones · Space to jump the walls', 'Steer round the stones · jump the walls', 5);
     yield () => p.pos.z > 490;
   }
 
@@ -1225,9 +1297,11 @@ export class Call extends Chapter {
     const at = L(clamp(p.pos.x, -2, 2), PLAIN + 0.36, Math.max(p.pos.z, 500));
     p.lock('idle');
     p.teleport(at, 0);
-    g.cam.setShot({ pos: V(at.x + 3.2, at.y + 2.6, at.z - 6.5), look: V(at.x - 0.4, at.y + 2.4, at.z + 40), fov: 48 }, 1.2);
+    // from behind him on the road: the gate of Joppa, the masts, the sea to either side
+    g.cam.setShot({ pos: V(at.x + 3.4, at.y + 2.3, at.z - 7), look: V(at.x - 1.5, at.y + 3.4, at.z + 60), fov: 48 }, 1.2);
     yield 1.4;
-    g.cam.setShot({ pos: V(at.x + 5, at.y + 15, at.z - 12), look: V(0, Y + PLAIN + 6, 640), fov: 40 }, 8);
+    // and up, until the harbour and the ships stand beyond the roofs
+    g.cam.setShot({ pos: V(at.x + 7, at.y + 15, at.z - 20), look: V(at.x - 6, at.y + 2, 640), fov: 46 }, 10);
     g.audio.gull();
     yield g.hud.verse(part('1:3', 'and went down to Joppa', 'Joppa'), { block: true });
     yield 0.8;
@@ -1355,6 +1429,7 @@ export class Call extends Chapter {
           if (Math.abs(ru - mine) < rr + 1.6) u = ru > 0 ? ru - (rr + 2.6) : ru + (rr + 2.6);
         }
         b.steer(trackX(z + 9) + u, z + 9, 1);
+        b.input.jump = p.grounded && WALLS.some((w) => w - z > 0.5 && w - z < 3.4);
         const dt: number = yield;
         t += dt ?? 0;
       }
