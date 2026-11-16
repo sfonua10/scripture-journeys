@@ -171,7 +171,7 @@ export class Hud {
   // ---- prompt --------------------------------------------------------------------------------------------------
 
   prompt(focus: Focus | null) {
-    if (!focus || this.cinemaOn || this.current?.block) {
+    if (!focus || focus.quiet || this.cinemaOn || this.current?.block) {
       if (this.lastPrompt) {
         this.promptEl.classList.remove('show');
         this.lastPrompt = '';

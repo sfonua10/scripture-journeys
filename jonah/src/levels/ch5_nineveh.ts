@@ -67,6 +67,7 @@ const WALL_N = -98;
 const ZIG = { x: 0, z: -57 };
 const TOP = V(0, 10.5, -52); // where he stands to cry from the temple tower
 const HIGH = 2.4; // above this a cry carries over walls
+const WAVE = 11; // how fast the word crosses the city at the close, metres a second
 
 /** The walled spaces. 0 gate quarter, 1 the walled garden, 2 market, 3 the khan, 4 temple quarter, 5 west court, 6 east court. */
 const ROOMS: { zone: number; x0: number; z0: number; x1: number; z1: number }[] = [
@@ -151,6 +152,9 @@ export class Nineveh extends Chapter {
   private dusk = 0;
   private quarterShown = -1;
   private stragglers = false;
+  private wave!: THREE.Mesh;
+  private waveT = 0;
+  private heardAll = [false, false, false];
 
   // ---- building ------------------------------------------------------------------------------------------------
 
@@ -212,6 +216,14 @@ export class Nineveh extends Chapter {
       g.root.add(mesh);
       this.rings.push({ mesh, t: 0, radius: 1, life: 0 });
     }
+
+    // the word crossing the whole city at the close: a ring of light that runs out over the roofs
+    this.wave = new THREE.Mesh(new THREE.RingGeometry(0.95, 1, 128), new THREE.MeshBasicMaterial({ color: 0xfff0c8, transparent: true, opacity: 0.5, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false }));
+    this.wave.rotation.x = -Math.PI / 2;
+    this.wave.position.set(TOP.x, 1.2, TOP.z);
+    this.wave.visible = false;
+    this.wave.renderOrder = 9;
+    g.root.add(this.wave);
 
     this.motes = new Motes(Math.round(220 * q.particles), { color: 0xfff0cc, size: 0.075, opacity: 0.5, box: V(34, 14, 34), velocity: V(0.5, 0.04, 0.25) });
     g.root.add(this.motes.object);
@@ -342,7 +354,7 @@ export class Nineveh extends Chapter {
       this.banner(s * 8, 6.4, WALL_S + 3.62, 1.5, 4.2, C.crimson);
       this.banner(s * 5.6, 6.2, WALL_S - 3.7, 1.2, 3.4, C.crimson);
       // the doors, standing open
-      b.box(s * 4.3, 3.1, WALL_S - 2.9, 0.26, 6.2, 3.4, C.woodDark, { mat: 'wood', collide: false, rotY: s * 0.12 });
+      b.box(s * 4.3, 3.1, WALL_S - 2.9, 0.26, 6.2, 3.4, 0x8a6a44, { mat: 'wood', collide: false, rotY: s * 0.12 });
       for (const y of [1.2, 3.1, 5]) b.box(s * 4.14, y, WALL_S - 2.9, 0.1, 0.3, 3.44, 0xa8823a, { collide: false, rotY: s * 0.12 });
     }
     b.block(0, 6.4, WALL_S, 9, 3.3, 3, C.brick, { mat: 'brick' });
@@ -385,6 +397,18 @@ export class Nineveh extends Chapter {
     b.box(0, 2.5, WALL_C + 0.66, 0.16, 5, 0.1, 0x5a4420, { collide: false });
     // the heralds' walk above the doors
     b.block(0, 5, WALL_C, 6.6, 0.4, 2.2, C.brickDark, { mat: 'brick' });
+  }
+
+  /** A flight of steps: a slope to walk on, with treads laid over it. Foot centre at (x, y, z); rises toward +z before rotY. */
+  private stair(b: LevelBuilder, x: number, y: number, z: number, w: number, h: number, len: number, rotY: number, color: number, mat: 'stone' | 'plaster' = 'stone') {
+    b.ramp(x, y, z, w - 0.04, h, len, color, { mat, rotY });
+    const n = Math.max(2, Math.round(h / 0.22));
+    const rise = h / n;
+    const run = len / n;
+    for (let i = 0; i < n; i++) {
+      const lz = -len / 2 + (i + 0.5) * run;
+      b.box(x + lz * Math.sin(rotY), y + (i + 1) * rise - rise * 0.5 + 0.01, z + lz * Math.cos(rotY), w, rise, run + 0.02, color, { mat, rotY, collide: false, jitter: 0.02, shade: 0.12 });
+    }
   }
 
   /** A flat-roofed house of mud brick. Its roof can be walked. */
@@ -465,7 +489,7 @@ export class Nineveh extends Chapter {
     this.house(b, 5.5, 7, 17.5, 11.6, 3.6, C.plaster, { door: 'w' });
     // the house with the outer stair (the first high place), and the roof beyond the gap
     this.house(b, 11, 13, 18.2, 27, 3.2, C.pale, { door: 'w' });
-    b.ramp(10.1, 0, 22.5, 1.8, 3.2, 8, 0xd8c096, { mat: 'plaster', rotY: Math.PI });
+    this.stair(b, 10.1, 0, 22.5, 1.8, 3.2, 8, Math.PI, 0xd8c096, 'plaster');
     b.block(10.1, 0, 17.6, 1.8, 3.2, 1.8, 0xd8c096, { mat: 'plaster' });
     this.house(b, 11, 29.4, 17.5, 36.5, 3.2, C.plaster, { door: 'w' });
     // a hut on that roof, with the scroll piece behind it
@@ -590,7 +614,7 @@ export class Nineveh extends Chapter {
 
     // ---- the dyer's house and vats: the east side's high place
     this.house(b, 20, -8, 31, 1, 3.4, C.pale, { door: 'w' });
-    b.ramp(19.1, 0, -3.5, 1.8, 3.4, 8, 0xd8c096, { mat: 'plaster', rotY: Math.PI });
+    this.stair(b, 19.1, 0, -3.5, 1.8, 3.4, 8, Math.PI, 0xd8c096, 'plaster');
     b.block(19.1, 0, -8.4, 1.8, 3.4, 1.8, 0xd8c096, { mat: 'plaster' });
     for (const [x, z, c] of [
       [14.6, -1.6, 0xb0282a],
@@ -680,11 +704,11 @@ export class Nineveh extends Chapter {
       }
     }
     // the stairs: up the front, then by the east face, then by the back
-    b.ramp(0, 0, ZIG.z + 13 + 3.1, 5, 4, 6.2, 0xdcc49a, { mat: 'stone', rotY: Math.PI });
-    for (const s of [1, -1]) b.block(s * 2.8, 0, ZIG.z + 13 + 3.1, 0.6, 4.5, 6.2, tier, { mat: 'brick', taper: 1 });
-    b.ramp(10.85, 4, ZIG.z + 5, 2.5, 3.5, 6, 0xdcc49a, { mat: 'stone', rotY: Math.PI });
+    this.stair(b, 0, 0, ZIG.z + 13 + 3.1, 5, 4, 6.2, Math.PI, 0xdcc49a);
+    for (const s of [1, -1]) b.ramp(s * 2.85, 0, ZIG.z + 13 + 3.1, 0.7, 4.7, 6.2, tier, { mat: 'brick', rotY: Math.PI });
+    this.stair(b, 10.85, 4, ZIG.z + 5, 2.5, 3.5, 6, Math.PI, 0xdcc49a);
     b.block(10.85, 4, ZIG.z + 0.8, 2.5, 3.5, 2.4, 0xd4ac72, o);
-    b.ramp(-1, 7.5, ZIG.z - 7.35, 2.5, 3, 6, 0xdcc49a, { mat: 'stone', rotY: Math.PI / 2 });
+    this.stair(b, -1, 7.5, ZIG.z - 7.35, 2.5, 3, 6, Math.PI / 2, 0xdcc49a);
     b.block(3.2, 7.5, ZIG.z - 7.35, 2.4, 3, 2.5, 0xd9b278, o);
     // the shrine
     b.block(ZIG.x, 10.5, ZIG.z, 5, 3.6, 5, C.lapis, { jitter: 0.02 });
@@ -750,8 +774,8 @@ export class Nineveh extends Chapter {
     // ---- the open ground before the tower: palms, an incense seller, the wings
     this.palm(b, -9.5, -34.5, 6.2);
     this.palm(b, 9.5, -34.5, 6.2);
-    this.stall(b, -17, -36.5, 0, 0x7a3a8a, 2);
-    this.stall(b, 17, -36.5, 0, 0x2a4fa6, 3);
+    this.stall(b, -19.5, -36.5, 0, 0x7a3a8a, 2);
+    this.stall(b, 19.5, -36.5, 0, 0x2a4fa6, 3);
     this.fill(b, -42, -44.6, -24, -32.6, { door: 'e' });
     this.fill(b, 24, -44.6, 42, -32.6, { door: 'w' });
   }
@@ -760,7 +784,7 @@ export class Nineveh extends Chapter {
     const z0 = -82;
     // the terrace and its stair
     b.block(0, 0, -89.5, 40, 3, 15, 0xd9b880, { mat: 'brick', jitter: 0.02 });
-    b.ramp(0, 0, z0 + 2.25, 12, 3, 4.5, 0xdcc49a, { mat: 'stone', rotY: Math.PI });
+    this.stair(b, 0, 0, z0 + 2.25, 12, 3, 4.5, Math.PI, 0xdcc49a);
     for (const s of [1, -1]) {
       b.block(s * 6.6, 0, z0 + 2.25, 1.2, 3.6, 4.5, 0xd4ac72, { mat: 'brick' });
       this.glazeZ(b, s * 13.5, 1.6, z0 + 0.02, 12, 1.5, 1);
@@ -790,8 +814,23 @@ export class Nineveh extends Chapter {
     b.box(0, 7.85, -91.6, 6.8, 0.1, 4.6, C.crimson, { mat: 'cloth', collide: false, doubleSide: true });
     b.box(0, 7.6, -89.3, 6.8, 0.55, 0.06, C.crimson, { mat: 'cloth', collide: false, doubleSide: true });
     // a brazier, cold: the ashes he will sit in
-    b.post(3.4, 3, -86.6, 0.75, 0.3, 0x8a7a68, { mat: 'stone', seg: 9 });
-    b.ball(3.4, 3.26, -86.6, 0.72, C.ash, { detail: 1, squash: V(1, 0.34, 1), jitter: 0.04, shade: 0.3 });
+    b.ball(0, 3.02, -86.5, 1.5, C.ash, { detail: 2, squash: V(1, 0.13, 0.9), jitter: 0.06, shade: 0.35, collide: false });
+    b.ball(0.5, 3.04, -86.9, 0.8, 0x7d7870, { detail: 1, squash: V(1, 0.2, 1), jitter: 0.08, shade: 0.35, collide: false });
+    for (const [x, z, r, c] of [
+      [-1.0, -85.8, 0.55, 0x9a958c],
+      [1.2, -86.0, 0.6, 0x6f6a63],
+      [0.1, -87.5, 0.5, 0x858078],
+      [-0.9, -87.0, 0.45, 0x5e5953],
+      [0.9, -85.6, 0.35, 0xa29d94],
+    ]) {
+      b.ball(x, 3.03, z, r, c, { detail: 1, squash: V(1, 0.22, 1), jitter: 0.12, shade: 0.3, collide: false });
+    }
+    for (const [x, z] of [
+      [-1.5, -86.6],
+      [1.6, -86.9],
+    ]) {
+      b.box(x, 3.05, z, 0.36, 0.07, 0.08, 0x3a3530, { collide: false, rotY: x * 2 });
+    }
     this.banner(-10, 8.6, -95.2, 1.6, 4.4, C.crimson);
     this.banner(10, 8.6, -95.2, 1.6, 4.4, C.crimson);
     // palms either side of the stair
@@ -820,7 +859,8 @@ export class Nineveh extends Chapter {
       b.block(x, 0, z, 30 * s, 6 * s, 30 * s, 0xcba470, far);
       b.block(x, 6 * s, z, 21 * s, 5 * s, 21 * s, 0xd2ac76, far);
       b.block(x, 11 * s, z, 12 * s, 4 * s, 12 * s, 0xd8b47e, far);
-      b.block(x, 15 * s, z, 5 * s, 4 * s, 5 * s, C.lapis, { ...far, mat: 'plain' });
+      b.block(x, 15 * s, z, 4.4 * s, 3 * s, 4.4 * s, 0x35549c, { ...far, mat: 'plain' });
+      b.block(x, 18 * s, z, 4.9 * s, 0.4 * s, 4.9 * s, C.gold, { ...far, mat: 'plain' });
     }
     // the walls go on
     for (const s of [1, -1]) this.wallZ(b, -236, WALL_S, s * 152, 7, 3, { far: true });
@@ -868,8 +908,8 @@ export class Nineveh extends Chapter {
     c.cluster(-7, -37, N(9), 2.8, 4, 2, LOOK_TEMPLE);
     c.cluster(7, -37, N(9), 2.8, 4, 2, LOOK_TEMPLE);
     c.line(-2.5, -33.5, -2.5, -42, N(3), 0.9, 4, 2, LOOK_TEMPLE, 0.5);
-    c.cluster(-17, -39.8, N(6), 1.8, 4, 2, LOOK_TEMPLE, { face: Math.PI });
-    c.cluster(17, -39.8, N(6), 1.8, 4, 2, LOOK_TEMPLE, { face: Math.PI });
+    c.cluster(-19.5, -39.8, N(6), 1.8, 4, 2, LOOK_TEMPLE, { face: Math.PI });
+    c.cluster(19.5, -39.8, N(6), 1.8, 4, 2, LOOK_TEMPLE, { face: Math.PI });
     c.cluster(-16.5, -51, N(6), 2.2, 4, 2, LOOK_TEMPLE);
     c.cluster(16.5, -63, N(6), 2.2, 4, 2, LOOK_TEMPLE);
     c.cluster(0, -72.2, N(8), 1.6, 4, 2, LOOK_TEMPLE, { face: Math.PI });
@@ -918,9 +958,9 @@ export class Nineveh extends Chapter {
       this.court.push(f);
       return f;
     };
-    this.king = mk(KING, 0, 3.62, -92.05, 0, 'sit');
+    this.king = mk(KING, 0, 3.95, -92.0, 0, 'sit');
     this.kingSack = mk(KING_SACK, 0, 3.6, -91, 0, 'idle');
-    this.nobles = [mk(NOBLE_A, -2.6, 3, -89.4, 0.5, 'idle'), mk(NOBLE_B, 2.7, 3, -89.6, -0.5, 'idle')];
+    this.nobles = [mk(NOBLE_A, -4.4, 3, -88.3, 0.7, 'idle'), mk(NOBLE_B, 4.4, 3, -88.5, -0.7, 'idle')];
     this.runner = mk(RUNNER, 0, 0, -78, Math.PI, 'idle');
     // the robe he lays from him, and the crown
     this.robe = buildMesh((b) => {
@@ -1178,26 +1218,30 @@ export class Nineveh extends Chapter {
     g.audio.swell(110);
     g.audio.chime();
     // ---- the word crosses the whole city
-    this.crowd.sweep(TOP.x, TOP.z, 8.5);
-    this.far.sweep(TOP.x, TOP.z, 13);
+    this.crowd.sweep(TOP.x, TOP.z, WAVE);
+    this.far.sweep(TOP.x, TOP.z, WAVE);
+    this.wave.visible = true;
+    this.waveT = 0;
     g.cam.setShot({ pos: V(0, 27, -24), look: V(0, 3, -50), fov: 52 }, 2.2);
     yield 2.6;
-    g.cam.setShot({ pos: V(44, 64, 34), look: V(-4, 0, -46), fov: 50 }, 6.5);
+    g.cam.setShot({ pos: V(38, 50, 30), look: V(-3, 0, -38), fov: 50 }, 6.5);
     yield g.hud.verse(cite('3:5'), { block: true });
     yield* waitFor(() => this.crowd.count().turned >= all.total, 9);
     g.hud.meter('souls', null);
 
     // ---- word comes to the king
+    this.wave.visible = false;
     for (const f of this.court) f.root.visible = f !== this.kingSack;
     const run = this.runner;
     run.root.position.set(0.4, 0, -78.2);
-    g.cam.setShot({ pos: V(8.5, 6.4, -80.5), look: V(-0.6, 4.4, -91), fov: 40 }, 0);
-    g.run(() => this.walk(run, [V(0.4, 3, -82.2), V(0.6, 3, -87.6)], 3.4, 'bow'));
+    g.cam.setShot({ pos: V(6.2, 5.0, -82.6), look: V(-0.5, 4.5, -91), fov: 42 }, 0);
+    g.cam.setShot({ pos: V(5.6, 5.0, -84), look: V(-0.3, 4.6, -91), fov: 40 }, 6);
+    g.run(() => this.walk(run, [V(0.4, 3, -82.2), V(2.1, 3, -86.6)], 3.2, 'bow'));
     const read = g.hud.verse(cite('3:6'), { block: true });
     yield 2.6;
     // he arose from his throne
     this.king.pose = 'idle';
-    yield* tween(1.1, (t) => this.king.root.position.set(0, lerp(3.62, 3.6, t), lerp(-92.05, -91.1, t)), ease.inOutQuad);
+    yield* tween(1.1, (t) => this.king.root.position.set(0, lerp(3.95, 3.6, t), lerp(-92.0, -91.0, t)), ease.inOutQuad);
     for (const n of this.nobles) n.pose = 'talk';
     yield 0.9;
     // and he laid his robe from him, and covered him with sackcloth
@@ -1224,13 +1268,14 @@ export class Nineveh extends Chapter {
     for (const n of this.nobles) n.pose = 'bow';
     yield 1.0;
     // and sat in ashes
-    g.cam.setShot({ pos: V(-1.4, 4.9, -81.6), look: V(2.6, 3.7, -87.4), fov: 42 }, 2.4);
-    yield* this.walk(this.kingSack, [V(1.2, 3.6, -89.4), V(1.6, 3, -88.4), V(3.0, 3, -87.3)], 3.2, 'idle');
-    this.kingSack.root.rotation.y = 0.5;
+    g.cam.setShot({ pos: V(-3.8, 4.5, -82.2), look: V(0.3, 3.8, -87.2), fov: 42 }, 2.6);
+    yield* this.walk(this.kingSack, [V(0, 3.6, -89.5), V(0, 3, -88.5), V(0, 3, -86.6)], 3.4, 'idle');
+    this.kingSack.root.rotation.y = 0.25;
     this.kingSack.pose = 'sit';
-    yield* tween(0.6, (t) => (this.kingSack.root.position.y = lerp(3, 3.12, t)));
-    (this.ashes.uniforms.uOpacity as THREE.IUniform<number>).value = 0.55;
-    this.ashes.object.position.set(3.2, 3.4, -86.8);
+    yield* tween(0.6, (t) => (this.kingSack.root.position.y = lerp(3, 3.1, t)));
+    (this.ashes.uniforms.uOpacity as THREE.IUniform<number>).value = 0.6;
+    this.ashes.object.position.set(0, 3.6, -86.5);
+    g.fx.emit(V(0, 3.2, -86.5), { count: 16, color: 0xb8b2a8, color2: 0x8d8880, speed: 1.1, spread: 1, dir: V(0, 1, 0), life: 1.6, gravity: -0.4, size: 0.3, opacity: 0.5, drag: 2 });
     for (const n of this.nobles) n.pose = 'kneel';
     run.pose = 'kneel';
     yield read;
@@ -1306,7 +1351,7 @@ export class Nineveh extends Chapter {
     const zone = zoneOf(p.x, p.z);
     const over = p.y > HIGH;
     const ease2 = this.g.story ? 1.2 : 1;
-    const radius = over ? Math.min(27, 13 + p.y * 1.3) * (this.g.story ? 1.08 : 1) : GROUND[districtOf(zone)] * ease2;
+    const radius = over ? Math.min(27, 13 + p.y * 1.3) * (this.g.story ? 1.08 : 1) : (zone === 2 ? GROUND[1] : GROUND[0]) * ease2;
     return { radius, over, zone };
   }
 
@@ -1418,7 +1463,16 @@ export class Nineveh extends Chapter {
     this.free = this.canCry && g.state === 'play' && !p.locked && !p.carried && p.focus === null && p.state === 'ground' && !g.hud.blocking && !g.hud.inCinema;
     this.cryFocus.pos = p.pos;
     this.cryFocus.progress = 0;
+    // once he has cried a few times the bubble is put away: the button still says what it does
+    this.cryFocus.quiet = this.cries >= 3;
     g.promptOverride = this.free && this.cool <= 0 ? this.cryFocus : null;
+    if (this.wave.visible) {
+      this.waveT += dt;
+      const radius = Math.max(0.01, this.waveT * WAVE);
+      this.wave.scale.set(radius, radius, 1);
+      (this.wave.material as THREE.MeshBasicMaterial).opacity = 0.55 * clamp01(1 - (radius - 150) / 110) * clamp01(radius / 6);
+      if (radius > 260) this.wave.visible = false;
+    }
     for (const r of this.rings) {
       if (!r.mesh.visible) continue;
       r.t += dt;
@@ -1459,6 +1513,16 @@ export class Nineveh extends Chapter {
         g.hud.objective(this.objective.text, sub);
       }
     }
+    if (this.canCry) {
+      for (let d = 0; d < 3; d++) {
+        if (this.heardAll[d]) continue;
+        const c = this.crowd.count(d);
+        if (c.reached < c.total) continue;
+        this.heardAll[d] = true;
+        g.audio.good();
+        g.hud.toast(`All of ${QUARTER[d]} has heard`, 3);
+      }
+    }
     // the name of each quarter as he comes into it
     if (this.canCry) {
       const d = districtOf(zoneOf(p.pos.x, p.pos.z));
@@ -1497,15 +1561,28 @@ export class Nineveh extends Chapter {
     const crowd = this.crowd;
     const self = this;
     function* cry(): Routine {
+      if (!(self.free && self.cool <= 0)) {
+        yield 0.5;
+        if (!(self.free && self.cool <= 0)) b.note(`cannot cry at (${p.pos.x.toFixed(1)}, ${p.pos.y.toFixed(1)}, ${p.pos.z.toFixed(1)}): canCry ${self.canCry} state ${p.state} locked ${p.locked} focus ${p.focus ? p.focus.kind + ':' + p.focus.prompt : null} carried ${!!p.carried} blocking ${g.hud.blocking} cinema ${g.hud.inCinema} cool ${self.cool.toFixed(2)}`);
+      }
       yield* b.until(() => self.free && self.cool <= 0, 6, 'leave to cry');
       yield* b.tap('action', 0.1);
       yield 0.75;
     }
-    /** Goes to those who have not heard in one walled space and cries among them until all there have. */
-    function* tell(zone: number, tries = 12): Routine {
+    /** Goes to those on his own level who have not heard in one walled space, and cries among them until all there have. */
+    function* tell(zone: number, tries = 12, ok: (s: Soul) => boolean = () => true): Routine {
       for (let i = 0; i < tries; i++) {
         yield 1.4;
-        const s = crowd.nearestUnheard(p.pos.x, p.pos.z, undefined, zone);
+        let s: Soul | null = null;
+        let best = Infinity;
+        for (const it of crowd.souls) {
+          if (it.state !== 0 || it.zone !== zone || Math.abs(it.y - p.pos.y) > 1.5 || !ok(it)) continue;
+          const d = Math.hypot(it.x - p.pos.x, it.z - p.pos.z);
+          if (d < best) {
+            best = d;
+            s = it;
+          }
+        }
         if (!s) return;
         yield* b.goTo(V(s.x, s.y, s.z), { dist: 2.2, timeout: 9 });
         yield* cry();
@@ -1526,15 +1603,15 @@ export class Nineveh extends Chapter {
 
     yield* b.until(() => this.phase !== 'call' || (!p.locked && !g.hud.inCinema && !g.hud.blocking), 60, 'the call');
     if (this.from('call')) {
-      yield* path([[0, 0, 44]]);
-      yield* b.until(() => this.canCry && !p.locked, 30, 'the gate');
+      yield* b.goTo(V(0, 0, 36), { timeout: 20, until: () => g.hud.inCinema || p.locked });
+      yield* b.until(() => this.canCry && !p.locked && !g.hud.inCinema, 30, 'the gate');
     }
     if (this.from('gate')) {
       // the square
       yield* path([[0, 0, 21]]);
       yield* cry();
       yield 3;
-      yield* tell(0, 6);
+      yield* tell(0, 6, (s) => s.x > -12);
       // the court down the lane
       yield* path([
         [-8.6, 0, 27.3],
@@ -1542,6 +1619,7 @@ export class Nineveh extends Chapter {
         [-25, 0, 27.5],
       ]);
       yield* cry();
+      yield* tell(0, 3, (s) => s.x < -20.6);
       yield* path([
         [-20, 0, 27.3],
         [-8.6, 0, 27.3],
@@ -1568,7 +1646,7 @@ export class Nineveh extends Chapter {
         [9.6, 0, 33],
         [3, 0, 26],
       ]);
-      yield* tell(0, 4);
+      yield* tell(0, 4, (s) => s.x > -12);
       yield* path([
         [0, 0, 12],
         [0, 0, 2],
@@ -1585,27 +1663,17 @@ export class Nineveh extends Chapter {
       yield* path([[-17, 8.5, -13]], { timeout: 3 });
       yield* cry();
       yield 3;
-      // down, and to those the cry did not reach
+      // down, and to those the cry did not reach: the stalls across the way
       yield* path([
         [-13, 0, -9],
-        [-6, 0, -9],
+        [1, 0, -7],
       ]);
       yield* tell(2, 14);
-      // the dyer's roof
-      if (crowd.nearestUnheard(p.pos.x, p.pos.z, undefined, 2)) {
-        yield* path([
-          [17, 0, 2.4],
-          [19.1, 0.2, 0.2],
-          [19.1, 3.4, -7.6],
-          [22, 3.4, -4],
-        ]);
-        yield* cry();
-        yield 2.5;
-        yield* path([[17.4, 0, -9.5]]);
-        yield* tell(2, 8);
-      }
       // the khan
-      yield* path([[11.4, 0, -19]]);
+      yield* path([
+        [4, 0, -19],
+        [11.4, 0, -19],
+      ]);
       yield* lift('khan');
       yield* path([[18.5, 0, -19.4]]);
       yield* tell(3, 5);
@@ -1627,34 +1695,30 @@ export class Nineveh extends Chapter {
     if (this.from('temple')) {
       yield* b.until(() => this.phase === 'temple', 20, 'the temple quarter');
       yield* cry();
-      yield* tell(4, 6);
       // the courts
       yield* path([
-        [-16.5, 0, -44],
-        [-18.4, 0, -57],
+        [-15, 0, -35.7],
+        [-15, 0, -57],
       ]);
       yield* lift('west');
       yield* path([[-27, 0, -57]]);
       yield* tell(5, 6);
       yield* path([
         [-24, 0, -57],
-        [-16.5, 0, -57],
-        [-16.5, 0, -41.5],
-        [16.5, 0, -41.5],
-        [18.4, 0, -57],
+        [-15, 0, -57],
+        [-15, 0, -35.7],
+        [15, 0, -35.7],
+        [15, 0, -57],
       ]);
       yield* lift('east');
       yield* path([[26.5, 0, -57]]);
       yield* tell(6, 6);
-      yield* path([
-        [24, 0, -57],
-        [16.5, 0, -57],
-      ]);
-      yield* tell(4, 6);
       // the tower: front stair, east stair, round by the west for the scroll, the back stair, the top
       yield* path([
-        [16.5, 0, -41],
-        [0, 0, -36.5],
+        [24, 0, -57],
+        [15, 0, -57],
+        [15, 0, -35.7],
+        [0, 0, -35.7],
         [0, 4, -44.8],
         [10.85, 4, -45.6],
         [10.85, 4, -48.6],
@@ -1665,9 +1729,9 @@ export class Nineveh extends Chapter {
         [-8, 7.5, -57],
         [-8, 7.5, -64.35],
         [-4.6, 7.5, -64.35],
-        [2.6, 10.5, -64.35],
-        [4.4, 10.5, -62],
-        [4.4, 10.5, -53],
+        [3.2, 10.5, -64.35],
+        [4.6, 10.5, -61.5],
+        [4.6, 10.5, -53],
         [0.4, 10.5, -52.2],
       ]);
       yield* cry();
@@ -1695,6 +1759,8 @@ export class Nineveh extends Chapter {
       r.mesh.geometry.dispose();
       (r.mesh.material as THREE.Material).dispose();
     }
+    this.wave.geometry.dispose();
+    (this.wave.material as THREE.Material).dispose();
     void dotTexture;
     void _c;
   }

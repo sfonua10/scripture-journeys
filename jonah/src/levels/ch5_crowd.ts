@@ -83,7 +83,7 @@ function merge(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
 }
 
 function robeGeometry(): THREE.BufferGeometry {
-  const skirt = new THREE.CylinderGeometry(0.2, 0.33, 0.95, 6, 1, false);
+  const skirt = new THREE.CylinderGeometry(0.2, 0.33, 0.95, 6, 1, true);
   skirt.translate(0, 0.475, 0);
   const chest = new THREE.CylinderGeometry(0.22, 0.2, 0.42, 6, 1, false);
   chest.translate(0, 1.14, 0);
@@ -104,7 +104,7 @@ function robeGeometry(): THREE.BufferGeometry {
 function headGeometry(): THREE.BufferGeometry {
   const head = new THREE.IcosahedronGeometry(0.15, 0);
   head.translate(0, 0.02, 0);
-  const neck = new THREE.CylinderGeometry(0.06, 0.07, 0.1, 5);
+  const neck = new THREE.CylinderGeometry(0.06, 0.07, 0.1, 5, 1, true);
   neck.translate(0, -0.14, 0);
   const beard = new THREE.BoxGeometry(0.17, 0.13, 0.08);
   beard.translate(0, -0.09, 0.11);
