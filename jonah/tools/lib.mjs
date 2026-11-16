@@ -54,7 +54,10 @@ export async function open(browser, url, size = SIZES.desktop) {
     else if (text.startsWith('[bot]') || text.startsWith('pass ') || text.startsWith('fail ')) logs.push(text);
   });
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-  page.on('requestfailed', (r) => errors.push(`request failed: ${r.url()}`));
+  // (a request cut off by the dev server reloading the page after an edit is not a fault of the game)
+  page.on('requestfailed', (r) => {
+    if (r.failure()?.errorText !== 'net::ERR_ABORTED') errors.push(`request failed: ${r.url()} ${r.failure()?.errorText ?? ''}`);
+  });
   await page.goto(url, { waitUntil: 'load' });
   return { page, context, errors, logs };
 }

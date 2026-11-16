@@ -112,6 +112,8 @@ export class Player {
   killY = -30;
   /** Decides what Action does with a carried prop; return true to take it over. */
   onCarryAction: ((prop: Prop) => boolean) | null = null;
+  /** What the prompt says while carrying, when the chapter has its own use for the load; null for the usual. */
+  carryPrompt: ((prop: Prop) => string | null) | null = null;
   /** Where the carried prop would land if set down now, for a chapter's guide. */
   canPickUp: (prop: Prop) => boolean = () => true;
 
@@ -773,7 +775,7 @@ export class Player {
     const busy = this.state === 'hang' || this.state === 'mantle' || this.state === 'climb' || this.state === 'slide';
     if (this.carried) {
       const prop = this.carried;
-      this.focus = { kind: 'carry', prompt: this.charge > 0 ? 'Release to throw' : 'Set down · hold to throw', progress: this.charge, pos: prop.pos };
+      this.focus = { kind: 'carry', prompt: this.carryPrompt?.(prop) ?? (this.charge > 0 ? 'Release to throw' : 'Set down · hold to throw'), progress: this.charge, pos: prop.pos };
       if (this.onCarryAction && a.pressed && this.onCarryAction(prop)) {
         this.actionEaten = true;
         this.charge = 0;

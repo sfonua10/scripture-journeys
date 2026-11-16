@@ -54,7 +54,7 @@ void main() {
   vec3 d = normalize(vDir);
   float h = d.y;
   vec3 c = mix(uHorizon, uTop, pow(clamp(h, 0.0, 1.0), 0.55));
-  c = mix(c, uBottom, smoothstep(0.0, -0.25, h));
+  c = mix(c, uBottom, 1.0 - smoothstep(-0.25, 0.0, h));
   float sd = max(dot(d, uSunDir), 0.0);
 
   // stars: a sparse grid of points, steady enough at this scale
@@ -63,7 +63,7 @@ void main() {
     vec2 cell = floor(sp);
     float r = hash(cell);
     vec2 f = fract(sp) - 0.5 - (vec2(hash(cell + 7.0), hash(cell + 13.0)) - 0.5) * 0.6;
-    float star = step(0.93, r) * smoothstep(0.09, 0.0, length(f));
+    float star = step(0.93, r) * (1.0 - smoothstep(0.0, 0.09, length(f)));
     c += star * uStars * (0.6 + 0.4 * sin(uTime * 2.0 + r * 40.0)) * smoothstep(0.02, 0.3, h);
   }
 

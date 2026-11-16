@@ -57,6 +57,8 @@ export class Game implements MenuHost {
   /** No fail states. */
   story = false;
   bot: Bot | null = null;
+  /** A prompt a chapter shows by its own hand (a staged moment where the player is not free to walk). */
+  promptOverride: import('../player/controller').Focus | null = null;
   /** For the playthrough tool and the browser console. */
   readonly report = { done: [] as number[], errors: [] as string[], assists: [] as string[], result: null as ResultData | null };
 
@@ -195,6 +197,7 @@ export class Game implements MenuHost {
 
   private unload() {
     this.scripts.clear();
+    this.promptOverride = null;
     this.hud.reset();
     this.input.bot = null;
     this.chapter?.dispose();
@@ -521,8 +524,9 @@ export class Game implements MenuHost {
       this.lights?.follow(_v);
       _v.y += 1;
       this.scrolls.update(dt, _v);
-      this.hud.prompt(p.locked ? null : p.focus);
-      this.touch.setAction(p.locked ? null : (p.focus?.prompt ?? null), p.focus?.progress ?? 0);
+      const focus = this.promptOverride ?? (p.locked ? null : p.focus);
+      this.hud.prompt(focus);
+      this.touch.setAction(focus?.prompt ?? null, focus?.progress ?? 0);
       if (this.patchTest) {
         if (!this.testPos) this.testPos = p.pos.clone();
         else if (this.testPos.distanceTo(p.pos) > 2) {

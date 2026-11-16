@@ -91,7 +91,9 @@ void main() {
   gl_FragColor = vec4(c, 1.0);
   #include <tonemapping_fragment>
   c = gl_FragColor.rgb;
-  // The grade is done after tone mapping, where the numbers mean what the eye sees.
+  // The grade is done after tone mapping and in display (gamma) space, where the numbers mean what the eye
+  // sees: contrast pivots on middle grey there, and shadows are not crushed.
+  c = pow(max(c, 0.0), vec3(1.0 / 2.2));
   c = c * uTint + uLift * (1.0 - c);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c = mix(vec3(l), c, uSaturation);
@@ -99,7 +101,8 @@ void main() {
   vec2 q = (vUv - 0.5) * vec2(mix(1.0, uAspect, 0.35), 1.0);
   float v = smoothstep(0.35, 1.05, length(q) * 1.25);
   c *= 1.0 - v * uVignette;
-  gl_FragColor = vec4(max(c, 0.0), 1.0);
+  c = pow(max(c, 0.0), vec3(2.2));
+  gl_FragColor = vec4(c, 1.0);
   #include <colorspace_fragment>
 }`;
 

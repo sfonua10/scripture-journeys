@@ -81,7 +81,7 @@ export class Bot {
    * Runs to a place. Jumps when it stops making headway (a step, a low wall) or when `jump` says so.
    * Gives up after `timeout` seconds and assists.
    */
-  *goTo(target: THREE.Vector3Like, opts: { dist?: number; timeout?: number; jump?: () => boolean; slide?: () => boolean; speed?: number; y?: boolean; noAssist?: boolean; holdJump?: () => boolean } = {}): Routine {
+  *goTo(target: THREE.Vector3Like, opts: { dist?: number; timeout?: number; jump?: () => boolean; slide?: () => boolean; speed?: number; y?: boolean; noAssist?: boolean; holdJump?: () => boolean; until?: () => boolean } = {}): Routine {
     const g = this.g;
     const dist = opts.dist ?? 0.6;
     const timeout = opts.timeout ?? 14;
@@ -95,6 +95,7 @@ export class Bot {
       const d = this.steer(target.x, target.z, opts.speed ?? 1);
       const dy = Math.abs(target.y - p.y);
       if (d < dist && (!opts.y || dy < 1.2)) break;
+      if (opts.until?.()) break;
       const dt: number = (yield) ?? 0;
       t += dt;
       // headway

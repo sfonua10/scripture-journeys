@@ -17,7 +17,7 @@ void main() {
   vec3 local = mod(p - uCam, uBox) - uBox * 0.5;
   vec3 world = uCam + local;
   world -= normalize(uVel) * uLen * aEnd * (0.6 + 0.8 * fract(aSeed.y * 53.3));
-  vAlpha = (1.0 - aEnd) * smoothstep(uBox.x * 0.5, uBox.x * 0.3, length(local.xz));
+  vAlpha = (1.0 - aEnd) * (1.0 - smoothstep(uBox.x * 0.3, uBox.x * 0.5, length(local.xz)));
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
 }`;
 const rainFrag = /* glsl */ `
@@ -92,7 +92,7 @@ void main() {
   p += uWander * vec3(sin(uTime * 0.7 + ph), sin(uTime * 0.53 + ph * 1.7), cos(uTime * 0.61 + ph * 1.3));
   vec3 local = mod(p - uCam, uBox) - uBox * 0.5;
   vec4 mv = viewMatrix * vec4(uCam + local, 1.0);
-  float edge = smoothstep(uBox.x * 0.5, uBox.x * 0.36, length(local));
+  float edge = 1.0 - smoothstep(uBox.x * 0.36, uBox.x * 0.5, length(local));
   vAlpha = edge * (0.45 + 0.55 * fract(ph * 3.3));
   gl_PointSize = uSize * (0.5 + fract(ph * 7.1)) * uScale / max(0.1, -mv.z);
   gl_Position = projectionMatrix * mv;
