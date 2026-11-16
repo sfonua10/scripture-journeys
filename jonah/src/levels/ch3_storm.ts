@@ -542,6 +542,11 @@ export class Storm extends Chapter {
     if (this.from('asleep')) yield* this.pAsleep();
     if (this.from('wake')) yield* this.pWake();
     if (this.from('wares')) yield* this.pWares();
+    else {
+      // begun part-way (?seek=): the meter the wares would have set going
+      this.meterOn = true;
+      this.damage = 0.3;
+    }
     if (this.from('jobs')) yield* this.pJobs();
     if (this.from('chaos')) yield* this.pChaos();
     if (this.from('lots')) yield* this.pLots();
