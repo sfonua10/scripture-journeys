@@ -150,12 +150,12 @@ beards, faces left plain.
 - [x] Bot plays it through; phone and desktop screenshots judged; frame rate measured
 
 ### Chapter 1: The Call
-- [ ] Town on a hill: rooftops, alleys, awnings, walls, market
-- [ ] The call (1:1–2); the east road left behind
-- [ ] Teach: run, jump gaps, ledge climb; then slide under awnings; then wall climb
-- [ ] Headwind and gusts (the twist: time jumps between gusts)
-- [ ] Set piece: the long slide down to the coast with Joppa and the sea opening below
-- [ ] 3 scrolls, challenge, bot, screenshots
+- [x] Town on a hill: rooftops, alleys, awnings, walls, market
+- [x] The call (1:1–2); the east road left behind
+- [x] Teach: run, jump gaps, ledge climb; then slide under awnings; then wall climb
+- [x] Headwind and gusts (the twist: time jumps between gusts)
+- [x] Set piece: the long slide down to the coast with Joppa and the sea opening below
+- [x] 3 scrolls, challenge, bot, screenshots
 
 ### Chapter 2: Joppa Harbor
 - [ ] Harbour: quay, warehouse, moored boats, the ship of Tarshish
@@ -167,38 +167,38 @@ beards, faces left plain.
 - [ ] 3 scrolls, challenge, bot, screenshots
 
 ### Chapter 4: The Great Fish
-- [ ] The sinking: rocks, weeds, faint lights, the prayer's verses at depth
-- [ ] The fish comes (set piece) and swallows
-- [ ] Inside: currents, flotsam stepping stones, glowing creatures
-- [ ] The prayer puzzle: each verse found lights more of the way
-- [ ] The launch onto dry land (set piece)
-- [ ] 3 scrolls, challenge, bot, screenshots
+- [x] The sinking: rocks, weeds, faint lights, the prayer's verses at depth
+- [x] The fish comes (set piece) and swallows
+- [x] Inside: currents, flotsam stepping stones, glowing creatures
+- [x] The prayer puzzle: each verse found lights more of the way
+- [x] The launch onto dry land (set piece)
+- [x] 3 scrolls, challenge, bot, screenshots
 
 ### Chapter 5: Nineveh
-- [ ] The second call (3:1–2)
-- [ ] City: gate, three districts, high places, palace
-- [ ] Crowd (instanced); the cry; the word spreading person to person; sackcloth
-- [ ] High places carry the voice further (the twist: walled courts)
-- [ ] The king rises, lays his robe from him, sits in ashes; the decree (3:6–9)
-- [ ] The city seen turning from above (set piece)
-- [ ] 3 scrolls, challenge, bot, screenshots
+- [x] The second call (3:1–2)
+- [x] City: gate, three districts, high places, palace
+- [x] Crowd (instanced); the cry; the word spreading person to person; sackcloth
+- [x] High places carry the voice further (the twist: walled courts)
+- [x] The king rises, lays his robe from him, sits in ashes; the decree (3:6–9)
+- [x] The city seen turning from above (set piece)
+- [x] 3 scrolls, challenge, bot, screenshots
 
 ### Chapter 6: The Plant and the East Wind
-- [ ] The hill east of the city; Jonah's prayer and the first question (4:1–4)
-- [ ] Gather and raise the booth (4:5)
-- [ ] The gourd grows (set piece) (4:6)
-- [ ] The worm, which always gets away (4:7)
-- [ ] The east wind and the sun; shade that fails (4:8)
-- [ ] The closing question; sit as long as you like (4:9–11)
-- [ ] 3 scrolls, challenge, bot, screenshots
+- [x] The hill east of the city; Jonah's prayer and the first question (4:1–4)
+- [x] Gather and raise the booth (4:5)
+- [x] The gourd grows (set piece) (4:6)
+- [x] The worm, which always gets away (4:7)
+- [x] The east wind and the sun; shade that fails (4:8)
+- [x] The closing question; sit as long as you like (4:9–11)
+- [x] 3 scrolls, challenge, bot, screenshots
 
 ### Menus, polish, ending
-- [ ] Title screen over a live scene
-- [ ] Chapter cards with the scripture reference
-- [ ] Chapter select with stars, best times, scrolls
-- [ ] Pause, settings (quality, difficulty, sound, timer, camera)
-- [ ] Result screen; bonuses (gallery plate per chapter, costume for all 18 scrolls)
-- [ ] Ending screen
+- [x] Title screen over a live scene
+- [x] Chapter cards with the scripture reference
+- [x] Chapter select with stars, best times, scrolls
+- [x] Pause, settings (quality, difficulty, sound, timer, camera)
+- [x] Result screen; bonuses (gallery plate per chapter, costume for all 18 scrolls)
+- [x] Ending screen
 - [ ] Controller works on every screen
 - [ ] Full playthrough by the bot, phone and desktop
 - [ ] No console errors; frame rate on low measured for every chapter

@@ -1,8 +1,9 @@
 # Jonah: progress
 
-> **Status: being built.** The core engine and Chapter 3 (The Storm) play from start to end. Chapters 1, 2, 4, 5
-> and 6 are being written; the title scene, ending and final passes come after. The summary that belongs here (how to
-> run it, what to check first) is written when the game plays end to end.
+> **Status: five of six chapters play end to end.** Chapters 1, 3, 4, 5 and 6, the title scene and the ending are
+> done and the bot finishes each at desktop (Normal) and phone (Story) size with no assists. Chapter 2 (Joppa
+> Harbor) is still being written in its own worktree. The final summary (how to run it, what to check first) is
+> written here when all six play.
 
 If you are picking this up: read `PLAN.md`, then this file from the top. The checklist in `PLAN.md` is the list of
 work; this file says which of it is done and what was learned.
@@ -20,7 +21,7 @@ node tools/probe.mjs --q "ch=3&nocard&bot" --eval "(g) => g.player.pos.toArray()
 
 Address parameters: `?ch=N` (1–6, 9 = test yard), `?q=low|medium|high`, `?bot`, `?speed=2`, `?nocard`,
 `?diff=story|normal`, `?seek=<phase>` (chapter 3: asleep, wake, wares, jobs, chaos, lots, words, rowing, cast, calm),
-`?fps`, `?touch=1`, `?mute`, `?nosave`.
+`?fps`, `?touch=1`, `?mute`, `?nosave`, `?ending`. Each chapter's `?seek=` names are in `notes/chN.md`.
 
 ## Done
 
@@ -40,19 +41,28 @@ Address parameters: `?ch=N` (1–6, 9 = test yard), `?q=low|medium|high`, `?bot`
 
 ## Next
 
-- Chapters 1, 2, 4, 5, 6 (each in its own `src/levels/chN_*.ts`; notes for each go in `notes/chN.md` first).
-- The scene behind the title (registry 0), ending, gallery plates, the costume for all 18 scrolls.
-- `tools/fps.mjs`, `tools/preview.mjs`, `?patch-test=1`, the production build checked from `dist/`.
-- Full bot playthrough of all six at both sizes; frame rate on low for every chapter.
+- Chapter 2 (Joppa Harbor): merge when its worktree is done; then rename its title to the brief's.
+- Full bot playthrough of all six at both sizes; frame rate on low, medium and high for every chapter
+  (`node tools/fps.mjs`, with the machine to itself).
+- `npm run build`, the `--dist` runs, `pch check dist`, `?patch-test=1`.
+- Polish passes (see each chapter's "still thin" below).
 
 ## Known bugs
 
-- Chapter 3: the bot sometimes needs one or two "assists" (it is set down where it was going) among the sliding cargo
-  in the hold; a person is not affected. It sometimes misses one of the three scrolls for want of time.
-- Chapter 3: the ship-damage meter is gentle for the bot (it ends near 0.2); it has not been tuned against a person,
-  who is two or three times slower. If Normal feels toothless, raise the rates in `Storm.update` (search `0.0026`).
-- Chapter 3: bailing has no bucket in the hand; the calm sea's foam ring under the hull is a little bright.
-- Frame rate has only been measured in passing (60 fps on high at 1440×900 and at 390×844 touch on this Mac).
+Each chapter's own list is in `notes/chN.md`. The ones that matter most:
+
+- No person has played any chapter; every timing (gusts, heat, damage, currents) has been tuned against the bot,
+  which is quicker and steadier than a person. The bot's clocks: 1:28, 2:21 (Storm), 2:35, 3:00, 3:12.
+- Chapter 1 is likely short (three to five minutes for a person).
+- Chapter 3: the bot sometimes needs one or two "assists" among the sliding cargo in the hold; the damage meter is
+  gentle for the bot (ends near 0.2). If Normal feels toothless, raise the rates in `Storm.update` (search `0.0026`).
+- Chapter 4: jellies under the water are drawn without the water's tint; the veils across the way are plain sheets;
+  the "Use" button shows on touch though nothing is used.
+- Chapter 5: feet sink into stairs by a tread (the collider is the slope); the people do not collide; the closing
+  wave of light shows through the tower.
+- Chapter 6: on low the painted shade is round patches; the cloth roll can fill the view when a rock pushes the
+  camera in.
+- Frame rate has only been read in passing (60 fps on this Mac at both sizes on high).
 
 ## Decisions
 
@@ -77,6 +87,9 @@ Address parameters: `?ch=N` (1–6, 9 = test yard), `?q=low|medium|high`, `?bot`
 - **A man with his hands on held work is braced**: the leaning deck does not walk him away from the rope, the bucket
   or the mariner he is holding. Without this the deck pushed the player out of reach in the seconds before a wave.
 - **No painted eyes on the bow.** They read as a face from the wrong culture and added nothing.
+- **The verse tool proves each book by a witness verse.** Project Gutenberg's KJV prints "The Second Book of the
+  Kings" as a by-name under 2 Samuel, and 2 Kings 14:25 had been copied from 2 Samuel 14:25. No chapter had shown it.
+  The tool now takes the last heading of that name and checks a known verse of every book it reads.
 - **The chapters after the Storm were written side by side** in separate git worktrees, each owning one level file,
   then merged: there was one night.
 
@@ -97,3 +110,41 @@ Address parameters: `?ch=N` (1–6, 9 = test yard), `?q=low|medium|high`, `?bot`
   into it so the player still has men to hold, and the "toward the land" meter that never fills says what the verse
   says.
 - **Still thin**: bailing is hold-a-button. A rhythm (dip, lift, throw) would be better.
+
+### 1 The Call
+
+- **Most of the time**: running west over roofs and jumping: gaps, ledges, a slide under awnings and a cart, a vine
+  wall, then the wind roofs where a gust (announced by sound and streaks) makes a jump fall short.
+- **Where it drags**: the wind rewards standing still for a lull; only sliding under the pergolas lets a good
+  player keep moving. The hill slide is the best-looking stretch and cannot be failed. The roofs are bare.
+- **Changed**: a gust no longer shoves a standing man off a roof (only in the air is he carried); the sun climbs as
+  he goes west so the west slope is not dark.
+
+### 4 The Great Fish
+
+- **Most of the time**: in the deep, steering down a shaft of rock rooms and keeping out of the weed; in the belly,
+  floating and climbing across flotsam while reading the currents, each light found showing a verse of Jonah 2.
+- **Where it dragged**: sinking to the bottom unless Jump was held (he now floats); flotsam set closer than a
+  jump carries (respaced); neon lighting (toned down); waiting for the high water (the third scroll is put there).
+- **Still thin**: the veils; the turning current is signalled only by flecks on the water.
+
+### 5 Nineveh
+
+- **Most of the time**: walking into a crowd, crying out, watching the word run through the people as they kneel in
+  sackcloth, then working out how to reach the rest: closer, higher, or through a barred gate.
+- **Where it dragged**: the first cry showed too little (a ring now shows its reach, people turn before they
+  kneel); the last few unheard were a hunt (they are marked); the tower climb was a walk (a scroll and the priests
+  are on it).
+- **Still thin**: the cry is one press with a cooldown; the gates are a hold.
+
+### 6 The Plant and the East Wind
+
+- **Most of the time**: carrying poles, branches and cloth across open sand to the hilltop, choosing a line through
+  the shade with one eye on the heat; then the gourd, the worm that always gets away, the east wind, and the
+  questions.
+- **Where it dragged**: the heat did not matter (raised, so shade is a real choice); the wind walked an idle player
+  off the hill (a man standing is now only edged along); the last view was through the dead vine (moved to the
+  brow, closing on the city, the people and the cattle).
+- **Still thin**: the gourd scene and the questions are watched (about a minute and a half); holding the booth in the
+  wind is a held button.
+
