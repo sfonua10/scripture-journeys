@@ -63,7 +63,7 @@ export const CHAPTERS: ChapterMeta[] = [
   },
   {
     id: 6,
-    title: 'The Gourd',
+    title: 'The Plant and the East Wind',
     passage: 'Jonah 4:1–11',
     verse: part('4:5', 'So Jonah went out', 'made him a booth'),
     challenge: 'Raise the booth before the sun is high',
