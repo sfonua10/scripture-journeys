@@ -59,7 +59,6 @@ function beam(b: LevelBuilder, p0: THREE.Vector3Like, p1: THREE.Vector3Like, r: 
 
 export interface Lantern {
   group: THREE.Group;
-  light: THREE.PointLight | null;
   glow: THREE.Sprite;
   /** Where it hangs, in the ship's space. */
   at: THREE.Vector3;
@@ -91,6 +90,8 @@ export class Ship {
   /** Everything of the ship hangs here; a sailing chapter moves this group over the waves. */
   readonly group = new THREE.Group();
   readonly lanterns: Lantern[] = [];
+  /** The real lights are few: they are lent to the lanterns nearest whoever is being followed. */
+  private lights: { light: THREE.PointLight; lantern: Lantern | null; level: number }[] = [];
   readonly lines: Line[] = [];
   readonly oars: Oar[] = [];
   readonly climb: ClimbZone;
@@ -173,12 +174,19 @@ export class Ship {
     // ---- lanterns
     const spots: [number, number, number][] = [
       [0, 3.25, MAST_Z - 0.62],
-      [1.25, -0.72, -4.6],
+      [-0.4, -0.72, -8.8],
       [0, 3.95, -10.6],
       [0, 4.25, 12.3],
       [-1.3, -0.72, 6.6],
+      [1.45, -0.72, -1.0],
     ];
-    spots.forEach((p, i) => this.lanterns.push(this.makeLantern(new THREE.Vector3(...p), i < opts.lights, i)));
+    spots.forEach((p, i) => this.lanterns.push(this.makeLantern(new THREE.Vector3(...p), i)));
+    for (let i = 0; i < Math.min(opts.lights, this.lanterns.length); i++) {
+      const light = new THREE.PointLight(0xffc488, 0, 11, 1.8);
+      this.group.add(light);
+      this.lights.push({ light, lantern: null, level: 0 });
+    }
+    this.lightFor(new THREE.Vector3(0, 0, 0), 10);
 
     // ---- oars (shown when the men row)
     const oarMat = solid(0x7a5a38);
@@ -209,7 +217,7 @@ export class Ship {
     const N = 30;
     for (let i = 0; i <= N; i++) stations.push(HULL.len * Math.sin((Math.PI / 2) * (-1 + (2 * i) / N)));
     const levels = [0, 0.1, 0.22, 0.36, 0.5, 0.64, 0.76, 0.88, 1];
-    const tones = [0x3a2e26, 0x3a2e26, 0x4a3a2c, 0x64482f, 0x7c5836, 0x86603a, 0x8e6840, 0x7a3428];
+    const tones = [0x5a4a3e, 0x5a4a3e, 0x64503e, 0x7a5c40, 0x94704a, 0x9e7850, 0xa67e52, 0x9a4234];
     const pt = (z: number, t: number, side: number, out: THREE.Vector3) => {
       const k = keelY(z);
       const g = gunY(z);
@@ -298,13 +306,6 @@ export class Ship {
       [-11.3, 6.9],
     ];
     for (let i = 0; i < stern.length - 1; i++) beam(b, { x: 0, y: stern[i][1], z: stern[i][0] }, { x: 0, y: stern[i + 1][1], z: stern[i + 1][0] }, 0.2 - i * 0.022, DARK, { mat: 'wood', seg: 6 });
-    // an eye painted on each bow, as such ships had
-    for (const side of [1, -1]) {
-      const z = 10.4;
-      const x = side * (hullHalf(z, 1.7) + 0.03);
-      b.cyl(x, 1.75, z, 0.3, 0.3, 0.05, 0xe8dcc0, { rot: new THREE.Euler(0, side * 0.42, Math.PI / 2), collide: false, seg: 10, shade: 0, jitter: 0 });
-      b.cyl(x + side * 0.03, 1.75, z + 0.02, 0.13, 0.13, 0.05, 0x1c1a22, { rot: new THREE.Euler(0, side * 0.42, Math.PI / 2), collide: false, seg: 8, shade: 0, jitter: 0 });
-    }
   }
 
   private buildDecks(b: LevelBuilder) {
@@ -429,7 +430,7 @@ export class Ship {
     beam(b, { x: 0, y: 4.5, z: 12.3 }, { x: 0, y: 4.7, z: 13.15 }, 0.04, DARK);
   }
 
-  private makeLantern(at: THREE.Vector3, lit: boolean, seed: number): Lantern {
+  private makeLantern(at: THREE.Vector3, seed: number): Lantern {
     const group = new THREE.Group();
     group.position.copy(at);
     const frame = solid(0x2a2018);
@@ -448,14 +449,25 @@ export class Ship {
     glow.scale.setScalar(2.2);
     glow.position.y = -0.2;
     group.add(top, base, core, glow);
-    let light: THREE.PointLight | null = null;
-    if (lit) {
-      light = new THREE.PointLight(0xffc488, 8, 11, 1.8);
-      light.position.y = -0.2;
-      group.add(light);
-    }
     this.group.add(group);
-    return { group, light, glow, at, base: 8, seed };
+    return { group, glow, at, base: 8, seed };
+  }
+
+  /** Lends the lights to the lanterns nearest a place aboard. Call every frame with the player's place. */
+  lightFor(at: THREE.Vector3, dt: number) {
+    const near = [...this.lanterns].sort((a, b) => a.at.distanceToSquared(at) - b.at.distanceToSquared(at)).slice(0, this.lights.length);
+    for (const slot of this.lights) {
+      const keep = slot.lantern && near.includes(slot.lantern);
+      if (keep) slot.level = Math.min(1, slot.level + dt * 3);
+      else {
+        slot.level = Math.max(0, slot.level - dt * 3);
+        if (slot.level <= 0) {
+          const free = near.find((l) => !this.lights.some((o) => o.lantern === l));
+          slot.lantern = free ?? null;
+          if (free) slot.light.position.set(free.at.x, free.at.y - 0.25, free.at.z);
+        }
+      }
+    }
   }
 
   // ---- afloat --------------------------------------------------------------------------------------------------
@@ -529,7 +541,7 @@ export class Ship {
       l.group.rotation.z = damp(l.group.rotation.z, -this.roll * 1.3 + Math.sin(t * 2.1 + l.seed) * 0.08 * wind, 4, dt);
       l.group.rotation.x = damp(l.group.rotation.x, -this.pitch * 1.3 + Math.sin(t * 1.7 + l.seed * 2) * 0.06 * wind, 4, dt);
       const flick = 0.86 + 0.14 * Math.sin(t * 13 + l.seed * 5) * Math.sin(t * 7.3 + l.seed) - (Math.sin(t * 0.9 + l.seed * 3) > 0.93 ? 0.3 * wind : 0);
-      if (l.light) l.light.intensity = l.base * flick;
+      for (const slot of this.lights) if (slot.lantern === l) slot.light.intensity = l.base * flick * slot.level;
       (l.glow.material as THREE.SpriteMaterial).opacity = 0.42 * flick;
     }
 

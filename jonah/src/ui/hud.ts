@@ -206,6 +206,7 @@ export class Hud {
       if (m) {
         m.el.remove();
         this.meters.delete(id);
+        this.root.style.setProperty('--meters', String(this.meters.size));
       }
       return;
     }
@@ -222,6 +223,7 @@ export class Hud {
       this.metersEl.append(el);
       m = { el, fill, label: name, value };
       this.meters.set(id, m);
+      this.root.style.setProperty('--meters', String(this.meters.size));
     }
     m.label.textContent = opts.label;
     m.value.textContent = opts.text ?? '';

@@ -141,21 +141,24 @@ export class Bot {
   }
 
   /** Walks to a prop and takes it up. */
-  *take(prop: Prop): Routine {
+  *take(prop: Prop, opts: { any?: boolean } = {}): Routine {
     const g = this.g;
-    if (g.player.carried === prop) return;
+    const got = () => g.player.carried === prop || (!!opts.any && !!g.player.carried);
+    if (got()) return;
     yield* this.goTo(prop.pos, { dist: 1.25 + Math.max(prop.size.x, prop.size.z) * 0.3, timeout: 10 });
     yield* this.face(prop.pos);
-    for (let i = 0; i < 4 && g.player.carried !== prop; i++) {
+    for (let i = 0; i < 4 && !got(); i++) {
+      // something else came to hand: put it down and try again
+      if (g.player.carried) yield* this.setDown();
       yield* this.tap('action');
       yield 0.15;
-      if (g.player.carried !== prop) {
+      if (!got() && !g.player.carried) {
         this.steer(prop.pos.x, prop.pos.z, 0.6);
         yield 0.2;
         this.stop();
       }
     }
-    if (g.player.carried !== prop) {
+    if (!got()) {
       this.assist(`could not take up a ${prop.kind}`);
       if (g.player.carried) g.player.release(g.player.carried);
       g.player.pickUp(prop);

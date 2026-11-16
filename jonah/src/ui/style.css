@@ -464,7 +464,7 @@ body {
 
 .toast {
   position: absolute;
-  top: calc(118px + var(--safe-t));
+  top: calc(66px + var(--safe-t) + var(--meters, 1) * 50px);
   left: 50%;
   transform: translate(-50%, -8px);
   padding: 8px 16px;

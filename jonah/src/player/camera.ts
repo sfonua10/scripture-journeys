@@ -78,6 +78,11 @@ export class CameraRig {
     if (blend <= 0.001) this.shotW = shot ? 1 : 0;
   }
 
+  /** How far the camera actually sits from the player now (walls push it in). */
+  get distance() {
+    return this.curDist;
+  }
+
   get inShot() {
     return !!this.shot;
   }

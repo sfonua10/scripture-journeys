@@ -159,9 +159,9 @@ void main() {
     float hw = hullHalfBeam(l.z) * pow(t, 0.3);
     float dx = abs(l.x) - hw;
     if (dx < 0.07 && l.y < uHull.w && abs(l.z) < uHull.y) discard;
-    float dz = abs(l.z) - uHull.y;
-    float dist = max(dx, dz);
-    wake = (1.0 - smoothstep(0.0, 2.2, dist)) * step(l.y, 1.5);
+    float dz = max(0.0, abs(l.z) - uHull.y);
+    float dist = length(vec2(max(dx, 0.0), dz));
+    wake = (1.0 - smoothstep(0.0, 0.5 + uAmp * 1.6, dist)) * step(l.y, 1.5) * (0.35 + 0.65 * min(uAmp, 1.0));
   }
 
   vec3 N = normalize(vNormal);

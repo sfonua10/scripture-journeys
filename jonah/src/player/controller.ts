@@ -838,6 +838,11 @@ export class Player {
   }
 
   /** The pose asked for by a held interaction, if any. */
+  /** Hands on a held piece of work: he is braced, and a leaning deck does not walk him off it. */
+  get braced() {
+    return this.holding !== null;
+  }
+
   private get workPose(): Pose | null {
     return this.holding ? (this.holding.pose ?? 'work') : null;
   }

@@ -169,7 +169,7 @@ export class Storm extends Chapter {
     g.root.add(this.sky.mesh);
     this.ocean = new Ocean(q.oceanGrid, SEA, STORM_WAVES, { low: q.level === 'low' });
     g.root.add(this.ocean.mesh);
-    g.lights = makeLights(g.engine.scene, { sunDir: V(0.5, 0.75, -0.4), sunColor: STORM.key, sunIntensity: 2.2, skyColor: 0x6a8aa0, groundColor: 0x2c2824, hemiIntensity: 2.3, shadowSize: q.shadowSize, shadowRange: 20 });
+    g.lights = makeLights(g.engine.scene, { sunDir: V(0.5, 0.75, -0.4), sunColor: STORM.key, sunIntensity: 2.2, skyColor: 0x6a8aa0, groundColor: 0x45403a, hemiIntensity: 2.3, shadowSize: q.shadowSize, shadowRange: 20 });
     g.engine.setView(700, 24, 230, STORM.fog);
     this.flashLight = new THREE.DirectionalLight(0xcfe0ff, 0);
     g.root.add(this.flashLight, this.flashLight.target);
@@ -203,16 +203,27 @@ export class Storm extends Chapter {
     g.cam.frame = this.ship.group;
     g.cam.frameTilt = 0.42;
     g.cam.dist = 7;
-    g.cam.hint = (at) => (at.y < -1.2 ? { dist: 3.5, pitch: 0.14, strength: 2 } : at.y > 5 ? { dist: 6.2, pitch: 0.5, strength: 1.5 } : { dist: 7, strength: 1 });
+    g.cam.hint = (at) => (at.y < -1.2 ? { dist: 3.1, pitch: 0.2, strength: 2 } : at.y > 5 ? { dist: 6.2, pitch: 0.5, strength: 1.5 } : { dist: 7, strength: 1 });
 
     // ---- where Jonah lay: sacks in the sides of the ship
     const bed = buildMesh((b) => {
-      b.ball(-1.25, HOLD_Y + 0.16, -7.4, 0.5, 0x9a8a68, { squash: V(1.1, 0.42, 0.8), detail: 1 });
-      b.ball(-1.2, HOLD_Y + 0.14, -6.5, 0.52, 0x8f7f5e, { squash: V(1.1, 0.36, 0.85), detail: 1 });
-      b.ball(-1.75, HOLD_Y + 0.3, -7.9, 0.44, 0xa39370, { squash: V(0.9, 0.6, 0.8), detail: 1 });
-      b.ball(-0.4, HOLD_Y + 0.22, -8.3, 0.46, 0x94845f, { squash: V(1, 0.55, 0.8), detail: 1 });
+      b.ball(-1.25, HOLD_Y + 0.14, -7.3, 0.5, 0x9a8a68, { squash: V(1.15, 0.42, 0.85), detail: 1 });
+      b.ball(-1.2, HOLD_Y + 0.12, -6.5, 0.52, 0x8f7f5e, { squash: V(1.15, 0.36, 0.9), detail: 1 });
+      b.ball(-1.25, HOLD_Y + 0.26, -8.05, 0.42, 0xa39370, { squash: V(1.0, 0.62, 0.7), detail: 1 });
+      b.ball(-0.3, HOLD_Y + 0.22, -8.4, 0.46, 0x94845f, { squash: V(1, 0.55, 0.8), detail: 1 });
+      // bales stowed at the fore end of the hold: low enough to step up on
+      b.box(-0.55, HOLD_Y + 0.25, 8.05, 1.0, 0.5, 1.0, 0x8a7652, { mat: 'weave', rotY: 0.08 });
+      b.box(0.5, HOLD_Y + 0.25, 8.1, 1.0, 0.5, 1.1, 0x94805a, { mat: 'weave', rotY: -0.06 });
+      b.box(0.0, HOLD_Y + 0.22, 8.95, 1.7, 0.44, 0.6, 0x7e6c4c, { mat: 'weave' });
     }, 4);
     this.ship.group.add(bed);
+    for (const [x, z, sx, sz] of [
+      [-0.55, 8.05, 1.0, 1.0],
+      [0.5, 8.1, 1.0, 1.1],
+      [0, 8.95, 1.7, 0.6],
+    ]) {
+      g.physics.box({ x, y: HOLD_Y + 0.25, z }, { x: sx / 2, y: 0.25, z: sz / 2 }, undefined, { surface: 'cloth' });
+    }
 
     // ---- the wares
     const t = this.toys;
@@ -228,9 +239,8 @@ export class Storm extends Chapter {
     ware(t.sack(2.1, 0.35, 7.5));
     ware(t.basket(-0.3, 0.3, 7.3));
     // below: cargo still stowed (it may be brought up and cast forth too), and the pile that hides a scroll
-    ware(t.crate(0.1, HOLD_Y + 0.42, 8.3));
-    ware(t.crate(-0.85, HOLD_Y + 0.42, 7.9, 0.8, 0.2));
-    ware(t.crate(0.75, HOLD_Y + 0.42, 7.3, 0.8, -0.3));
+    ware(t.crate(0.9, HOLD_Y + 0.42, 6.4));
+    ware(t.crate(-1.0, HOLD_Y + 0.42, -1.6, 0.8, 0.2));
     ware(t.barrel(1.4, HOLD_Y + 0.47, 5.6));
     ware(t.barrel(-1.5, HOLD_Y + 0.47, -3.2));
     ware(t.jar(1.5, HOLD_Y + 0.42, -4.4));
@@ -370,7 +380,7 @@ export class Storm extends Chapter {
 
     // ---- scroll pieces
     const rec = g.save.record(3);
-    g.scrolls.add(0, V(0.1, -0.95, 8.75), 'Psalm 139:9', this.ship.group, rec.scrolls[0]);
+    g.scrolls.add(0, V(0, HOLD_Y + 1.3, 8.9), 'Psalm 139:9', this.ship.group, rec.scrolls[0]);
     g.scrolls.add(1, V(0.55, TOP_Y + 1.0, -2.6), 'Psalm 107:25', this.ship.group, rec.scrolls[1]);
     g.scrolls.add(2, V(0, FORE.y + 1.15, 12.05), 'Psalm 89:9', this.ship.group, rec.scrolls[2]);
 
@@ -547,15 +557,15 @@ export class Storm extends Chapter {
     this.phase = 'asleep';
     this.stormWant = 0.72;
     g.hud.cinema(true);
-    p.teleport(V(-1.25, HOLD_Y + 0.42, -6.9), 0);
+    p.teleport(V(-1.25, HOLD_Y + 0.4, -6.25), 0);
     p.lock('lie');
-    g.cam.setShot({ pos: V(1.4, -1.25, -3.4), look: V(-1.1, -2.0, -6.9), fov: 46, local: true }, 0);
+    g.cam.setShot({ pos: V(1.5, -1.1, -3.6), look: V(-1.0, -2.0, -7.0), fov: 46, local: true }, 0);
     this.master.place(0.3, HOLD_Y, 1.4, Math.PI, 'idle');
     yield 1.6;
     yield g.hud.verse(part('1:5', 'But Jonah was gone down', 'fast asleep'));
     yield 0.3;
     this.master.follow([V(-0.9, HOLD_Y, -1.2), V(-0.5, HOLD_Y, -5.3)], 'point', Math.atan2(-0.75, -1.6));
-    g.cam.setShot({ pos: V(1.5, -1.0, -4.6), look: V(-0.9, -1.6, -6.4), fov: 44, local: true }, 2.4);
+    g.cam.setShot({ pos: V(1.7, -0.95, -3.9), look: V(-0.8, -1.7, -6.3), fov: 46, local: true }, 2.4);
     yield () => !this.master.walking;
     g.audio.shout(0.8, 1);
     yield g.hud.verse(part('1:6', 'What meanest thou'), { who: 'The shipmaster', block: true });
@@ -590,7 +600,7 @@ export class Storm extends Chapter {
     this.phase = 'wares';
     this.stormWant = 0.82;
     this.meterOn = true;
-    this.damage = 0.34;
+    this.damage = 0.3;
     this.castNeed = this.cast + 5;
     g.audio.shout(1.1, 1);
     g.hud.say('A mariner', 'Cast forth the wares! Lighten the ship!', { seconds: 3.4 });
@@ -602,6 +612,7 @@ export class Storm extends Chapter {
   /** Test: lines come loose, the hold takes water, and the first great wave. */
   private *pJobs(): Routine {
     const g = this.g;
+    g.bot?.note(`wares cast at ${g.clock.toFixed(0)} s: damage ${this.damage.toFixed(2)}`);
     this.phase = 'jobs';
     this.stormWant = 1.0;
     this.strike(undefined, true);
@@ -623,6 +634,7 @@ export class Storm extends Chapter {
   /** Twist: everything at once, and the storm only grows (1:4, 1:11). */
   private *pChaos(): Routine {
     const g = this.g;
+    g.bot?.note(`jobs done at ${g.clock.toFixed(0)} s: damage ${this.damage.toFixed(2)}`);
     this.phase = 'chaos';
     this.stormWant = 1.15;
     this.strike(undefined, true);
@@ -656,6 +668,7 @@ export class Storm extends Chapter {
   private *pLots(): Routine {
     const g = this.g;
     const p = g.player;
+    g.bot?.note(`the work is over at ${g.clock.toFixed(0)} s: damage ${this.damage.toFixed(2)}, cast ${this.cast}, swept ${this.swept}`);
     this.phase = 'lots';
     this.stormWant = 1.05;
     g.hud.clearMarkers();
@@ -680,12 +693,12 @@ export class Storm extends Chapter {
     p.teleport(V(C.x, 0.02, C.z - R), 0);
     p.lock('kneel');
     this.jar.visible = true;
-    g.cam.setShot({ pos: V(3.6, 3.3, 2.6), look: V(0, 0.7, 6.6), fov: 44, local: true }, 0);
+    g.cam.setShot({ pos: V(3.9, 4.9, 2.2), look: V(0, 0.4, 6.6), fov: 46, local: true }, 0);
     yield 0.3;
     yield g.hud.fade(0, 0.6);
     g.audio.shout(0.9, 1);
     yield g.hud.verse(part('1:7', 'Come, and let us cast lots', 'this evil is upon us'), { who: 'The mariners', block: true });
-    g.cam.setShot({ pos: V(-1.9, 2.5, 3.6), look: V(0.2, 0.6, 6.7), fov: 40, local: true }, 5);
+    g.cam.setShot({ pos: V(-3.4, 4.2, 2.6), look: V(0.2, 0.5, 6.7), fov: 44, local: true }, 5);
     // each man draws in turn; every stone is pale
     for (let i = 0; i < ring.length; i++) {
       const s = ring[i];
@@ -700,7 +713,7 @@ export class Storm extends Chapter {
     }
     // and then Jonah
     this.lot.visible = false;
-    g.cam.setShot({ pos: V(1.5, 1.5, 6.9), look: V(0, 0.95, 4.9), fov: 36, local: true }, 1.6);
+    g.cam.setShot({ pos: V(2.9, 2.7, 8.9), look: V(0, 0.9, 5.3), fov: 40, local: true }, 1.6);
     this.lotAsk = true;
     this.lotProgress = 0;
     let beat = 0;
@@ -770,7 +783,7 @@ export class Storm extends Chapter {
     g.cam.setShot({ pos: V(-2.9, 2.1, 3.3), look: V(0.2, 1.0, 6.2), fov: 42, local: true }, 1.6);
     yield g.hud.verse(part('1:8', 'Tell us, we pray thee'), { who: 'The mariners', block: true });
     p.setLockedPose('talk');
-    g.cam.setShot({ pos: V(1.2, 1.7, 7.3), look: V(0, 1.2, 4.8), fov: 36, local: true }, 1.4);
+    g.cam.setShot({ pos: V(2.6, 2.5, 9.2), look: V(0, 1.0, 5.2), fov: 40, local: true }, 1.4);
     yield g.hud.verse(part('1:9', 'I am an Hebrew'), { who: 'Jonah', block: true });
     p.setLockedPose('idle');
     for (const s of ring) s.pose = 'stagger';
@@ -781,7 +794,7 @@ export class Storm extends Chapter {
     for (const s of ring) s.pose = 'talk';
     yield g.hud.verse(part('1:11', 'What shall we do unto thee', 'calm unto us?'), { who: 'The mariners', block: true });
     p.setLockedPose('talk');
-    g.cam.setShot({ pos: V(0.9, 1.6, 7.0), look: V(0, 1.25, 4.8), fov: 34, local: true }, 1.4);
+    g.cam.setShot({ pos: V(-2.4, 2.4, 9.0), look: V(0, 1.0, 5.2), fov: 40, local: true }, 1.4);
     yield g.hud.verse(part('1:12', 'Take me up'), { who: 'Jonah', block: true });
     p.setLockedPose('idle');
   }
@@ -1004,6 +1017,7 @@ export class Storm extends Chapter {
     wave.hit = true;
     const holding = (this.holdMan.progress ?? 0) > 0;
     wave.saved = holding;
+    g.bot?.note(`great wave in '${this.phase}': ${victim.name} ${holding ? 'held' : 'SWEPT'}; the bot was at (${g.player.pos.x.toFixed(1)}, ${g.player.pos.y.toFixed(1)}, ${g.player.pos.z.toFixed(1)}), he at (${victim.pos.x.toFixed(1)}, ${victim.pos.z.toFixed(1)}); damage ${this.damage.toFixed(2)}`);
     g.cam.shake(0.85);
     g.cam.fovKick = 5;
     g.audio.splash(3);
@@ -1137,7 +1151,7 @@ export class Storm extends Chapter {
     g.physics.setGravity(d.x * GRAV * lean, d.y * GRAV, d.z * GRAV * lean);
     for (const prop of g.physics.props) if (!prop.held) prop.body.wakeUp();
     // the deck's slope pulls at his feet; a wave that finds him unbraced throws him across
-    const pull = p.pos.y > -1 ? 2.4 : 1.2;
+    const pull = p.braced ? 0 : p.pos.y > -1 ? 2.4 : 1.2;
     p.push.set(d.x * pull, 0, d.z * pull);
     if (this.shove > 0) {
       this.shove = Math.max(0, this.shove - dt * 1.1);
@@ -1187,8 +1201,10 @@ export class Storm extends Chapter {
     ship.update(dt, wind);
     this.sky.update(time);
     this.rain.update(time, g.engine.camera);
-    const below = p.pos.y < -1.2 && !g.cam.inShot;
-    this.rain.uniforms.uOpacity.value = damp(this.rain.uniforms.uOpacity.value as number, (below ? 0.07 : 0.5) * (1 - clamp01(this.calm * 2.2)), 4, dt);
+    const camLocal = ship.group.worldToLocal(_w.copy(g.engine.camera.position));
+    const below = camLocal.y < -0.25 && Math.abs(camLocal.x) < 4 && Math.abs(camLocal.z) < 10;
+    ship.lightFor(g.cam.inShot ? camLocal : p.pos, dt);
+    this.rain.uniforms.uOpacity.value = damp(this.rain.uniforms.uOpacity.value as number, (below ? 0 : 0.5) * (1 - clamp01(this.calm * 2.2)), 4, dt);
     if (this.calm === 0) this.ocean.setLook({ foamAmount: 0.3 + this.storm * 0.42 });
 
     // a lantern's light on the water alongside
@@ -1272,7 +1288,7 @@ export class Storm extends Chapter {
     if (this.meterOn && this.calm === 0) {
       const working = this.phase === 'wares' || this.phase === 'jobs' || this.phase === 'chaos' || this.phase === 'rowing';
       if (working && !g.hud.blocking) {
-        this.damage += dt * (0.0032 * this.storm + this.looseCount() * 0.0028 + (this.lashLoose ? 0.003 : 0) + this.flood * 0.0055);
+        this.damage += dt * (0.0026 * this.storm + this.looseCount() * 0.0022 + (this.lashLoose ? 0.0024 : 0) + this.flood * 0.0045);
       }
       const cap = g.story ? 0.92 : 1;
       this.damage = Math.min(cap, this.damage);
@@ -1416,12 +1432,31 @@ export class Storm extends Chapter {
           yield* deck(0, HATCH.z1 + 0.7, until);
           yield* b.goTo(V(0, HOLD_Y, 0.3), { dist: 0.5, timeout: 8, until });
         } else {
-          yield* b.goTo(V(0, HOLD_Y, 0.35), { dist: 0.5, timeout: 10, until });
+          yield* hold(0, 0.2, until, 0.45);
           yield* b.goTo(V(0, 0, HATCH.z1 + 0.9), { dist: 0.5, timeout: 8, until });
         }
       }
-      if (wantBelow) yield* b.goTo(V(x, y, z), { dist: opts.dist ?? 0.6, timeout: 10, until });
+      if (wantBelow) yield* hold(x, z, until, opts.dist ?? 0.6);
       else yield* deck(x, z, until, opts.dist);
+    }
+    /** About the hold. The stair stands in the middle of it: pass its foot, never through or under it. */
+    function* hold(x: number, z: number, until?: () => boolean, dist = 0.6): Routine {
+      const fore = (v: number) => v > 0.4;
+      const lane = (v: number) => clamp(v, 0.3, 5.4);
+      if (Math.hypot(x - p.pos.x, z - p.pos.z) > 1.2 && (fore(p.pos.z) || fore(z))) {
+        const sideNow = Math.sign(p.pos.x) || 1;
+        const sideThen = Math.abs(x) > 0.3 ? Math.sign(x) : sideNow;
+        const round = !(fore(p.pos.z) && fore(z) && sideNow === sideThen);
+        if (fore(p.pos.z)) {
+          yield* b.goTo(V(sideNow * 1.7, HOLD_Y, lane(p.pos.z)), { dist: 0.6, timeout: 3, until, noAssist: true });
+          if (round) yield* b.goTo(V(sideNow * 1.7, HOLD_Y, -0.1), { dist: 0.6, timeout: 4, until, noAssist: true });
+        }
+        if (fore(z)) {
+          if (round) yield* b.goTo(V(sideThen * 1.7, HOLD_Y, -0.1), { dist: 0.6, timeout: 4, until, noAssist: true });
+          yield* b.goTo(V(sideThen * 1.7, HOLD_Y, lane(z)), { dist: 0.6, timeout: 4, until, noAssist: true });
+        }
+      }
+      yield* b.goTo(V(x, HOLD_Y, z), { dist, timeout: 10, until });
     }
     /** Across the open deck, round the hatch and the mast. */
     function* deck(x: number, z: number, until?: () => boolean, dist = 0.6): Routine {
@@ -1430,10 +1465,9 @@ export class Storm extends Chapter {
       const crosses = (fz < -3.2 && z > -3.2) || (fz > HATCH.z1 + 0.5 && z < HATCH.z1 + 0.5) || ((mid(fz) || mid(z)) && Math.abs(z - fz) > 0.8 && (Math.abs(p.pos.x) < 1.5 || Math.abs(x) < 1.5));
       if (crosses) {
         const side = Math.abs(x) > 0.6 ? Math.sign(x) : Math.abs(p.pos.x) > 0.6 ? Math.sign(p.pos.x) : 1;
-        if (!mid(z) || Math.abs(x) >= 1.5) {
-          yield* b.goTo(V(side * 1.9, 0, clamp(fz, -11, 11)), { dist: 0.5, timeout: 6, until });
-          yield* b.goTo(V(side * 1.9, 0, clamp(z, -5.5, 7.6)), { dist: 0.6, timeout: 8, until });
-        }
+        // always by the side lane: a straight line to the mast foot from the stair head goes back down the hatch
+        yield* b.goTo(V(side * 1.9, 0, clamp(fz, -11, 11)), { dist: 0.5, timeout: 6, until });
+        yield* b.goTo(V(side * 1.9, 0, clamp(z, -5.5, 7.6)), { dist: 0.6, timeout: 8, until });
       }
       yield* b.goTo(V(x, deckY(z), z), { dist, timeout: 9, until });
     }
@@ -1443,7 +1477,10 @@ export class Storm extends Chapter {
       if (p.carried) yield* b.setDown();
       const v = w.victim;
       const inboard = -Math.sign(v.pos.x || 1) * 0.9;
+      const t0 = g.clock;
+      const from = `(${p.pos.x.toFixed(1)}, ${p.pos.y.toFixed(1)}, ${p.pos.z.toFixed(1)})`;
       yield* to(v.pos.x + inboard, v.pos.y, v.pos.z, { dist: 0.7, rush: true });
+      b.note(`to ${v.name}: from ${from} to (${p.pos.x.toFixed(1)}, ${p.pos.y.toFixed(1)}, ${p.pos.z.toFixed(1)}) in ${(g.clock - t0).toFixed(1)} s; focus '${p.focus?.prompt ?? '-'}'`);
       b.input.action = true;
       while (self.wave === w && !w.hit) yield;
       yield 0.3;
@@ -1474,9 +1511,11 @@ export class Storm extends Chapter {
     yield* b.until(() => this.phase !== 'asleep' && !p.locked, 90, 'the waking');
     // the scroll behind the cargo below
     if (this.from('wake')) {
-      yield* b.goTo(V(0.2, HOLD_Y, 6.2), { timeout: 12 });
-      yield* b.goTo(V(0.1, HOLD_Y + 0.8, 8.2), { timeout: 5, noAssist: true, jump: () => p.pos.z > 6.9 && p.grounded });
-      yield 0.5;
+      // round the stair, not up it
+      yield* hold(0, 6.8);
+      yield* b.goTo(V(0, HOLD_Y + 0.5, 8.7), { dist: 0.3, timeout: 5, noAssist: true });
+      if (!g.scrolls.pieces[0].found) yield* b.tap('jump', 0.2);
+      yield 0.6;
       if (!g.scrolls.pieces[0].found) b.assist('could not reach the scroll in the hold');
       yield* to(0, 0, 6);
     }
@@ -1500,7 +1539,7 @@ export class Storm extends Chapter {
       const working = this.phase === 'wares' || this.phase === 'jobs' || this.phase === 'chaos';
       if (working) {
         // the top first: the yard, and the scroll up there
-        if (this.lashLoose || (this.phase !== 'wares' && !g.scrolls.pieces[1].found && this.looseCount() === 0)) {
+        if (this.lashLoose || (this.phase !== 'wares' && !g.scrolls.pieces[1].found && this.looseCount() === 0 && this.flood < 0.3)) {
           yield* to(0, 0, 0.1, { dist: 0.35 });
           if (urgent()) continue;
           yield* b.goTo(V(0, TOP_Y, -1.6), { dist: 0.5, timeout: 9, until: urgent });
@@ -1528,15 +1567,23 @@ export class Storm extends Chapter {
           continue;
         }
         if (this.cast < this.castNeed || this.phase === 'wares') {
-          const wares = g.physics.props.filter((q) => q.data.ware && !q.held && q.pos.y > -0.6 && q.pos.y < 2);
-          wares.sort((x, y) => x.pos.distanceTo(p.pos) - y.pos.distanceTo(p.pos));
+          // wares on deck first; when the hatch has swallowed them, the ones below are carried up
+          const wares = g.physics.props.filter((q) => q.data.ware && !q.held && q.pos.y < 2);
+          const cost = (q: Prop) => q.pos.distanceTo(p.pos) + (q.pos.y < -0.6 ? 30 : 0);
+          wares.sort((x, y) => cost(x) - cost(y));
           const w = p.carried ?? wares[0];
           if (w) {
             if (!p.carried) {
-              yield* to(w.pos.x, 0, w.pos.z, { dist: 1.5 });
+              yield* to(w.pos.x, w.pos.y < -0.6 ? HOLD_Y : 0, w.pos.z, { dist: 1.5 });
               if (urgent()) continue;
-              yield* b.take(w);
+              yield* b.take(w, { any: true });
+              if (!p.carried) {
+                yield 0.3;
+                continue;
+              }
             }
+            if (below()) yield* to(1.9, 0, 6.2);
+            if (urgent()) continue;
             const side = Math.sign(p.pos.x) || 1;
             const z = clamp(p.pos.z, -5.5, 7.8);
             yield* deck(side * (hullHalf(z, 0.5) - 0.9), z, urgent, 0.5);

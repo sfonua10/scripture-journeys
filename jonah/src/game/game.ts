@@ -520,6 +520,8 @@ export class Game implements MenuHost {
       const p = this.player;
       p.update(dt, this.engine.alpha);
       this.cam.update(dt, p, this.input);
+      // pushed right up against him by a wall, the camera looks through him rather than at the inside of his head
+      p.figure.body.visible = this.cam.inShot || this.cam.distance > 1.05;
       p.figure.root.getWorldPosition(_v);
       this.lights?.follow(_v);
       _v.y += 1;
