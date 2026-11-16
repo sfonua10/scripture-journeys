@@ -333,7 +333,13 @@ export class Fish extends Chapter {
       g.audio.bed('waves', 0.5);
       g.audio.bed('wind', 0.2);
       g.touch.setJump('Jump');
+      g.touch.setSlide(false);
     }
+  }
+
+  /** A staged shot's field of view, opened up on a tall screen so its sides are not lost. */
+  private wide(fov: number): number {
+    return this.g.engine.camera.aspect < 1 ? Math.min(86, fov * 1.5) : fov;
   }
 
   private deepCurrent(p: THREE.Vector3, out: THREE.Vector3): THREE.Vector3 {
@@ -433,6 +439,7 @@ export class Fish extends Chapter {
     g.hud.clearBanners();
     if (this.seek === 'fish') p.teleport(V(-8, FLOOR_Y + 4, -2), 0);
     g.hud.objective(null);
+    g.hud.marker('well', null);
     g.hud.cinema(true);
     this.release();
     p.lock('faint');
@@ -449,7 +456,7 @@ export class Fish extends Chapter {
     f.glow = 1.3;
     f.group.rotation.set(0, Math.PI / 2, 0);
     g.audio.whale();
-    g.cam.setShot({ pos: V(6.5, FLOOR_Y + 1.5, 7.5), look: V(-3, FLOOR_Y + 8.5, -30), fov: 58 }, 3.2);
+    g.cam.setShot({ pos: V(6.5, FLOOR_Y + 1.5, 7.5), look: V(-3, FLOOR_Y + 8.5, -30), fov: this.wide(58) }, 3.2);
     yield* tween(9, (k) => {
       f.group.position.set(lerp(-88, 84, k), -81 - Math.sin(k * Math.PI) * 1.5, -37);
       this.fogWide = lerp(1, 2.4, smoothstep(0, 0.35, k));
@@ -460,7 +467,7 @@ export class Fish extends Chapter {
     f.group.rotation.set(0, 0, 0);
     g.audio.whale();
     g.audio.heartbeat();
-    g.cam.setShot({ pos: V(12.5, FLOOR_Y + 2.6, -15.5), look: V(-1, FLOOR_Y + 7, -34), fov: 54 }, 0);
+    g.cam.setShot({ pos: V(12.5, FLOOR_Y + 2.6, -15.5), look: V(-1, FLOOR_Y + 7, -34), fov: this.wide(54) }, 0);
     const lamp = this.lamps[0];
     lamp.position.set(4, MEET.y + 4, MEET.z + 4);
     lamp.color.set(0xcfe8ff);
@@ -584,14 +591,14 @@ export class Fish extends Chapter {
     f.group.rotation.set(0, 0, 0);
     f.group.position.copy(SV(0, -12, -42));
     g.audio.play('calm');
-    g.cam.setShot({ pos: SV(-17, 3.2, 9), look: SV(1, 1.6, -9), fov: 48 }, 0);
+    g.cam.setShot({ pos: SV(-17, 3.2, 9), look: SV(1, 1.6, -9), fov: this.wide(48) }, 0);
     g.hud.fade(1, 0, '#fff');
     yield g.hud.fade(0, 1.8, '#fff');
     yield 1.1;
     // the sea heaves, and the great fish comes up out of it
     g.audio.whale();
     g.audio.splash(1.6);
-    g.cam.setShot({ pos: SV(-15, 2.4, 8), look: SV(1, 3.2, -9), fov: 50 }, 3);
+    g.cam.setShot({ pos: SV(-15, 2.4, 8), look: SV(1, 3.2, -9), fov: this.wide(50) }, 3);
     let n = 0;
     yield* tween(3.4, (k) => {
       const e = ease.outCubic(k);
@@ -634,7 +641,7 @@ export class Fish extends Chapter {
         },
       ),
     );
-    g.cam.setShot({ pos: SV(4.4, shoreY(13) + 1.5, 13.5), look: SV(0.4, shoreY(7) + 0.8, 5.5), fov: 46 }, 3.4);
+    g.cam.setShot({ pos: SV(-12.5, shoreY(13) + 1.9, 13.5), look: SV(0.6, 1.1, 1.5), fov: this.wide(46) }, 3.4);
     yield 2.2;
     p.setLockedPose('kneel');
     yield g.hud.verse(part('2:10', 'and it vomited out Jonah'), { block: true });
@@ -786,6 +793,9 @@ export class Fish extends Chapter {
     this.deepJellies.update(t, this.deepGlow.lit, null);
     this.motes.update(t, cam, vh);
     this.seaSkin.update(t);
+    // a mark on the next well down, so the way is never lost in the dark
+    const well = this.phase === 'sink' && !g.hud.inCinema ? SLABS.find((s) => s.y + SLAB_T / 2 < p.pos.y + 0.6) : undefined;
+    g.hud.marker('well', well ? _w.set(well.x, well.y + SLAB_T / 2, well.z) : null, { label: 'Down' });
     // the prayer remembers the going down
     if (this.phase === 'sink' && !g.hud.inCinema) {
       if (this.said === 0 && p.pos.y < -19) {
@@ -841,7 +851,7 @@ export class Fish extends Chapter {
       if (o > 0 && o < 1) {
         this.veilOpen[i] = Math.min(1, o + dt / 1.6);
         v.uniforms.uAlpha.value = 0.62 * (1 - this.veilOpen[i]);
-        v.uniforms.uBright.value = 0.5 + 2 * Math.sin(this.veilOpen[i] * Math.PI);
+        v.uniforms.uBright.value = 0.5 + 0.7 * Math.sin(this.veilOpen[i] * Math.PI);
         if (this.veilOpen[i] >= 1) v.mesh.visible = false;
       }
       v.update(t);
@@ -1038,8 +1048,8 @@ export class Fish extends Chapter {
   override plate(): Shot | null {
     // the belly of the fish, every light awake
     this.enter('belly');
-    this.glowAll = 1;
-    for (let i = 0; i < 9; i++) this.bellyGlow.lit[i] = 1;
+    this.glowAll = 0.25;
+    for (let i = 0; i < 9; i++) this.bellyGlow.lit[i] = this.litTarget[i] = 1;
     this.g.player.teleport(BV(0, 0.52, 67.5), 0);
     return { pos: BV(-5.5, 3.4, 58), look: BV(1, 1.6, 74), fov: 58 };
   }
@@ -1070,5 +1080,6 @@ export class Fish extends Chapter {
     this.g.hud.meter('weed', null);
     this.g.hud.marker('light', null);
     this.g.hud.marker('way', null);
+    this.g.hud.marker('well', null);
   }
 }

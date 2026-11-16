@@ -71,6 +71,17 @@ export function buildDeep(physics: Physics): Deep {
       const size = rng.range(0.7, 1.5);
       b.ball(s.x + Math.cos(a) * r, s.y + SLAB_T / 2 + size * 0.2, s.z + Math.sin(a) * r, size, tone, { squash: V(1.2, 0.6, 1), detail: 1, rotY: rng.range(0, TAU), noShadow: true });
     }
+    // the shelf's top is broken ground, not a floor: stones, and darker hollows
+    for (let i = 0; i < 26; i++) {
+      const a = rng.range(0, TAU);
+      const d = Math.sqrt(rng.next()) * 13.5;
+      const x = Math.cos(a) * d;
+      const z = Math.sin(a) * d;
+      if (Math.abs(x - s.x) < HOLE + 0.8 && Math.abs(z - s.z) < HOLE + 0.8) continue;
+      const size = rng.range(0.5, 1.9);
+      const flat = rng.chance(0.45);
+      b.ball(x, s.y + SLAB_T / 2 + (flat ? 0.0 : size * 0.12), z, size, new THREE.Color(tone).multiplyScalar(flat ? 0.72 : rng.range(0.9, 1.25)).getHex(), { squash: V(1.3, flat ? 0.06 : rng.range(0.25, 0.5), 1), detail: 1, rotY: rng.range(0, TAU), noShadow: true, shade: flat ? 0 : 0.3 });
+    }
     for (let i = 0; i < 14; i++) {
       const a = (i / 14) * TAU;
       const sq = Math.max(Math.abs(Math.cos(a)), Math.abs(Math.sin(a)));
