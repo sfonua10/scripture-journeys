@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite';
 
+// JONAH_PORT lets several checkouts (git worktrees) each run their own dev server.
+const port = Number(process.env.JONAH_PORT) || 5390;
+
 export default defineConfig({
   base: './',
+  cacheDir: '.cache/vite',
   resolve: { dedupe: ['three'] },
   optimizeDeps: { include: ['three', '@dimforge/rapier3d-compat'] },
   build: {
@@ -10,5 +14,5 @@ export default defineConfig({
     modulePreload: { polyfill: false },
     chunkSizeWarningLimit: 4000,
   },
-  server: { host: '127.0.0.1', port: 5390, strictPort: true },
+  server: { host: '127.0.0.1', port, strictPort: true },
 });

@@ -70,6 +70,7 @@ tools/
   lib.mjs            starts a server and a headless Chromium on this machine's GPU
   shots.mjs          screenshots at phone (390×844, touch) and desktop (1440×900)
   playthrough.mjs    the bot plays every chapter to its end
+  probe.mjs          samples an expression in the running game over time (finding where a bot stalls)
   fps.mjs            frame rate per chapter per quality
   verses.mjs         copies verses from the published text; --check proves them
   preview.mjs        serves dist/ with Patch's game-host headers
@@ -118,35 +119,35 @@ beards, faces left plain.
 
 ### Core engine
 - [x] Project scaffold: Vite + TypeScript + three + Rapier, `npm run build` → `dist/`
-- [ ] Renderer, loop, resize, quality levels (shadows, pixel ratio, particles, draw distance) with auto-pick
-- [ ] Post pass: grade, vignette, bloom; off on low
-- [ ] Rapier world, static colliders, physics props with interpolation
-- [ ] Input: keyboard + mouse, touch joystick + buttons, controller; bot injection
-- [ ] Audio engine: effects, weather beds, score; starts on first gesture
-- [ ] LevelBuilder, textures, props, sky, particles
-- [ ] Character model + animation set
-- [ ] Player controller: run, jump (coyote/buffer/variable), air control, ledge grab, climb, slide, swim, carry/throw
-- [ ] Camera: follow, collision, shake, rails
-- [ ] HUD, verse cards, scrolls, save
-- [ ] Test tools: shots, fps, playthrough bot, verse check
-- [ ] A test yard (`?ch=0`) where every move and toy can be tried
+- [x] Renderer, loop, resize, quality levels (shadows, pixel ratio, particles, draw distance) with auto-pick
+- [x] Post pass: grade, vignette, bloom; off on low
+- [x] Rapier world, static colliders, physics props with interpolation
+- [x] Input: keyboard + mouse, touch joystick + buttons, controller; bot injection
+- [x] Audio engine: effects, weather beds, score; starts on first gesture
+- [x] LevelBuilder, textures, props, sky, particles
+- [x] Character model + animation set
+- [x] Player controller: run, jump (coyote/buffer/variable), air control, ledge grab, climb, slide, swim, carry/throw
+- [x] Camera: follow, collision, shake, rails
+- [x] HUD, verse cards, scrolls, save
+- [x] Test tools: shots, probe, playthrough bot, verse check (fps.mjs still to write)
+- [x] A test yard (`?ch=9`) where every move and toy can be tried
 
 ### Chapter 3: The Storm (first, the showpiece)
-- [ ] Ocean shader + CPU waves; ship that floats on them
-- [ ] Ship model: hull, deck, hold, mast, sail, rigging, rails, lanterns
-- [ ] Ship-frame physics: cargo slides with the tilt; overboard hand-off
-- [ ] Rain, spray, wind, lightning + thunder, lantern light
-- [ ] Opening: asleep in the sides of the ship; the shipmaster (1:6)
-- [ ] Job: cast the wares overboard (1:5)
-- [ ] Job: tie down loose ropes
-- [ ] Job: bail the hold
-- [ ] Job: hold the mariners back from the sea; great waves
-- [ ] Ship damage meter; Story/Normal behaviour
-- [ ] The lots (1:7), the questions and answer (1:8–12)
-- [ ] The rowing that cannot win (1:13)
-- [ ] Cast forth; the sea ceases (1:14–16)
-- [ ] 3 scrolls, challenge ("no man swept from the deck"), stars, timer
-- [ ] Bot plays it through; phone and desktop screenshots judged; frame rate measured
+- [x] Ocean shader + CPU waves; ship that floats on them
+- [x] Ship model: hull, deck, hold, mast, sail, rigging, rails, lanterns
+- [x] Ship-frame physics: cargo slides with the tilt; overboard hand-off
+- [x] Rain, spray, wind, lightning + thunder, lantern light
+- [x] Opening: asleep in the sides of the ship; the shipmaster (1:6)
+- [x] Job: cast the wares overboard (1:5)
+- [x] Job: tie down loose ropes
+- [x] Job: bail the hold
+- [x] Job: hold the mariners back from the sea; great waves
+- [x] Ship damage meter; Story/Normal behaviour
+- [x] The lots (1:7), the questions and answer (1:8–12)
+- [x] The rowing that cannot win (1:13)
+- [x] Cast forth; the sea ceases (1:14–16)
+- [x] 3 scrolls, challenge ("no man swept from the deck"), stars, timer
+- [x] Bot plays it through; phone and desktop screenshots judged; frame rate measured
 
 ### Chapter 1: The Call
 - [ ] Town on a hill: rooftops, alleys, awnings, walls, market

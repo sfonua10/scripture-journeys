@@ -32,7 +32,7 @@ export async function serveDist() {
 /** The address to test: --dist serves the build; otherwise the dev server (npm run dev) on 5390. */
 export async function target(args) {
   if (args.includes('--dist')) return serveDist();
-  return { url: 'http://127.0.0.1:5390/', close() {} };
+  return { url: `http://127.0.0.1:${process.env.JONAH_PORT || 5390}/`, close() {} };
 }
 
 export async function launch({ vsync = true } = {}) {
