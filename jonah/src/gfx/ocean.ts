@@ -214,7 +214,7 @@ void main() {
   // foam: on pinched crests, and churned along the hull
   float cap = smoothstep(0.62 - uFoamAmount * 0.5, 1.02 - uFoamAmount * 0.5, vFoam + grain * 0.42);
   float streak = smoothstep(0.55, 0.9, grain) * smoothstep(-0.4, 1.6, vHeight) * uFoamAmount * 0.7;
-  float fm = clamp(max(cap, streak) + wake * smoothstep(0.3, 0.7, grain + wake * 0.5), 0.0, 1.0);
+  float fm = clamp(max(cap, streak) + wake * smoothstep(0.4, 0.8, grain + wake * 0.4), 0.0, 1.0);
   vec3 foamLit = uFoam * (uAmbient * 1.5 + uSunColor * (ndl * 0.7 + 0.3) + uFlash * 1.6);
   c = mix(c, foamLit, fm * 0.92);
 

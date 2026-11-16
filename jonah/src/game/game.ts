@@ -175,7 +175,8 @@ export class Game implements MenuHost {
       this.startChapter(1);
       return;
     }
-    if (this.params.has('ch') && this.registry[ch]) this.startChapter(ch);
+    if (this.params.has('ending')) this.ending();
+    else if (this.params.has('ch') && this.registry[ch]) this.startChapter(ch);
     else this.toTitle();
   }
 
@@ -421,6 +422,7 @@ export class Game implements MenuHost {
     this.state = 'ending';
     this.current = 0;
     this.hud.hide(true);
+    this.touch.show(false);
     const Title = this.registry[0];
     if (Title) this.load(0, Title);
     this.audio.play('calm');

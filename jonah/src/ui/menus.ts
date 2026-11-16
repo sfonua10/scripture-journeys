@@ -5,7 +5,7 @@ import type { QualityChoice } from '../core/quality';
 import type { Save } from '../core/save';
 import { formatTime } from '../core/util';
 import { CHAPTERS, type ChapterMeta } from '../game/chapters';
-import { part } from '../game/verses';
+import { cite, part } from '../game/verses';
 import { h } from './hud';
 
 export interface MenuHost {
@@ -532,10 +532,11 @@ export class Menus {
 
   private ending() {
     const save = this.host.save;
-    this.mount('ending', 'black', (s) => {
+    this.mount('ending', 'dim', (s) => {
       const c = h('div', 'card ending');
       c.append(h('div', 'num', 'Jonah'));
-      const q = part('4:2', 'for I knew that thou art a gracious God', 'of great kindness');
+      // the book ends on a question and leaves it open; so does the game
+      const q = cite('4:11');
       c.append(h('p', 'verse', q.text));
       c.append(h('div', 'ref', q.ref));
       c.append(h('div', 'rule'));
