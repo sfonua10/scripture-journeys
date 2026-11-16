@@ -76,7 +76,7 @@ export const OTHER: Record<string, string> = {
   "Psalm 46:1": "God is our refuge and strength, a very present help in trouble.",
   "Proverbs 16:9": "A man’s heart deviseth his way: but the LORD directeth his steps.",
   "Proverbs 16:33": "The lot is cast into the lap; but the whole disposing thereof is of the LORD.",
-  "2 Kings 14:25": "But in all Israel there was none to be so much praised as Absalom for his beauty: from the sole of his foot even to the crown of his head there was no blemish in him.",
+  "2 Kings 14:25": "He restored the coast of Israel from the entering of Hamath unto the sea of the plain, according to the word of the LORD God of Israel, which he spake by the hand of his servant Jonah, the son of Amittai, the prophet, which was of Gathhepher.",
   "Jeremiah 23:24": "Can any hide himself in secret places that I shall not see him? saith the LORD. Do not I fill heaven and earth? saith the LORD.",
   "Jeremiah 18:7": "At what instant I shall speak concerning a nation, and concerning a kingdom, to pluck up, and to pull down, and to destroy it;",
   "Jeremiah 18:8": "If that nation, against whom I have pronounced, turn from their evil, I will repent of the evil that I thought to do unto them.",

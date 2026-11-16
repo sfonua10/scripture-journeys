@@ -24,6 +24,8 @@ const lines = text.replace(/\r/g, '').split('\n');
 function book(heading) {
   const heads = lines.flatMap((line, i) => (line.trim() === heading ? [i] : []));
   if (heads.length < 2) throw new Error(`no book headed "${heading}"`);
+  // The last heading is the book itself: "The Second Book of the Kings" is also the by-name printed under 2 Samuel.
+  const head = heads[heads.length - 1];
   const verses = {};
   let paragraph = [];
   const flush = () => {
@@ -39,7 +41,7 @@ function book(heading) {
     }
     return true;
   };
-  for (let i = heads[1] + 1; i < lines.length; i++) {
+  for (let i = head + 1; i < lines.length; i++) {
     if (lines[i].trim()) paragraph.push(lines[i]);
     else if (paragraph.length && !flush()) break;
   }
@@ -58,6 +60,18 @@ const OTHER = [
   ['Luke', 'The Gospel According to Saint Luke', ['11:30', '11:32']],
 ];
 
+// How a known verse of each of those books begins, so that a heading matched to the wrong book is caught.
+const WITNESS = {
+  Psalm: ['23:1', 'The LORD is my shepherd'],
+  Proverbs: ['1:1', 'The proverbs of Solomon'],
+  '2 Kings': ['14:25', 'He restored the coast of Israel'],
+  Jeremiah: ['1:1', 'The words of Jeremiah'],
+  Joel: ['1:1', 'The word of the LORD that came to Joel'],
+  Nahum: ['1:1', 'The burden of Nineveh'],
+  Matthew: ['1:1', 'The book of the generation of Jesus Christ'],
+  Luke: ['2:1', 'And it came to pass in those days'],
+};
+
 const jonah = book('Jonah');
 jonah['1:10'] = jonah['1:10'].replace('said unto him. Why', 'said unto him, Why');
 jonah['1:15'] = jonah['1:15'].replace('So they look up Jonah', 'So they took up Jonah');
@@ -68,6 +82,9 @@ for (const [name, heading, refs] of OTHER) {
     if (!verses[ref]) throw new Error(`${name} ${ref} is not in the text`);
     other[`${name} ${ref}`] = verses[ref];
   }
+  // a witness that the right book was read: how one of its verses begins
+  const [wRef, wStart] = WITNESS[name] ?? [];
+  if (!wRef || !verses[wRef]?.startsWith(wStart)) throw new Error(`${name}: ${wRef} does not begin "${wStart}": the wrong book was read`);
 }
 const count = Object.keys(jonah).length;
 if (count !== 48) throw new Error(`Jonah has 48 verses; the text gave ${count}`);
