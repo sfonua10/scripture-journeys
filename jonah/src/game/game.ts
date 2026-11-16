@@ -427,6 +427,8 @@ export class Game implements MenuHost {
     if (Title) this.load(0, Title);
     this.audio.play('calm');
     this.menus.show('ending');
+    // a chapter may close on a fade to black: lift it so the sea shows behind the last words
+    this.hud.fade(0, 2.2);
   }
 
   /** Saves a small picture of the present view as the chapter's gallery plate. */
