@@ -1047,7 +1047,7 @@ export function buildCity(crowd: number): FarCity {
       for (const dz of [-4.6, 0, 4.6]) b.block(wallX + 4, y0 + 31, s * 13 + dz, 16, 2.4, 2.6, ochre[2], far);
     }
     b.block(wallX + 4, y0 + 18, 0, 12, 9, 14, ochre[0], far);
-    b.block(wallX + 9.7, y0 + 19.5, 0, 0.6, 6, 13.4, lapis, { ...far, mat: 'brick' });
+    b.block(wallX + 10.1, y0 + 19.5, 0, 0.6, 6, 13.4, lapis, { ...far, mat: 'brick' });
     b.block(wallX + 10.2, y0, 0, 0.5, 18, 13, 0x2a2018, far);
     // within: the stepped tower, the palace, and roofs upon roofs
     const zx = wallX - 95;

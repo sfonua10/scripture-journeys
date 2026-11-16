@@ -349,6 +349,8 @@ export class Plant extends Chapter {
     }
     this.painted.update(key, up * (night > 0.5 ? 0.45 : 1));
     this.city.update(g.engine.time, night);
+    // points are drawn at a size that takes no account of the lens: keep the people the size of people when it narrows
+    (this.city.people.material as THREE.PointsMaterial).size = 0.9 / Math.tan(THREE.MathUtils.degToRad(g.engine.camera.fov) / 2);
     // dust in the air shows by day and not by night
     this.motes.uniforms.uOpacity.value = 0.35 * (1 - night) + this.wind * 0.3;
   }
@@ -563,6 +565,19 @@ export class Plant extends Chapter {
     g.run(() => this.story());
   }
 
+  /**
+   * A staged view. A tall screen sees a narrow slice of it and the verse lies across its middle, so there the view
+   * is opened a little, turned toward the one thing that matters most, and tipped down to lift that thing clear of
+   * the words.
+   */
+  private view(pos: THREE.Vector3, look: THREE.Vector3, fov: number, focus?: THREE.Vector3): Shot {
+    if (this.g.engine.camera.aspect >= 1) return { pos, look, fov };
+    const wide = Math.min(72, fov * 1.3);
+    const to = focus ? look.clone().lerp(focus, 0.85) : look.clone();
+    to.y -= pos.distanceTo(to) * Math.tan(THREE.MathUtils.degToRad(wide * 0.2));
+    return { pos, look: to, fov: wide };
+  }
+
   private from(phase: Phase): boolean {
     return !this.seek || ORDER.indexOf(phase) >= ORDER.indexOf(this.seek);
   }
@@ -590,9 +605,12 @@ export class Plant extends Chapter {
     p.teleport(road, Math.PI / 2);
     p.lock('idle');
     this.city.people.visible = false;
-    g.cam.setShot({ pos: V(-141.2, -11.5, 8.6), look: V(-232, -1, -8), fov: 50 }, 0);
+    // wide: he stands to the right of the words with the gate before him; tall: close behind him, above the words
+    const tall = g.engine.camera.aspect < 1;
+    const gate = V(-232, -9, -1);
+    g.cam.setShot(tall ? { pos: V(-144.5, -13.38, 4.1), look: gate, fov: 58 } : { pos: V(-141.2, -11.5, 8.6), look: V(-232, -1, -8), fov: 50 }, 0);
     yield 1.2;
-    g.cam.setShot({ pos: V(-144.2, -12.0, 6.6), look: V(-232, -3, -6), fov: 45 }, 24);
+    g.cam.setShot(tall ? { pos: V(-145.3, -13.38, 4.0), look: gate, fov: 55 } : { pos: V(-144.2, -12.0, 6.6), look: V(-232, -3, -6), fov: 45 }, 24);
     yield g.hud.verse(cite('4:1'), { block: true });
     yield 0.3;
     p.teleport(road, WEST);
@@ -665,7 +683,7 @@ export class Plant extends Chapter {
     g.hud.cinema(true);
     p.teleport(V(0.15, 0.02, 0.1), WEST);
     p.lock('sit');
-    g.cam.setShot({ pos: V(3.2, 1.5, 5.4), look: V(-9, 0.5, -1.6), fov: 48 }, 1.6);
+    g.cam.setShot(this.view(V(3.2, 1.5, 5.4), V(-9, 0.5, -1.6), 48, V(0.15, 1.0, 0.1)), 1.6);
     yield 1.2;
     yield g.hud.verse(part('4:5', 'and there made him a booth'));
     yield 0.4;
@@ -683,18 +701,19 @@ export class Plant extends Chapter {
     p.lock('sit');
     this.day = Math.max(this.day, 0.3);
     // the day goes over; the sun sets behind the city
-    g.cam.setShot({ pos: V(8.2, 3.0, 7.6), look: V(-7, 0.8, -2), fov: 46 }, this.seek === 'gourd' ? 0 : 2.5);
+    const booth = V(0, 1.4, 0);
+    g.cam.setShot(this.view(V(8.2, 3.0, 7.6), V(-7, 0.8, -2), 46, booth), this.seek === 'gourd' ? 0 : 2.5);
     const d0 = this.day;
     yield* tween(7, (t) => (this.day = lerp(d0, 0.762, t)), ease.inOutQuad);
-    g.cam.setShot({ pos: V(6.4, 2.2, 5.2), look: V(-9, 1.0, -1.8), fov: 44 }, 5);
+    g.cam.setShot(this.view(V(6.4, 2.2, 5.2), V(-9, 1.0, -1.8), 44, booth), 5);
     yield* tween(3.6, (t) => (this.day = lerp(0.762, 0.9, t)), ease.inOutQuad);
     // by night, it comes up
-    g.cam.setShot({ pos: V(4.2, 0.55, -4.1), look: V(1.6, 1.0, -1.4), fov: 40 }, 2.4);
+    g.cam.setShot(this.view(V(4.2, 0.55, -4.1), V(1.6, 1.0, -1.4), 40), 2.4);
     yield 1.6;
     g.audio.swell(147);
     const read = g.hud.verse(part('4:6', 'And the LORD God prepared a gourd', 'deliver him from his grief'));
     let rung = 0;
-    g.cam.setShot({ pos: V(6.8, 2.6, -5.6), look: V(0, 1.7, 0), fov: 42 }, 9);
+    g.cam.setShot(this.view(V(6.8, 2.6, -5.6), V(0, 1.7, 0), 42), 9);
     yield* tween(12.5, (t) => {
       this.gourd.grown = ease.inOutQuad(clamp01(t / 0.9));
       this.day = lerp(0.9, 1.238, t * t);
@@ -706,14 +725,14 @@ export class Plant extends Chapter {
     this.gourd.grown = 1;
     yield read;
     // morning: he sees it
-    g.cam.setShot({ pos: V(-5.8, 1.45, -2.9), look: V(0.3, 1.55, 0.2), fov: 44 }, 2.2);
+    g.cam.setShot(this.view(V(-5.8, 1.45, -2.9), V(0.3, 1.55, 0.2), 44), 2.2);
     yield* tween(3.2, (t) => (this.day = lerp(1.238, 1.285, t)));
     p.setLockedPose('cheer');
     g.audio.good();
     yield g.hud.verse(part('4:6', 'So Jonah was exceeding glad'));
     p.setLockedPose('sit');
     // a glad day under it, and the night after
-    g.cam.setShot({ pos: V(-7.4, 3.6, 6.8), look: V(0, 1.4, 0), fov: 44 }, 6);
+    g.cam.setShot(this.view(V(-7.4, 3.6, 6.8), V(0, 1.4, 0), 44), 6);
     yield* tween(7.5, (t) => (this.day = lerp(1.285, 2.2, t)), ease.inOutQuad);
   }
 
@@ -730,7 +749,7 @@ export class Plant extends Chapter {
     p.teleport(V(0.15, 0.02, 0.1), WEST);
     p.lock('sit');
     const d0 = this.day;
-    g.cam.setShot({ pos: V(4.6, 1.1, -4.4), look: V(1.7, 0.4, -1.5), fov: 40 }, this.seek === 'worm' ? 0 : 3);
+    g.cam.setShot(this.view(V(4.6, 1.1, -4.4), V(1.7, 0.4, -1.5), 40), this.seek === 'worm' ? 0 : 3);
     yield* tween(3, (t) => (this.day = lerp(d0, 2.262, t)));
     // it comes up at the root
     this.worm = { mode: 'rise', t: 0, root: 0, pos: this.gourd.roots[0].clone().add(V(0.35, 0, -0.3)), to: V(0, 0, 0), yaw: -2.4 };
@@ -806,11 +825,11 @@ export class Plant extends Chapter {
     at.y = hillY(at.x, at.z) + 0.02;
     p.teleport(at, p.yaw);
     p.lock('stagger');
-    g.cam.setShot({ pos: at.clone().add(V(-3.4, 1.5, 2.6)), look: at.clone().add(V(0, 0.7, 0)), fov: 46 }, 1.4);
+    g.cam.setShot(this.view(at.clone().add(V(-3.4, 1.5, 2.6)), at.clone().add(V(0, 0.7, 0)), 46), 1.4);
     yield 1.1;
     p.setLockedPose('faint');
     g.audio.thud(0.6, 'sand');
-    g.cam.setShot({ pos: at.clone().add(V(-2.6, 0.8, 2.0)), look: at.clone().add(V(0, 0.3, 0)), fov: 42 }, 6);
+    g.cam.setShot(this.view(at.clone().add(V(-2.6, 0.8, 2.0)), at.clone().add(V(0, 0.3, 0)), 42), 6);
     yield 0.8;
     yield g.hud.verse(part('4:8', 'and the sun beat upon the head of Jonah'), { block: true });
     yield g.hud.fade(1, 2.4, '#fff6e4');
@@ -837,7 +856,7 @@ export class Plant extends Chapter {
     g.hud.objective(null);
     p.teleport(V(0.15, 0.02, 0.1), WEST);
     p.lock('sit');
-    g.cam.setShot({ pos: V(4.4, 1.5, 3.8), look: V(-1.4, 0.9, -0.5), fov: 46 }, 0);
+    g.cam.setShot(g.engine.camera.aspect < 1 ? this.view(V(5.2, 1.5, 2.1), V(0.15, 0.9, 0.1), 40) : { pos: V(5.2, 1.5, 2.1), look: V(-1.4, 0.9, -0.4), fov: 46 }, 0);
     g.audio.play('calm');
     yield g.hud.fade(0, 2.6, '#fff6e4');
     g.run(() => tween(8, (t) => (this.white = lerp(0.3, 0, t))));
@@ -845,13 +864,14 @@ export class Plant extends Chapter {
     yield g.hud.verse(cite('4:9'), { block: true });
     yield 0.8;
     // the view turns from the dead gourd toward the city
-    g.cam.setShot({ pos: V(5.4, 2.5, 1.5), look: V(-60, -7, -1), fov: 42 }, 7);
+    g.cam.setShot(this.view(V(5.4, 2.5, 1.5), V(-60, -7, -1), 42, V(-3, 1.1, 0.4)), 7);
     yield 1.4;
     yield g.hud.verse(cite('4:10'), { block: true });
     yield 0.5;
     // past the dead vine, to what he has been watching: the city, its people on the road, the herds
-    g.cam.setShot({ pos: V(-3.8, 1.9, 1.7), look: V(-170, -10.5, -6), fov: 40 }, 0);
-    g.cam.setShot({ pos: V(-4.4, 2.0, 1.5), look: V(-170, -12.6, 4), fov: 17 }, 20);
+    g.cam.setShot(this.view(V(-3.8, 1.9, 1.7), V(-170, -10.5, -6), 40), 0);
+    // it ends on the whole gate, the people on the road before it, and the cattle
+    g.cam.setShot(g.engine.camera.aspect < 1 ? { pos: V(-4.4, 2.0, 1.5), look: V(-170, -13, 2), fov: 27 } : { pos: V(-4.4, 2.0, 1.5), look: V(-170, -4.5, 2), fov: 20 }, 20);
     yield 2.4;
     yield g.hud.verse(cite('4:11'), { block: true });
     yield 2.2;

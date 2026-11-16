@@ -64,7 +64,13 @@ shade, the second load more, the cloth all of it.
 - **The worm.** A good chaser holds it to under half a second of gnawing a visit and the gourd lasts about forty
   seconds; a slow one loses it in fifteen. Either way it ends by 44 seconds. It breaks for a hole on the far side
   from Jonah, and if he heads it off it goes to ground where it is.
-- **The last view was through the dead vine.** The camera for 4:11 now stands past the booth, on the brow.
+- **The last view was through the dead vine.** The camera for 4:11 now stands past the booth, on the brow, and
+  closes over twenty seconds on the whole gate, the people on the road before it, and the cattle in the fields.
+- **On a phone the verse lay across whoever the view was of.** Every staged view has a tall-screen form (`view()`):
+  a little wider, turned toward its subject, tipped down so the subject stands above the words. The prayer, 4:9 and
+  the end of 4:11 have views of their own for tall screens.
+- **The people on the road shrank to specks when the lens narrowed** (points are drawn without regard to the lens).
+  Their size now follows the camera's field of view.
 - **Still thin:** the gourd scene and the questions are watched, not played (about a minute and a half in all, in
   three stretches). The wind's "hold the booth together" is a held button.
 
