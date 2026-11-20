@@ -281,11 +281,12 @@ export class Menus {
       const grid = h('div', 'chapters');
       for (const c of CHAPTERS) {
         const r = save.data.records[c.id];
-        const b = h('button', `chap${c.id > save.data.unlocked ? ' locked' : ''}`);
+        // every chapter is open to choose, reached or not
+        const b = h('button', 'chap');
         b.append(h('div', 'n', `Chapter ${ROMAN[c.id - 1]}`), h('div', 't', c.title), h('div', 'r', c.passage));
         const meta = h('div', 'meta');
         meta.append(stars(save.stars(c.id)));
-        meta.append(h('span', undefined, r?.bestTime != null ? formatTime(r.bestTime) : c.id > save.data.unlocked ? 'Not yet reached' : '—'));
+        meta.append(h('span', undefined, r?.bestTime != null ? formatTime(r.bestTime) : '—'));
         b.append(meta);
         grid.append(b);
         this.focusable(b, () => this.host.startChapter(c.id));
