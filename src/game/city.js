@@ -869,6 +869,11 @@ export function createProps(city, heightAt, extra = null) {
     waterjar: make((b) => {
       b.turned(0, 0, 0, [[0.09, 0], [0.16, 0.13], [0.17, 0.26], [0.1, 0.37], [0.07, 0.43], [0.095, 0.47]], 10, PART.PLASTER, CLAY, 0.73);
     }),
+    // a lot: a small flat stone, light, with a dark mark scratched on it for the one whose it is (3:11)
+    lot: make((b) => {
+      b.box(-0.07, 0.07, -0.045, 0.045, 0, 0.035, { part: PART.STONE, colour: [0.82, 0.78, 0.7], seed: 0.81, solid: false, roofPart: PART.STONE, roofColour: [0.86, 0.82, 0.74] });
+      b.box(-0.035, 0.035, -0.008, 0.008, 0.035, 0.04, { part: PART.STONE, colour: [0.2, 0.15, 0.12], seed: 0.82, solid: false, roofPart: PART.STONE, roofColour: [0.2, 0.15, 0.12] });
+    }),
     // a rod: a straight stick of wood, about the length of a man's arm and a half, lying on the ground (3:28)
     rod: make((b) => {
       b.box(-0.72, 0.72, -0.022, 0.022, 0, 0.045, { part: PART.WOOD, colour: [0.42, 0.3, 0.19], seed: 0.79, solid: false, roofPart: PART.WOOD, roofColour: [0.46, 0.33, 0.2] });

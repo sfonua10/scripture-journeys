@@ -359,16 +359,142 @@ export function story(g) {
     for (const name of names) who(name).face(...me());
   }
 
+  /**
+   * "And we cast lots—who of us should go in unto the house of Laban" (3:11). How they were cast the account does
+   * not say; here, as lots were cast: they stand round, and Laman, the eldest, sets a jar down between them. Each
+   * puts in his lot, a small stone with his mark, Nephi with them. Laman shakes the jar, and one stone leaps out:
+   * they all look at it. It is his. (What he says of it is said after: `lot`.) Resolves when they have seen it.
+   */
+  async function castLots(c) {
+    const mine = scenes;
+    const [laman, lemuel, sam] = BROTHERS.map(who);
+    const mid = [0, 1].map((k) => (at(laman)[k] + at(lemuel)[k] + at(sam)[k]) / 3);
+    const f = unit(me(), mid);
+    const centre = [g.player.x + f[0] * 1.8, g.player.z + f[1] * 1.8];
+    const side = [-f[1], f[0]];
+    const ring = {
+      laman: [centre[0] + side[0] * 1.3, centre[1] + side[1] * 1.3],
+      lemuel: [centre[0] + f[0] * 1.35, centre[1] + f[1] * 1.35],
+      sam: [centre[0] - side[0] * 1.3, centre[1] - side[1] * 1.3],
+    };
+    // (seen from behind Nephi and a little above, down into the middle of them)
+    g.standAt(...me(), yawTo(me(), centre));
+    shoulder(centre, { back: 3.3, up: 2.4, look: 0.2 });
+    // they come round into a ring
+    await Promise.race([
+      Promise.all(
+        Object.entries(ring).map(([name, p]) => {
+          const n = who(name);
+          n.face(null);
+          return n.walk([p], 1.5).then(() => n.face(...centre));
+        }),
+      ),
+      c.wait(4.5),
+    ]);
+    if (scenes !== mine) return;
+    for (const n of [laman, lemuel, sam]) n.stop().face(...centre);
+    await c.wait(0.4);
+    // Laman sets down the jar between them
+    laman.kneel = 1;
+    await c.wait(0.8);
+    g.props.show('waterjar', centre);
+    g.music.thud(0.5);
+    laman.kneel = 0;
+    await c.wait(0.7);
+    // each puts in his lot: Sam, Lemuel, Nephi, and Laman last
+    const drop = async (n) => {
+      if (n === g.player) g.player.kneel = 1;
+      else n.kneel = 1;
+      await c.wait(0.75);
+      g.music.rattle(0.5);
+      await c.wait(0.35);
+      if (n === g.player) g.player.kneel = 0;
+      else n.kneel = 0;
+      await c.wait(0.45);
+    };
+    for (const n of [sam, lemuel, g.player, laman]) {
+      await drop(n);
+      if (scenes !== mine) return;
+    }
+    // he takes it up, and shakes it
+    laman.kneel = 1;
+    await c.wait(0.7);
+    const JARHELD = { out: 0.32, up: 1.0, wide: 0.13 };
+    g.props.carry('waterjar', laman, JARHELD);
+    laman.kneel = 0;
+    await c.wait(0.6);
+    for (const n of [lemuel, sam]) n.look = at(laman);
+    for (let k = 0; k < 10; k++) {
+      g.props.carry('waterjar', laman, { ...JARHELD, up: JARHELD.up + (k % 2 ? 0.09 : -0.05), out: JARHELD.out + (k % 2 ? 0.03 : 0) });
+      if (k % 3 === 0) g.music.rattle(0.9);
+      await c.wait(0.11);
+    }
+    g.props.carry('waterjar', laman, JARHELD);
+    await c.wait(0.35);
+    // one leaps out, and falls before them
+    const falls = [centre[0] + (laman.x - centre[0]) * 0.35, centre[1] + (laman.z - centre[1]) * 0.35];
+    g.props.carry('waterjar', laman, { ...JARHELD, up: 0.85, out: 0.42 });
+    g.music.rattle(0.6);
+    await c.wait(0.2);
+    g.props.show('lot', falls, { turn: 0.6 });
+    g.music.thud(0.35);
+    // they all look down at it
+    for (const n of [laman, lemuel, sam]) {
+      n.look = null;
+      n.face(...falls);
+    }
+    shoulder(falls, { back: 2.6, up: 2.1, look: 0 });
+    await c.wait(1.6);
+    // and at Laman, whose it is
+    for (const n of [lemuel, sam]) n.face(...at(laman));
+    g.props.show('waterjar', [laman.x + (centre[0] - laman.x) * 0.45, laman.z + (centre[1] - laman.z) * 0.45]);
+    await c.wait(0.6);
+    laman.face(...me());
+    shoulder(at(laman), { back: 3.2, up: 2.1, look: 1.5 });
+    await c.wait(0.5);
+  }
+
   // the places in the land of Jerusalem, in the world's (x, z)
   // (where they come up into the land, on the path to the gate; and where his brethren have stopped on it)
   const camp = P(4, 5);
   const onTheWay = P(24, 8);
   const gateOut = P(GATE[0] - 14, 0);
   const gateIn = C(-62, 0);
-  const labanGate = C(21, 30.5);
+  // Laban's court, within his gates (places.js, IN_CITY.court: the street's gateway at cu 22, his house's door on
+  // its east side): the gateway, his door, where each of them stands when they go in unto him (3:24), and where he
+  // and his servants stand to meet them
+  const COURT = {
+    gate: C(21.2, 30.6),
+    within: C(23.4, 30.6),
+    door: C(29.0, 31.0),
+    nephi: C(24.8, 30.6),
+    laman: C(23.7, 28.5),
+    lemuel: C(23.5, 32.6),
+    sam: C(23.2, 30.9),
+    laban: C(27.6, 30.8),
+    s1: C(27.2, 28.1),
+    s2: C(27.2, 33.5),
+  };
+  /**
+   * Laban at home, in his court, with two of his servants: seen through his gateway from the street as they come up
+   * to it. He stands before his door, looking about him; they go about the court.
+   */
+  function labanAtHome() {
+    const [laban, s1, s2] = ['laban', 'servant1', 'servant2'].map(who);
+    laban.place(...COURT.door, yawTo(COURT.door, COURT.gate));
+    s1.place(...COURT.s1, yawTo(COURT.s1, COURT.gate));
+    s2.place(...COURT.s2, yawTo(COURT.s2, COURT.door));
+    life.live(laban, [{ stay: 12, face: COURT.gate, look: true }, { stay: 8, face: C(25, 24) }]);
+    life.live(s1, [{ stay: 7, face: COURT.gate }, { go: [C(26, 23.5)], pace: 1 }, { stay: 5, look: true }, { go: [COURT.s1], pace: 1 }]);
+    life.live(s2, [{ stay: 9, face: COURT.door }, { go: [C(26.4, 38.5)], pace: 1 }, { stay: 6, look: true }, { go: [COURT.s2], pace: 1 }]);
+  }
   const lehiYard = P(LEHI_HOUSE[0], LEHI_HOUSE[1] + 2);
   const lehiOut = P(LEHI_HOUSE[0], LEHI_HOUSE[1] + 24);
-  const hide = P(GATE[0] - 10, 32);
+  // where his brethren hide without the walls by night (4:5), not far from the gate; and where Nephi stands by them
+  const hiding = P(GATE[0] - 13, 24);
+  const hide = P(GATE[0] - 10, 20);
+  // just without the gate, where he comes out to them with Zoram (4:27–28)
+  const withoutWalls = P(GATE[0] - 14, 12);
   // the cavity of the rock: the middle of its floor, its mouth, the open ground before it, and where the brothers
   // stand in it, at the back
   const hollow = P(...CAVE.at);
@@ -674,10 +800,11 @@ export function story(g) {
         c.objective(null);
         await gather(c);
         await say(c, 'lots');
-        // "and the lot fell upon Laman" (3:11)
-        await c.hold(c.wait(0.9));
+        // "And we cast lots ... and the lot fell upon Laman" (3:11)
+        await c.hold(castLots(c));
         g.music.pluck();
         await say(c, 'lot');
+        g.view(null);
         c.objective('Go up to the gate of Jerusalem with your brethren.', 'Gate of Jerusalem');
         // the lot is Laman's: he goes before, Lemuel with him, and Sam beside Nephi
         withMe({ laman: ['lot', 'whogoes'], lemuel: ['notmine', 'stillstands'], sam: ['withyou', 'thereitis'] });
@@ -812,6 +939,7 @@ export function story(g) {
         await say(c, 'givelaban');
         await say(c, 'upagain');
         c.objective('Go up again unto the house of Laban, inside the city.', 'House of Laban');
+        labanAtHome();
         await c.reach(...lehiGate, 3, { via: [lehiDoorIn, lehiDoorOut] });
         // (they keep to the way he came out by: through the court's gate, not its wall)
         out.then(() => {
@@ -821,7 +949,8 @@ export function story(g) {
         });
         // (Laman, on the road up to the city, with the walls in sight again)
         const dread = c.until(() => from(gateOut) < 95).then(() => bark(c, 'nearly'));
-        await c.reach(...labanGate, 6, { via: [...fromLehi, ...toLaban] });
+        // "we went in unto Laban" (3:24): in at his gate, into his court
+        await c.reach(...COURT.within, 2.2, { via: [...fromLehi, ...toLaban, C(19.6, 30.6), COURT.gate] });
         await dread;
       },
     },
@@ -829,9 +958,10 @@ export function story(g) {
       id: 'a2-laban',
       label: 'Act Two',
       setup() {
-        reset({ hour: 18.9, stand: C(19.2, 25.5), face: labanGate, town: true });
-        brothersAt(C(18.4, 22), labanGate);
+        reset({ hour: 18.9, stand: COURT.within, face: COURT.door, town: true });
+        for (const name of BROTHERS) who(name).place(...COURT[name], yawTo(COURT[name], COURT.door));
         for (const name of Object.keys(riches)) bear(name);
+        labanAtHome();
       },
       async run(c) {
         c.objective(null);
@@ -840,21 +970,38 @@ export function story(g) {
         const laban = who('laban');
         const s1 = who('servant1');
         const s2 = who('servant2');
-        // Laban comes out to them in the street, his servants in the gateway behind him
-        const stage = () => {
-          for (const n of ['laman', 'lemuel', 'sam']) who(n).stop().face(...labanGate);
-          laban.place(...C(20.6, 30.5), -Math.PI / 2).face(...me());
-          s1.place(...C(23.2, 29.2), 0).face(...me());
-          s2.place(...C(23.2, 31.8), Math.PI).face(...me());
+        // In his court: Laban comes forward from his door to meet them, a servant at either side of him. They stand
+        // before him with what they have brought. (At once, with `now`: the chase begun again.)
+        life.end(laban, s1, s2);
+        const stage = async (now = false) => {
+          const goes = [];
+          const to = (n, p, face, pace) => {
+            if (now) return void n.place(...p, yawTo(p, face)).face(...face);
+            n.face(null);
+            goes.push(n.walk([p], pace).then(() => n.face(...face)));
+          };
+          if (now) g.standAt(...COURT.nephi, yawTo(COURT.nephi, COURT.laban));
+          for (const name of BROTHERS) to(who(name).stop(), COURT[name], COURT.laban, 1.6);
+          to(laban, COURT.laban, COURT.nephi, 1.1);
+          to(s1, COURT.s1, COURT.nephi, 1.1);
+          to(s2, COURT.s2, COURT.nephi, 1.1);
+          if (!now) {
+            g.standAt(...me(), yawTo(me(), COURT.laban));
+            await c.hold(Promise.race([Promise.all(goes), c.wait(3.5)]));
+          }
+          laban.face(...me());
+          for (const s of [s1, s2]) s.face(...me());
         };
-        stage();
+        shoulder(COURT.laban);
+        await stage();
         shoulder(at(laban));
         await say(c, 'offer');
         // "when Laban saw our property, and that it was exceedingly great, he did lust after it" (3:25)
         await say(c, 'seize');
         g.view(null);
-        // (he turns to the way out: he is asked with the street he must run by before him, and not Laban)
-        g.standAt(...me(), yawTo(me(), C(18, 1)));
+        // "he thrust us out" (3:25): he turns to the way out, his gate (he is asked with the way he must run by before
+        // him, and not Laban)
+        g.standAt(...me(), yawTo(me(), COURT.gate));
         // They run: the brothers ahead, out of the gate and away to the rock; the servants after Nephi. What he carries
         // weighs on him, and they gain on him until he leaves it (3:26). They are after him still when he has left
         // it, through the streets, out of the gate and over the open ground, until he is hid in the cavity of the
@@ -867,12 +1014,14 @@ export function story(g) {
         //
         // They do not set out until he does (or until they will wait no longer), and are a few strides in coming to
         // their pace: a thumb must find the stick on a phone's glass, and he is given the time.
-        const fled = [C(18, 1), C(-30, 0), gateIn, gateOut, P(200, 90), beforeRock, mouth];
+        // (out of his gate first, and down the street: not through the wall of his court)
+        const fled = [COURT.gate, C(19.4, 27), C(18, 1), C(-30, 0), gateIn, gateOut, P(200, 90), beforeRock, mouth];
         const away = (name, dx = 0, dz = 0) => [...fled.map(([x, z]) => [x + dx, z + dz]), inRock[name]];
         // the way: through the streets to the gate, and from the gate nothing is marked but the rock (the ground
         // before its mouth, which only shows the way in, and its mouth)
         // (the gate's is on its threshold, without: from there the way to the rock is open, and not through the wall)
-        const toRock = [...outOfCity.slice(0, 2), P(GATE[0] - 3, 0), [...beforeRock, 10], mouth];
+        // (out by his gateway itself, and into the street, before the way runs on: never through the court's wall)
+        const toRock = [[...COURT.gate, 1.3], [...C(19.6, 29.5), 1.6], ...outOfCity.slice(0, 2), P(GATE[0] - 3, 0), [...beforeRock, 10], mouth];
         // (he is out of the city when he is in the gateway or before it, whichever way he then turns)
         const past = P(GATE[0] - 12, 0);
         const STRONG = 2;
@@ -883,9 +1032,22 @@ export function story(g) {
         let heldOut = false;
         // (which try is being run, for what is begun in one and must not be finished in the next)
         let chase = -1;
+        const touch = g.ui.touch;
         for (let tries = 0; ; tries++) {
           const strong = await recall(c, remembered[tries % remembered.length]);
           const wild = leg === 'wild';
+          // what is about to happen, and what to do, before anything moves
+          if (tries === 0)
+            await c.mission('Flee from the servants of Laban', 'Laban has sent his servants to kill you, and to take what you have brought. Get out of the city, and hide.', [
+              `Run out of Laban’s gate, down the street and out at the city gate.${touch ? '' : ' Hold Shift to run.'}`,
+              `What you carry slows you down: ${touch ? 'tap' : 'press E'} to leave it behind.`,
+              'Then make for the cavity of a rock, where the marker shows the way.',
+              'If they catch you, you begin again.',
+            ]);
+          else
+            await c.mission('Again', wild ? 'You are out of the city. Make for the rock, and do not let them catch you.' : 'Out of Laban’s gate, out of the city, and away to the rock.', [
+              wild ? 'Follow the marker to the cavity of a rock.' : `${touch ? 'Tap' : 'Press E'} to leave what you carry behind: it slows you down.`,
+            ]);
           c.objective(wild ? 'Flee from the servants of Laban! Hide yourselves in the cavity of a rock.' : 'Flee from the servants of Laban! Out of the city, into the wilderness.', wild ? 'Cavity of a rock' : 'Flee into the wilderness');
           g.hurry(true);
           if (strong) g.music.pluck();
@@ -912,10 +1074,12 @@ export function story(g) {
           // (Sam cries out; and Laman, as he lets the gold fall, unless Nephi has left his own already)
           const cries = wild ? null : talk(c, ['run', () => !left && 'leaveit'], { first: 0.3, gap: 1.6 });
           const hidden = await c.reach(...hollow, 2.2, {
-            via: wild ? toRock.slice(3) : toRock,
+            via: wild ? toRock.slice(5) : toRock,
             unless() {
               if (began == null && (from(stood) > 2.5 || c.time - asked > patience)) began = c.time;
-              if (began != null && out == null && c.time - began >= (wild && strong ? 1.5 : 0)) {
+              // (they set out a moment after he does: out of the open country a little longer if he was strengthened;
+              // in the city long enough for him to be out of Laban's gate before them)
+              if (began != null && out == null && c.time - began >= (wild ? (strong ? 1.5 : 0) : 1.4)) {
                 out = c.time;
                 after = [s1, s2];
                 Object.assign(s1.follow(g.player, 0.8), { keen: true });
@@ -994,9 +1158,8 @@ export function story(g) {
             [s1, s2].forEach((s, i) => s.place(...inGate[i], yawTo(inGate[i], gateOut)).face(...gateOut));
           } else {
             left = false;
-            g.standAt(...C(19.2, 25.5), yawTo(C(19.2, 25.5), C(18, 1)));
-            brothersAt(C(18.4, 22), labanGate);
-            stage();
+            await stage(true);
+            g.standAt(...COURT.nephi, yawTo(COURT.nephi, COURT.gate));
             for (const name of Object.keys(riches)) bear(name);
             g.town.day(life);
           }
@@ -1158,7 +1321,7 @@ export function story(g) {
       scene: true,
       setup() {
         reset({ hour: 22.5, stand: hide, face: gateOut, town: 'night' });
-        brothersAt(P(GATE[0] - 13, 36), hide);
+        brothersAt(hiding, hide);
         fallenLaban();
       },
       async run(c) {
@@ -1334,7 +1497,7 @@ export function story(g) {
         life.with(zoram, { as: 'Zoram', answers: () => ['brethrenchurch', 'eldersagain', 'elders'], every: 13, near: 6 });
         zoram.follow(g.player, 2.4, 1.2);
         c.objective('Go forth unto your brethren, who are without the walls.', 'Without the walls');
-        await c.reach(...hide, 15, { via: [doorIn, doorOut, C(19.5, 1), C(-20, 0), gateIn, gateOut] });
+        await c.reach(...withoutWalls, 4.5, { via: [doorIn, doorOut, C(19.5, 1), C(-20, 0), gateIn, gateOut] });
         g.guidance.shine(null);
       },
     },
@@ -1342,8 +1505,8 @@ export function story(g) {
       id: 'a3-walls',
       label: 'Act Three',
       setup() {
-        reset({ hour: 22.8, stand: P(GATE[0] - 14, 14), face: hide, clothes: 'laban', town: 'night' });
-        brothersAt(P(GATE[0] - 13, 36), P(GATE[0] - 14, 14));
+        reset({ hour: 22.8, stand: withoutWalls, face: hiding, clothes: 'laban', town: 'night' });
+        brothersAt(hiding, withoutWalls);
         who('zoram').place(...P(GATE[0] - 12, 11), 0).follow(g.player, 2.4, 1.2);
         g.props.carry('plates', g.player);
       },
@@ -1352,14 +1515,14 @@ export function story(g) {
         const zoram = who('zoram');
         life.end(zoram, ...BROTHERS.map(who));
         // they take him for Laban, and run
-        const flee = (name, du, dv) => who(name).walk([P(GATE[0] - 13 + du, 36 + dv)], 4.2);
+        const flee = (name, du, dv) => who(name).walk([P(GATE[0] - 13 + du, 24 + dv)], 4.2);
         flee('laman', -14, 16);
         flee('lemuel', -10, 19);
         flee('sam', -18, 12);
         await say(c, 'itislaban');
         await c.act(...at(nearest(['laman', 'lemuel', 'sam'])), 22, 'Call after them');
         await say(c, 'itisi');
-        const back = P(GATE[0] - 13, 30);
+        const back = P(GATE[0] - 13, 19);
         brothersAt(back, me());
         // And Zoram, seeing them, makes for the city: "he began to tremble, and was about to flee from before me and
         // return to the city of Jerusalem" (4:30). Nephi must come up with him before he is in at the gate, and hold
@@ -1367,11 +1530,22 @@ export function story(g) {
         // as long as E is (or a finger on the words). Let go, he breaks away and runs on; in at the gate, he is gone,
         // and it is begun again.
         const trembling = bark(c, 'notmaster');
+        // (he stands trembling, turned to the city, while it is said)
+        zoram.stop().face(...gateIn);
+        await c.hold(trembling);
         const HOLD = 5;
+        const touch = g.ui.touch;
         const toGate = [P(GATE[0] - 9, 0.5), gateIn];
         const within = P(GATE[0] + 1, 0);
         g.hurry(true);
         for (let tries = 0; ; tries++) {
+          if (tries === 0)
+            await c.mission('Hold Zoram', 'Zoram sees your brothers, and is afraid. He is about to flee back into the city, and tell what he has seen.', [
+              'Run after him, and come up with him before he is in at the gate.',
+              `Stay close, and ${touch ? 'hold your finger on the prompt' : 'hold E'} to hold him until the bar is full.`,
+              'Let go, and he breaks away again.',
+            ]);
+          else await c.mission('Again', 'Come up with Zoram before he is in at the gate, and hold him.', [`Stay close, and ${touch ? 'hold your finger on the prompt' : 'hold E'} until the bar is full.`]);
           c.objective('Zoram flees back to the city. Come up with him before he is in at the gate, and hold him.', 'Hold Zoram');
           zoram.stop();
           zoram.walk(toGate, 3.8);

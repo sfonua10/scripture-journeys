@@ -63,7 +63,7 @@ const step = (seconds, act = '') =>
       const people = {};
       for (const name of ['lehi', 'sariah', 'laman', 'lemuel', 'sam']) {
         const n = tg.cast.get(name);
-        people[name] = { x: n.x, z: n.z, mode: n.mode, sit: n.sit, kneel: n.kneel, speed: n.speed };
+        people[name] = { x: n.x, z: n.z, mode: n.mode, sit: n.sit, kneel: n.kneel, speed: n.speed, state: tg.g.life?.state(n), path: n.path.length };
       }
       return { prompt: text('g-prompt'), toast: text('g-toast'), people, frozen: tg.director.frozen, beat: tg.director.beat };
     },
@@ -116,9 +116,15 @@ for (const [name, as, lines, from] of [
 
 // left alone again, the one last spoken to goes back to his day
 const back = await step(1, 'tg.standAt(...tg.g.P(0, 0), 0)');
-const after = await step(40);
-const went = ['sariah', 'sam', 'laman', 'lemuel'].filter((k) => Math.hypot(after.people[k].x - back.people[k].x, after.people[k].z - back.people[k].z) > 2);
-check('left alone again, they go back to what they were about', went.length >= 3, went);
+// (each goes round his day, and may be back where he began by the end of it: how far he got at any time is what counts)
+const far = {};
+let after = back;
+for (let i = 0; i < 8; i++) {
+  after = await step(5);
+  for (const k of ['sariah', 'sam', 'laman', 'lemuel']) far[k] = Math.max(far[k] ?? 0, Math.hypot(after.people[k].x - back.people[k].x, after.people[k].z - back.people[k].z));
+}
+const went = Object.keys(far).filter((k) => far[k] > 2);
+check('left alone again, they go back to what they were about', went.length >= 3, [went, back.people, after.people]);
 check('the story still waits on his father', after.beat === 'a1' && !after.frozen, after);
 
 check('nothing went wrong on the page', problems.length === 0, problems);

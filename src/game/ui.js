@@ -46,6 +46,12 @@ const CSS = /* css */ `
 }
 #g-card .next svg { width: 8px; height: 11px; margin-left: 1px; fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 #g-card .next kbd { font: inherit; font-size: 11px; line-height: 1; padding: 2px 6px 3px; border: 1px solid var(--line); border-radius: 4px; opacity: 0.7; }
+/* A mission: what is about to happen and what to do, read before it begins (director.js, c.mission) */
+#g-card.mission .title { color: var(--gold); font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 3px; }
+#g-card.mission .steps { margin: 8px 0 0; padding: 0 0 0 18px; font-size: 15px; line-height: 1.45; }
+#g-card.mission .steps li { margin: 3px 0; }
+#g-card.mission .steps li::marker { color: var(--gold); }
+#g-card.mission .go { margin-top: 10px; color: var(--gold); font-size: 13px; letter-spacing: 0.08em; }
 #g-card .hint { margin-top: 8px; text-align: center; font-size: 12px; letter-spacing: 0.1em; opacity: 0.55; }
 #g-card .answers { margin-top: 9px; display: grid; gap: 7px; }
 #g-card .answer {
@@ -422,7 +428,7 @@ export function createUI({ touch = false } = {}) {
        * Shows a card: scripture with its reference, or a thought (italic, no reference). With `answers` it asks: they
        * are listed under it, the one at `at` lit, and `onPick(i)` is told if one is clicked.
        */
-      show({ text, ref = '', who = '', from = '', kind = ref ? 'scripture' : 'thought', hint = '', answers = null, at = 0, onPick = null }) {
+      show({ text, ref = '', who = '', from = '', kind = ref ? 'scripture' : 'thought', hint = '', answers = null, at = 0, onPick = null, title = '', steps = null, go = '' }) {
         // (a card lies where the line of scripture does: the line goes)
         hideToast(true);
         card.className = `g-layer on ${kind}`;
@@ -436,7 +442,11 @@ export function createUI({ touch = false } = {}) {
         // a card that asks has its answers for the way on; one that is read has the round button beside its words
         const next = answers ? '' : `<span class="next" role="img" aria-label="Next">${touch ? '' : '<kbd>E</kbd>'}<i><svg viewBox="0 0 9 12" aria-hidden="true"><path d="M2 1.5 7 6 2 10.5"/></svg></i></span>`;
         const foot = answers && hint ? `<div class="hint">${esc(hint)}</div>` : '';
-        card.innerHTML = `<div class="body">${head}<div class="text">${esc(text)}</div>${list}${foot}</div>${next}`;
+        // (a mission: its name over it, and under it what to do, step by step, and how to begin)
+        const named = title ? `<div class="title">${esc(title)}</div>` : '';
+        const how = steps ? `<ol class="steps">${steps.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` : '';
+        const begin = go ? `<div class="go">${esc(go)}</div>` : '';
+        card.innerHTML = `<div class="body">${named}${head}<div class="text">${esc(text)}</div>${how}${list}${foot}${begin}</div>${next}`;
         speaks(who);
         for (const a of card.querySelectorAll('.answer')) a.addEventListener('click', () => onPick?.(Number(a.dataset.i)));
       },

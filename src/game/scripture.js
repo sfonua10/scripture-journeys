@@ -104,11 +104,14 @@ export const VERSES = {
  * them in the same chapter, joined with spaces; `reference` is "1 Nephi 3:7" or "1 Nephi 4:11–12". Each journey has
  * its own (stories.js), of the book it is told from.
  */
-export function scripture(book, table) {
+export function scripture(book, table, { also = [] } = {}) {
   return {
     book,
-    /** The chapters its verses are of (a journey reads the recordings of its own chapters: narration.js). */
-    chapters: [...new Set(Object.keys(table).map((k) => Number(k.split(':')[0])))],
+    /**
+     * The chapters its verses are of (a journey reads the recordings of its own chapters: narration.js); and `also`,
+     * those of other chapters that what its people say in their own words is from (a line "from 1 Nephi 2:17").
+     */
+    chapters: [...new Set([...Object.keys(table).map((k) => Number(k.split(':')[0])), ...also])],
     verses(first, last = first) {
       const [ch, a] = first.split(':').map(Number);
       const b = Number(last.split(':')[1]);
@@ -124,7 +127,8 @@ export function scripture(book, table) {
   };
 }
 
-export const nephi = scripture('1 Nephi', VERSES);
+// (what the family says in the story's own words is from chapter 2 as well: spoken-nephi.js)
+export const nephi = scripture('1 Nephi', VERSES, { also: [2] });
 export const { verses, reference } = nephi;
 
 /**

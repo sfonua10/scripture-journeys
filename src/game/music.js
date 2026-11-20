@@ -62,6 +62,29 @@ function makeDrum(ctx, low) {
   return buffer;
 }
 
+/**
+ * Small stones shaken in a clay jar: a run of short knocks, each a click of noise ringing a little in the clay,
+ * close together and uneven. `seed` makes each shake its own.
+ */
+function makeRattle(ctx, seed = 0, seconds = 0.42) {
+  const rate = ctx.sampleRate;
+  const n = Math.floor(seconds * rate);
+  const buffer = ctx.createBuffer(1, n, rate);
+  const data = buffer.getChannelData(0);
+  let r = 0.31 + seed * 0.17;
+  const rand = () => (r = (r * 9301 + 0.49297) % 1);
+  for (let k = 0; k < 7; k++) {
+    const at = Math.floor(rand() * (n - rate * 0.03));
+    const ring = 1800 + rand() * 1600;
+    const loud = 0.35 + rand() * 0.5;
+    for (let i = 0; i < rate * 0.03 && at + i < n; i++) {
+      const t = i / rate;
+      data[at + i] += ((Math.random() * 2 - 1) * Math.exp(-t * 900) + Math.sin(t * ring * Math.PI * 2) * Math.exp(-t * 160) * 0.5) * loud;
+    }
+  }
+  return buffer;
+}
+
 /** Breath, drawn and let go: soft noise, to loop. */
 function makeBreath(ctx, seconds = 4.4) {
   const rate = ctx.sampleRate;
@@ -359,6 +382,13 @@ export function createMusic(sounds) {
       play(c, dum, c.currentTime + 0.03, 0.6);
       play(c, string(c, 'E5', 'short'), c.currentTime + 0.01, 0.4, { pan: -0.2 });
       play(c, string(c, 'Fs5', 'short'), c.currentTime + 0.02, 0.4, { pan: 0.2 });
+    },
+    /** Small stones shaken in a jar, once (the lots: 3:11). */
+    rattle(loud = 1) {
+      const c = ctx();
+      if (!c) return;
+      if (!made) make(c);
+      play(c, makeRattle(c, Math.random()), c.currentTime + 0.01, 0.5 * loud, { pan: (Math.random() - 0.5) * 0.3 });
     },
     /** An arrow that strikes, or something set down: the drum once, low. */
     thud(loud = 1) {

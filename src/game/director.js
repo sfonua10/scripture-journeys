@@ -104,6 +104,11 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
       frozen--;
       await c.wait(0.25);
     },
+    /**
+     * What is about to happen, and what to do about it, before it begins: a card with its name, a line, and the steps
+     * (`steps`, a few short lines), which waits for a press. Nothing moves until it is gone.
+     */
+    mission: (title, text, steps = []) => c.card(text, '', { kind: 'mission', title, steps, go: ui.touch ? 'Tap to begin' : 'Press E to begin' }),
     /** A verse or a run of them, from scripture.js, as a card. */
     async verse(first, last = first, options = {}) {
       await c.card(g.verses(first, last), g.reference(first, last), options);
