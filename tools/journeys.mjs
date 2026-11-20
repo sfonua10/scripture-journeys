@@ -96,12 +96,12 @@ check(
 );
 check(
   'under them their books, those with no journey greyed',
-  l.books.slice(0, 5).join(', ') === 'Daniel, Jonah, 1 Nephi, 2 Nephi:greyed, Jacob:greyed' && l.books.at(-1) === 'A new journey · coming next week:greyed',
+  l.books.slice(0, 6).join(', ') === 'Daniel, Hosea, Joel, Jonah, 1 Nephi, 2 Nephi:greyed' && l.books.at(-1) === 'A new journey · coming next week:greyed',
   l.books,
 );
 check(
   'and a card for each journey, with the face and name of the one it follows',
-  l.items.map((i) => `${i.who}:${i.no}:${i.buttons.join('|')}`).join(', ') === 'Daniel:Chapter 3:Play, Daniel:Chapter 6:Play, Jonah:Chapters 1–4:Play, Nephi:Chapters 3–4:Play, Nephi:Chapter 16:Play',
+  l.items.map((i) => `${i.who}:${i.no}:${i.buttons.join('|')}`).join(', ') === 'Daniel:Chapter 3:Play, Daniel:Chapter 6:Play, Hosea:Chapter 10:Play, Joel:Chapters 1–2:Play, Joel:Chapter 2:Play, Jonah:Chapters 1–4:Play, Nephi:Chapters 3–4:Play, Nephi:Chapter 16:Play',
   l.items,
 );
 // (a rule of the stylesheet that is not read leaves what it hides showing: a stray brace once kept every line up)
@@ -217,7 +217,7 @@ if (shots) {
 }
 await open('story=jonah', true);
 l = await list();
-check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 5, { works: l.works, items: l.items.length });
+check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 8, { works: l.works, items: l.items.length });
 await page.evaluate(() => localStorage.clear());
 
 // 8. a journey's own page: its own name and picture for where a link to it is posted, and whoever opens it goes

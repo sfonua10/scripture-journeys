@@ -290,6 +290,58 @@ export function createMusic(sounds) {
       play(c, string(c, 'D4'), c.currentTime + 0.02, 0.32);
       play(c, string(c, 'A4'), c.currentTime + 0.17, 0.26);
     },
+    /**
+     * The trumpet blown in Zion (Joel 2:15), a ram's horn: a low note that the lips lift into, held, and then
+     * broken up to the note a fifth over it, rough and reedy. `answered`: how many came at its sound; a rising string
+     * for each (up to four) after it.
+     */
+    horn(answered = 0) {
+      const c = ctx();
+      if (!c) return;
+      if (!made) make(c);
+      const at = c.currentTime + 0.02;
+      // (each note: a reedy sawtooth and a square an octave down, through one filter that opens as it swells)
+      const note = (from, to, when, length, loud) => {
+        const f = c.createBiquadFilter();
+        f.type = 'lowpass';
+        f.Q.value = 2.2;
+        f.frequency.setValueAtTime(380, when);
+        f.frequency.linearRampToValueAtTime(1500, when + 0.18);
+        f.frequency.setValueAtTime(1500, when + length - 0.15);
+        f.frequency.linearRampToValueAtTime(500, when + length + 0.2);
+        const g = c.createGain();
+        g.gain.setValueAtTime(0, when);
+        g.gain.linearRampToValueAtTime(loud, when + 0.07);
+        g.gain.setValueAtTime(loud, when + length - 0.1);
+        g.gain.linearRampToValueAtTime(0, when + length + 0.22);
+        f.connect(g).connect(out);
+        for (const [type, k, level] of [['sawtooth', 1, 1], ['square', 0.5, 0.35]]) {
+          const o = c.createOscillator();
+          o.type = type;
+          o.frequency.setValueAtTime(from * k, when);
+          o.frequency.exponentialRampToValueAtTime(to * k, when + 0.14);
+          // (a breath's unsteadiness in it)
+          const lfo = c.createOscillator();
+          lfo.frequency.value = 6.3;
+          const depth = c.createGain();
+          depth.gain.value = to * k * 0.006;
+          lfo.connect(depth).connect(o.frequency);
+          const v = c.createGain();
+          v.gain.value = level;
+          o.connect(v).connect(f);
+          for (const s of [o, lfo]) {
+            s.start(when);
+            s.stop(when + length + 0.3);
+            playing.push(s);
+          }
+        }
+      };
+      note(HZ.A3 * 0.9, HZ.A3, at, 0.55, 0.11);
+      note(HZ.A3 * 1.3, HZ.E4, at + 0.6, 0.85, 0.12);
+      // (and those who answered it)
+      const up = ['D4', 'Fs4', 'A4', 'D5'];
+      for (let i = 0; i < Math.min(4, answered); i++) play(c, string(c, up[i]), at + 1.5 + i * 0.14, 0.3 - i * 0.03, { pan: i % 2 ? 0.2 : -0.2 });
+    },
     /** A bowstring let go: one low string, short, and the hand's slap under it. `loud`: 0 to 1 (a bow with no spring is quiet). */
     twang(loud = 1) {
       const c = ctx();
