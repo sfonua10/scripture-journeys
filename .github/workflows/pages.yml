@@ -38,8 +38,9 @@ jobs:
         working-directory: jonah
         env:
           JONAH_PATH: ${{ vars.JONAH_PATH }}
+        # (npm install, not npm ci: its lockfile is made on a Mac, and Linux wants a few optional packages more)
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           npm run build
           mkdir -p "../dist/$JONAH_PATH"
           cp -R dist/. "../dist/$JONAH_PATH/"
