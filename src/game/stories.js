@@ -190,9 +190,9 @@ export const STORIES = [
   },
   {
     // a short game: a plot of fallow ground broken up and sown before the rain comes, and reaped after it (hosea.js,
-    // fallow.js). Still being tried: opened at ?story=hosea.
+    // fallow.js).
     id: 'hosea',
-    wip: true,
+    beta: true,
     work: 'ot',
     book: 'hosea',
     number: 1,
@@ -216,9 +216,9 @@ export const STORIES = [
   },
   {
     // a short game: a plot of corn kept, as far as one can keep it, from four swarms; and then restored (locust-years.js,
-    // swarm.js). Still being tried: opened at ?story=locust-years.
+    // swarm.js).
     id: 'locust-years',
-    wip: true,
+    beta: true,
     work: 'ot',
     book: 'joel',
     number: 1,
@@ -241,9 +241,9 @@ export const STORIES = [
   },
   {
     // a short game rather than a walk through the story: the trumpet blown in Zion, and the people gathered at its
-    // sound before the sun goes down (joel.js, gather.js). Still being tried: opened at ?story=joel.
+    // sound before the sun goes down (joel.js, gather.js).
     id: 'joel',
-    wip: true,
+    beta: true,
     work: 'ot',
     book: 'joel',
     number: 2,
@@ -269,13 +269,14 @@ export const STORIES = [
   },
   {
     id: 'jonah',
-    wip: true,
+    beta: true,
     work: 'ot',
     book: 'jonah',
     number: 1,
     title: 'Should Not I Spare Nineveh?',
     ref: 'Jonah 1–4',
     blurb: 'Jonah flees from the presence of the LORD, is cast into the sea, cries against Nineveh, and is asked a question.',
+    shown: 'Jonah, cast into the sea, looks up from the waves into light breaking through the storm; behind him the shape of a great fish in the deep, and the ship and its mariners beyond.',
     released: true,
     first: 'a1',
     beats: jonah.story,

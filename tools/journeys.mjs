@@ -204,7 +204,7 @@ check('with a place kept, the list offers to go on or start over', l.on === true
 check(
   'the journeys that may be tried are on it, marked Beta, and those still being made are not',
   l.works.join(', ') === 'Old Testament, New Testament:coming, Book of Mormon, Doctrine and Covenants:coming, Pearl of Great Price:coming' &&
-    l.items.map((i) => `${i.who}:${i.no}${i.beta ? ':Beta' : ''}`).join(', ') === 'Daniel:Chapter 3:Beta, Daniel:Chapter 6:Beta, Nephi:Chapters 3–4',
+    l.items.map((i) => `${i.who}:${i.no}${i.beta ? ':Beta' : ''}`).join(', ') === 'Daniel:Chapter 3:Beta, Daniel:Chapter 6:Beta, Hosea:Chapter 10:Beta, Joel:Chapters 1–2:Beta, Joel:Chapter 2:Beta, Jonah:Chapters 1–4:Beta, Nephi:Chapters 3–4',
   { works: l.works, items: l.items.map((i) => `${i.who}:${i.no}${i.beta ? ':Beta' : ''}`) },
 );
 check('and the journey to hand is still the first finished one, not one marked Beta', (await page.evaluate(() => document.activeElement?.dataset.id)) === 'plates-of-brass');
@@ -215,7 +215,7 @@ if (shots) {
   await page.screenshot({ path: join(out, '6-list-as-found-phone.png') });
   await page.setViewportSize({ width: 1280, height: 720 });
 }
-await open('story=jonah', true);
+await open('story=by-small-means', true);
 l = await list();
 check('one of them asked for by name is listed with the rest', l.on === true && l.works[0] === 'Old Testament' && l.items.length === 8, { works: l.works, items: l.items.length });
 await page.evaluate(() => localStorage.clear());
