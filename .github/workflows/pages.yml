@@ -23,8 +23,26 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            jonah/package-lock.json
       - run: npm ci
       - run: npm run build
+      # The Jonah app (jonah/) at an address only those who are given it know, and in no list: the address is the
+      # repository variable JONAH_PATH (Settings, Secrets and variables, Actions, Variables), not written here, as
+      # this repository is public. Left out if the variable is not set; and if it fails to build, the site still goes
+      # out without it.
+      - name: The Jonah app, at its own address
+        if: ${{ vars.JONAH_PATH != '' }}
+        continue-on-error: true
+        working-directory: jonah
+        env:
+          JONAH_PATH: ${{ vars.JONAH_PATH }}
+        run: |
+          npm ci
+          npm run build
+          mkdir -p "../dist/$JONAH_PATH"
+          cp -R dist/. "../dist/$JONAH_PATH/"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
