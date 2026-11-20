@@ -9,8 +9,12 @@
 
 const LOOPS = ['grass', 'leaves', 'summer', 'lake', 'crickets'];
 
-/** Wind over dry grass: brown noise, softened, swelling and falling, as a seamless stereo loop. */
-function makeWind(ctx, seconds = 9) {
+/**
+ * Wind over dry grass, as a seamless stereo loop: a little low air, and over it the hiss of the stalks. It rises and
+ * falls only slowly and unevenly (once, twice and three times in the loop's long length): a swell that comes round
+ * every few seconds over a low rumble is the sea on a shore, not wind.
+ */
+function makeWind(ctx, seconds = 24) {
   const rate = ctx.sampleRate;
   const n = Math.floor(seconds * rate);
   const buffer = ctx.createBuffer(2, n, rate);
@@ -18,13 +22,17 @@ function makeWind(ctx, seconds = 9) {
     const data = buffer.getChannelData(ch);
     let brown = 0;
     let soft = 0;
+    let low = 0;
     for (let i = 0; i < n; i++) {
-      brown = (brown + (Math.random() * 2 - 1) * 0.02) * 0.998;
+      const white = Math.random() * 2 - 1;
+      brown = (brown + white * 0.02) * 0.998;
       soft += (brown - soft) * 0.08;
+      // (the hiss: white noise with its low part taken out, and its top softened)
+      low += (white - low) * 0.18;
+      const hiss = (white - low) * 0.5 + low * 0.25;
       const t = i / n;
-      // (two slow swells that come round to where they began, so the loop has no seam)
-      const swell = 0.6 + 0.25 * Math.sin(t * Math.PI * 2 * 2 + ch) + 0.15 * Math.sin(t * Math.PI * 2 * 3 + 1.7);
-      data[i] = soft * 3.2 * swell;
+      const swell = 0.78 + 0.12 * Math.sin(t * Math.PI * 2 + ch) + 0.07 * Math.sin(t * Math.PI * 4 + 1.7) + 0.04 * Math.sin(t * Math.PI * 6 + 0.4 + ch);
+      data[i] = (soft * 1.4 + hiss * 0.09) * swell;
     }
     // cross-fade the ends into each other
     const fade = Math.floor(rate * 0.5);
@@ -182,7 +190,7 @@ export function createSounds(base = './audio/') {
     },
     /**
      * @param here.wind m/s; here.gust 0 to 1, the gust passing now; here.tree 0 to 1, how far under a tree you
-     *   are; here.tarn 0 to 1, how near the water; here.dusk 0 to 1
+     *   are; here.tarn 0 to 1, how near the water; here.dusk 0 to 1; here.night 1 by night
      */
     update(dt, here) {
       if (!begun) return;
@@ -191,7 +199,8 @@ export function createSounds(base = './audio/') {
       const to = (name, value) => {
         if (loops[name]) loops[name].gain.value += (value - loops[name].gain.value) * ease;
       };
-      to('grass', (0.1 + Math.min(0.5, here.wind * 0.055)) * (0.55 + 0.45 * here.gust));
+      // (by night the wind has dropped: what is heard is the crickets)
+      to('grass', (0.1 + Math.min(0.5, here.wind * 0.055)) * (0.55 + 0.45 * here.gust) * (1 - 0.85 * (here.night ?? 0)));
       to('leaves', here.tree * (0.3 + 0.5 * here.gust));
       to('summer', 0.55 * (1 - 0.5 * here.dusk));
       to('lake', here.tarn * 0.5);

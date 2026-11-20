@@ -29,6 +29,15 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
   let asking = false;
   /** A line (c.line) is up at the top: a card that comes takes it away, so the two are not read at once. */
   let lineUp = false;
+  /**
+   * Something else he may do where he stands, when the story asks nothing of him there (c.also): asked each frame,
+   * it gives `{ label, act() }` or nothing. `offer` is what it gave this frame; `own` that the story's own prompt is
+   * up this frame, which comes before it; `offered` that its prompt is the one showing.
+   */
+  let also = null;
+  let offer = null;
+  let own = false;
+  let offered = false;
   const clearLine = () => {
     if (!lineUp) return;
     lineUp = false;
@@ -158,15 +167,23 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
     /**
      * Waits for Nephi to act (E) within r of (x, z), showing the prompt while he is near. `unless` is asked each
      * frame: when it says so the wait is given up. Resolves true if he acted.
+     * In place of (x, z) it may be given someone who moves ({ x, z }, one of the cast): `act(lehi, r, label)`. The
+     * place is then wherever he is, asked each frame, and the marker and the autopilot go where he goes.
      */
-    async act(x, z, r, label, { mark = true, unless = null } = {}) {
-      goal = { x, z, r: r * 0.7, mark };
-      interactable = { x, z, r, label };
+    async act(...args) {
+      const on = typeof args[0] === 'object' ? args.shift() : null;
+      const fixed = on ? null : args.splice(0, 2);
+      const [r, label, { mark = true, unless = null } = {}] = args;
       pressed = false;
       let acted = false;
       await until(() => {
+        const [x, z] = on ? [on.x, on.z] : fixed;
+        goal = { x, z, r: r * 0.7, mark };
+        interactable = { x, z, r, label };
         const close = near(x, z, r) && !frozen;
-        ui.prompt(close ? label : null);
+        // (away from it, the prompt is left to whatever else there is to do where he stands: `also`)
+        if (close) own = true;
+        if (close || !offer) ui.prompt(close ? label : null);
         if (close && (pressed || auto)) return (acted = true);
         if (!close) pressed = false;
         return !!unless?.();
@@ -254,6 +271,14 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
     freeze(on) {
       frozen += on ? 1 : -1;
     },
+    /**
+     * Something else he may do where he stands, besides what the story waits on: `ask()` is asked each frame, and
+     * gives `{ label, act() }` (the prompt, and what E then does) or nothing. One of the camp to speak to (life.js).
+     * What the story itself asks of him at that place comes first. The autopilot does none of it.
+     */
+    also(ask) {
+      also = ask;
+    },
     /** Where the autopilot should walk while nothing is waited on (the Spirit's leading, in act three). */
     lead(point) {
       goal = point;
@@ -326,6 +351,9 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
     },
     update(dt) {
       time += dt;
+      const acted = pressed;
+      offer = (!frozen && !auto && also?.()) || null;
+      own = false;
       // (a wait that is met may start another, which is checked next frame)
       for (let i = waits.length - 1; i >= 0; i--) {
         if (waits[i].test()) {
@@ -333,6 +361,15 @@ export function createDirector(beats, ui, g, { auto = false, autoRead = 0.15, ke
           waits.splice(i, 1);
           done();
         }
+      }
+      // what else there is to do here, where the story's own prompt is not up
+      if (offer && !own && !frozen) {
+        ui.prompt(offer.label);
+        offered = true;
+        if (acted) offer.act();
+      } else if (offered) {
+        if (!own) ui.prompt(null);
+        offered = false;
       }
       pressed = false;
       key = null;

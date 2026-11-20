@@ -26,85 +26,67 @@ export const TOWNSFOLK = Array.from({ length: 10 }, (_, i) => [`town${i}`, i % T
 
 export function createTown(g) {
   const { P, C } = g;
-  // Where each goes. Two places: he walks from one to the other and back, stopping a while at each. One: he stands
-  // there, facing the second point. (None of them uses the street before Laban's house, where the story happens.)
-  const WAYS = [
-    { walk: [C(-56, -1.9), C(52, -1.9)], pace: 1.25 },
-    { walk: [C(44, 2.0), C(-52, 2.0)], pace: 1.4 },
-    { walk: [C(-27, -40), C(-27, 38)], pace: 1.2 },
-    { walk: [C(20.5, -38), C(20.5, -7)], pace: 1.3 },
-    { stand: C(-53, 8), face: C(-51.6, 8.9) },
-    { stand: C(-51.6, 8.9), face: C(-53, 8) },
-    { walk: [C(-50, 1.6), P(GATE[0] - 24, 3)], pace: 1.35 },
-    { stand: C(-9, 3.0), face: C(-9, -3) },
-    { stand: C(31, -2.7), face: C(32.3, -2.2) },
-    { stand: C(32.3, -2.2), face: C(31, -2.7) },
+  // What each does by day, over and over (life.js): one walks the length of a street and back, stopping at each end
+  // to look about him; two stand talking, and one of them goes a little way off and comes back; one sits by a wall.
+  // `t` is how far along his way he is found. (None of them uses the street before Laban's house, where the story
+  // happens.)
+  const walker = ([a, b], pace, rest) => [{ go: [b], pace }, { stay: rest, look: true }, { go: [a], pace }, { stay: rest + 1.5, face: b }];
+  const DAY = [
+    { at: [C(-56, -1.9), C(52, -1.9)], t: 0, steps: walker([C(-56, -1.9), C(52, -1.9)], 1.25, 3) },
+    { at: [C(44, 2.0), C(-52, 2.0)], t: 0.37, steps: walker([C(44, 2.0), C(-52, 2.0)], 1.4, 4.7) },
+    { at: [C(-27, -40), C(-27, 38)], t: 0.74, steps: walker([C(-27, -40), C(-27, 38)], 1.2, 3.4) },
+    { at: [C(20.5, -38), C(20.5, -7)], t: 0.11, steps: walker([C(20.5, -38), C(20.5, -7)], 1.3, 5.1) },
+    // two by the gate, talking; one of them goes over to look out at the road, and comes back to the other
+    { stand: C(-53, 8), face: C(-51.6, 8.9), steps: [{ stay: 16, face: C(-51.6, 8.9) }, { go: [C(-55.5, 3.6)], pace: 1.1 }, { stay: 6, look: true }, { go: [C(-53, 8)], pace: 1.1 }] },
+    { stand: C(-51.6, 8.9), face: C(-53, 8), steps: [{ stay: 14, face: C(-53, 8) }, { stay: 7, look: true }, { stay: 9, face: () => g.cast.get('town4') && [g.cast.get('town4').x, g.cast.get('town4').z] }] },
+    { at: [C(-50, 1.6), P(GATE[0] - 24, 3)], t: 0.85, steps: walker([C(-50, 1.6), P(GATE[0] - 24, 3)], 1.35, 4) },
+    // one who sits by a wall of the main street, and gets up now and then to stretch his legs
+    { stand: C(-9, 3.0), face: C(-9, -3), steps: [{ stay: 26, face: C(-9, -3), sit: true }, { go: [C(-4, 3.2)], pace: 0.9 }, { stay: 4, look: true }, { go: [C(-9, 3.0)], pace: 0.9 }] },
+    // two more, talking, in the street east of the cross street; one turns away, and back
+    { stand: C(31, -2.7), face: C(32.3, -2.2), steps: [{ stay: 12, face: C(32.3, -2.2) }, { stay: 5, face: C(28, -6), look: true }] },
+    { stand: C(32.3, -2.2), face: C(31, -2.7), steps: [{ stay: 20, face: C(31, -2.7) }] },
   ];
   // By night: one on the main street, west of the cross street; one on the far cross street; one standing in the
   // square inside the gate.
   const NIGHT = [
-    { walk: [C(-50, -1.6), C(8, -1.6)], pace: 1.05, from: 0.6 },
-    { walk: [C(-27, 34), C(-27, -36)], pace: 0.95, from: 0.3 },
-    { stand: C(-40, 9), face: C(-30, 0) },
+    { at: [C(-50, -1.6), C(8, -1.6)], t: 0.6, steps: walker([C(-50, -1.6), C(8, -1.6)], 1.05, 4) },
+    { at: [C(-27, 34), C(-27, -36)], t: 0.3, steps: walker([C(-27, 34), C(-27, -36)], 0.95, 5) },
+    { stand: C(-40, 9), face: C(-30, 0), steps: [{ stay: 30, face: C(-30, 0), look: true }] },
   ];
-  // (which day this is: a walker whose day has ended does not set out again)
-  let day = 0;
   const people = () => TOWNSFOLK.map(([name]) => g.cast.get(name));
-  /** One who walks to and fro between two places, stopping a while at each, for as long as it is the day `mine`. */
-  function walkTo(npc, way, i, mine) {
-    // he sets out from somewhere along his way, so the street is not empty at its ends
-    const [a, b] = way.walk;
-    const t = way.from ?? (i * 0.37) % 1;
-    npc.place(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, Math.atan2(b[0] - a[0], b[1] - a[1]));
-    let to = 1;
-    (async () => {
-      while (mine === day) {
-        await npc.walk([way.walk[to]], way.pace);
-        if (mine !== day) return;
-        // (he stops a while where he was going: a few seconds, not the same for each)
-        await new Promise((done) => {
-          npc.arrive = done;
-          npc.rest = 3 + ((i * 1.7) % 4);
-        });
-        to = 1 - to;
+  /** Each where his day finds him, and at it. `notice`: how he takes Nephi's coming near (life.js). */
+  function begin(life, list, notice) {
+    people().forEach((npc, i) => {
+      const way = list[i];
+      if (!way) return;
+      if (way.stand) npc.place(...way.stand, Math.atan2(way.face[0] - way.stand[0], way.face[1] - way.stand[1]));
+      else {
+        const [[ax, az], [bx, bz]] = way.at;
+        npc.place(ax + (bx - ax) * way.t, az + (bz - az) * way.t, Math.atan2(bx - ax, bz - az));
       }
-    })();
+      life.live(npc, way.steps, { notice });
+    });
   }
 
   return {
-    /** The streets as they are by day. */
-    day() {
-      const mine = ++day;
-      people().forEach((npc, i) => {
-        const way = WAYS[i];
-        if (way.stand) return void npc.place(...way.stand, 0).face(...way.face);
-        walkTo(npc, way, i, mine);
-      });
+    /**
+     * The streets as they are by day, each at his own business. They have no words for Nephi (the account gives them
+     * none): greeted, one stops and turns to him, and goes on.
+     */
+    day(life) {
+      begin(life, DAY, { greets: true, passes: true, label: 'Greet', near: 3 });
     },
     /**
      * The streets as they are by night: no one (the cast's own clear() has taken them in); or, with `few`, the two or
-     * three who are abroad late, going slowly, none of them near Laban's house or his treasury.
+     * three who are abroad late, going slowly, none of them near Laban's house or his treasury. A head turns as he
+     * passes; no more.
      */
-    night(few = false) {
-      const mine = ++day;
-      if (!few) return;
-      people().forEach((npc, i) => {
-        const way = NIGHT[i];
-        if (!way) return;
-        if (way.stand) return void npc.place(...way.stand, 0).face(...way.face);
-        walkTo(npc, way, i, mine);
-      });
+    night(life, few = false) {
+      if (few) begin(life, NIGHT, null);
     },
     /** Everyone stops where he is and turns to look at Nephi: something is happening in the street. */
-    watch() {
-      for (const npc of people()) {
-        if (!npc.visible) continue;
-        if (npc.mode === 'walk') {
-          day++;
-          npc.stop();
-        }
-        npc.face(g.player.x, g.player.z);
-      }
+    watch(life) {
+      life.watch(...people().filter((npc) => npc.visible));
     },
   };
 }

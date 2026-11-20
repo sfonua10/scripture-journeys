@@ -143,6 +143,20 @@ export function poseAcross(bones, object, yaw, table, sink, k) {
 }
 const bowDown = (npc, k) => poseAcross(npc.man.bones, npc.man.object, npc.yaw, BOW, KNEEL, k);
 
+// Looking at something: how much of the turn each bone takes (as the one you walk as looks where the eye does:
+// animator.js, lookToward).
+const LOOK = [['spine_03', 0.2], ['neck_01', 0.35], ['Head', 0.45]];
+const UP = new THREE.Vector3(0, 1, 0);
+const worldTurn = new THREE.Quaternion();
+/** Turns a bone about a line of the world (`axis`), whatever way its parents lie. The figure's matrices are as this frame has them. */
+function turnAbout(bone, axis, angle) {
+  if (!bone?.parent) return;
+  bone.parent.getWorldQuaternion(parentTurn);
+  bone.getWorldQuaternion(worldTurn);
+  bone.quaternion.copy(parentTurn.invert()).multiply(turn.setFromAxisAngle(axis, angle).multiply(worldTurn));
+  bone.updateMatrixWorld(true);
+}
+
 /**
  * @param field the meadow (its uniforms light them)
  * @param base a loaded man, never dressed: each one is a clone of it
@@ -196,7 +210,13 @@ export function createCast(field, base, world) {
       followTarget: null,
       followGap: 3,
       arrive: null,
-      weights: { Idle: 1, Walk: 0, Jog: 0, Run: 0 },
+      weights: { Idle: 1, Walk: 0, Jog: 0, Run: 0, Idle_LookAround: 0 },
+      // what he looks at as he stands or goes ([x, z], or null): his head and neck turn to it, his body does not
+      look: null,
+      // how he stands when he stands: 'look' for one who looks about him (null: as anyone stands)
+      idle: null,
+      // one he will not walk through ({ x, z }, read each frame): he stops short of him, and goes on when he can
+      yields: null,
       get visible() {
         return w.group.visible;
       },
@@ -302,6 +322,35 @@ export function createCast(field, base, world) {
       } else {
         want = npc.pace;
         npc.yaw += angleWrap(Math.atan2(dx, dz) - npc.yaw) * Math.min(1, dt * 8);
+        // (someone stands in his way, a step before him: he waits for him to move; and if he does not, a moment
+        // after he goes round him, on the side nearer where he is going. If where he is going is where the other
+        // stands, he has come as near it as he will.)
+        if (npc.yields) {
+          const y = npc.yields;
+          const yx = y.x - npc.x;
+          const yz = y.z - npc.z;
+          const yd = Math.hypot(yx, yz) || 1;
+          // (in his way: near, and all but straight before him)
+          if (yd < 1.3 && (yx * Math.sin(npc.yaw) + yz * Math.cos(npc.yaw)) / yd > 0.6) {
+            want = 0;
+            npc.blocked = (npc.blocked ?? 0) + dt;
+            if (npc.blocked > 1.2) {
+              npc.blocked = 0;
+              if (Math.hypot(tx - y.x, tz - y.z) < 1.6) {
+                npc.path.shift();
+                if (!npc.path.length) {
+                  npc.mode = 'stand';
+                  npc.arrive?.();
+                  npc.arrive = null;
+                }
+              } else {
+                const [px, pz] = [-yz / yd, yx / yd];
+                const side = Math.sign((tx - y.x) * px + (tz - y.z) * pz) || 1;
+                npc.path.unshift([y.x + px * side * 1.9, y.z + pz * side * 1.9]);
+              }
+            }
+          } else npc.blocked = 0;
+        }
       }
     } else if (npc.mode === 'follow' && npc.abreast && dt > 0 && Math.hypot(npc.followTarget.x - npc.x, npc.followTarget.z - npc.z) < 9) {
       // At his side. Where the other goes, and how fast, is seen from where he was a moment ago; his own place is
@@ -457,9 +506,13 @@ export function createCast(field, base, world) {
     }
     const s = npc.speed;
     const W = npc.weights;
-    const goal = s < 0.25 ? { Idle: 1, Walk: 0, Jog: 0, Run: 0 } : s < 2.2 ? { Idle: 0, Walk: 1, Jog: 0, Run: 0 } : s < 4.2 ? { Idle: 0, Walk: 0, Jog: 1, Run: 0 } : { Idle: 0, Walk: 0, Jog: 0, Run: 1 };
+    // (one who looks about him as he stands has a clip of his own for it)
+    const standing = npc.idle === 'look' && npc.act.Idle_LookAround && !npc.lying ? 'Idle_LookAround' : 'Idle';
+    const clip = s < 0.25 ? standing : s < 2.2 ? 'Walk' : s < 4.2 ? 'Jog' : 'Run';
     for (const k of Object.keys(W)) {
-      W[k] += (goal[k] - W[k]) * (snap ? 1 : Math.min(1, dt * 6));
+      // (from one way of standing to another he changes slowly: it is not a step taken)
+      const rate = k.startsWith('Idle') && clip.startsWith('Idle') ? 2 : 6;
+      W[k] += ((k === clip ? 1 : 0) - W[k]) * (snap ? 1 : Math.min(1, dt * rate));
       npc.act[k]?.setEffectiveWeight(W[k]);
     }
     // each moving clip at the rate that matches his real speed
@@ -505,6 +558,17 @@ export function createCast(field, base, world) {
     npc.seatedK = (npc.seatedK ?? 0) + ((npc.seated ?? 0) - (npc.seatedK ?? 0)) * (snap ? 1 : Math.min(1, dt * 2.6));
     if (npc.seatedK > 0.01) poseAcross(npc.man.bones, o, npc.yaw, SEAT, SEAT_SINK, npc.seatedK);
     o.updateMatrixWorld(true);
+    // one who looks at something (`look`): his head turns to it, as far as a neck goes, and his shoulders a little.
+    // What is behind him he does not look at.
+    {
+      let to = 0;
+      if (npc.look && !npc.lying && !(npc.bowK > 0.2)) {
+        const a = angleWrap(Math.atan2(npc.look[0] - npc.x, npc.look[1] - npc.z) - npc.yaw);
+        if (Math.abs(a) < 1.9) to = Math.min(1, Math.max(-1, a));
+      }
+      npc.lookK = (npc.lookK ?? 0) + (to - (npc.lookK ?? 0)) * (snap ? 1 : Math.min(1, dt * 4));
+      if (Math.abs(npc.lookK) > 0.01) for (const [name, k] of LOOK) turnAbout(npc.man.bones[name], UP, npc.lookK * k);
+    }
     // one who carries something has both hands to it
     npc.held = npc.holds ?? npc.held;
     npc.holdK = Math.min(1, Math.max(0, (npc.holdK ?? 0) + (npc.holds ? 1 : -1) * (snap ? 1 : dt * 4)));
@@ -533,6 +597,7 @@ export function createCast(field, base, world) {
         npc.show(false);
         npc.aura = 0;
         npc.stirs = false;
+        Object.assign(npc, { look: null, idle: null, yields: null });
       }
     },
     /** Records where Nephi is; a jump of more than a few metres (a new scene) starts the trail again. */

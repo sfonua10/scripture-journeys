@@ -865,6 +865,14 @@ export function createProps(city, heightAt, extra = null) {
     // a wine jar, fallen over and empty, and the cup that was drunk from (4:7)
     jar: turned([[0, 0], [0.07, 0], [0.15, 0.1], [0.19, 0.25], [0.17, 0.4], [0.09, 0.5], [0.065, 0.58], [0.095, 0.63]], CLAY, 0.71),
     cup: turned([[0, 0], [0.035, 0], [0.05, 0.05], [0.058, 0.09]], [0.74, 0.5, 0.32], 0.72),
+    // a jar for carrying water from the river, standing (the valley of Lemuel: life.js)
+    waterjar: make((b) => {
+      b.turned(0, 0, 0, [[0.09, 0], [0.16, 0.13], [0.17, 0.26], [0.1, 0.37], [0.07, 0.43], [0.095, 0.47]], 10, PART.PLASTER, CLAY, 0.73);
+    }),
+    // a rod: a straight stick of wood, about the length of a man's arm and a half, lying on the ground (3:28)
+    rod: make((b) => {
+      b.box(-0.72, 0.72, -0.022, 0.022, 0, 0.045, { part: PART.WOOD, colour: [0.42, 0.3, 0.19], seed: 0.79, solid: false, roofPart: PART.WOOD, roofColour: [0.46, 0.33, 0.2] });
+    }),
     // the treasury's door: two leaves of thick planks, shut
     door: make((b) => {
       b.box(-1.1, 1.1, -0.09, 0.09, -0.3, 3.0, { part: PART.WOOD, colour: [0.3, 0.2, 0.13], seed: 0.96, solid: false, roofPart: PART.WOOD, roofColour: [0.3, 0.2, 0.13] });

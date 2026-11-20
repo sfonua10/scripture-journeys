@@ -887,7 +887,7 @@ function tick(dt) {
   }
   const tarn = 1 - Math.min(1, Math.max(0, (tarnDistance(player.x, player.z) - 1) / 1.6));
   const gust = 0.5 + 0.5 * Math.sin(clock * 0.23) * Math.sin(clock * 0.37 + 1);
-  sounds.update(dt, { wind: wind.speed, gust, tree, tarn, dusk: Math.min(1, Math.max(0, (sky.hour - 18.8) / 1.4)) * (1 - 0.4 * sky.night) });
+  sounds.update(dt, { wind: wind.speed, gust, tree, tarn, dusk: Math.min(1, Math.max(0, (sky.hour - 18.8) / 1.4)) * (1 - 0.4 * sky.night), night: sky.night });
   sky.update(dt, camera);
   frame.exposure = sky.exposure;
   // (only what can be seen of the trees and of the far land is drawn: the camera is by now where this frame is

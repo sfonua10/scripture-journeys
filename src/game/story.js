@@ -25,7 +25,8 @@
 // brothers is neither seen nor told (the screen dims, and the angel's question says what it was); Laban's death is
 // not seen, and of 4:18 only "I did obey the voice of the Spirit" is read. The screen goes dark for it.
 import { IN_LEMUEL, LEHI_TABLE, lemuelCamp } from './city.js';
-import { CAVE, GATE, IN_CITY, LEHI_HOUSE, LEMUEL, ROCK } from './places.js';
+import { createLife } from './life.js';
+import { CAVE, GATE, IN_CITY, LEHI_HOUSE, LEMUEL, lemuelRiver, ROCK } from './places.js';
 import { BLANKS, EXCERPTS, SAID } from './scripture.js';
 import { BOOK, SPOKEN } from './spoken-nephi.js';
 import { telling } from './telling.js';
@@ -180,12 +181,182 @@ export function story(g) {
   const L = (du, dv) => P(LEMUEL.at[0] + du, LEMUEL.at[1] + dv);
   const beforeTent = L(IN_LEMUEL.tent[0] + 7.8, 0.4);
   const bySariah = L(IN_LEMUEL.tent[0] + 5.6, 3.6);
-  const brothersTents = L(-2.5, -15);
   const downValley = L(4, -62);
-  /** Their father and their mother before his tent, looking to a point. */
-  function parents(face) {
-    who('lehi').place(...beforeTent, yawTo(beforeTent, face)).face(...face);
-    who('sariah').place(...bySariah, yawTo(bySariah, face)).face(...face);
+  /**
+   * The bank of the river ("he pitched his tent in a valley by the side of a river of water", 2:6), `dv` along the
+   * valley from the middle of the camp: `off` metres short of the middle of the water, on the camp's side (less than
+   * 0: a point over the water, to look to).
+   */
+  const bank = (dv, off = 4.4) => L(lemuelRiver(LEMUEL.at[1] + dv) - LEMUEL.at[0] - off, dv);
+  // Where things are about the camp: the jars by their father's tent, and where a jar brought from the river is set
+  // down by them; where their mother kneels at the water, and where she sits; and where Laman and Lemuel sit by their
+  // tents.
+  const CAMP = {
+    jars: L(-3.8, 5.3),
+    byJars: L(-4.6, 4.8),
+    water: bank(9, 3.7),
+    rest: L(-3.2, 2.9),
+    seats: { laman: L(-5.2, -17.6), lemuel: L(-3.6, -16.2) },
+  };
+  // how a jar of water is carried
+  const JAR = { out: 0.3, up: 0.9, wide: 0.13 };
+  // The family about the camp, each living his own day until the story has need of him (life.js).
+  const life = createLife(g);
+  // (for a test: tools/life-scenes.mjs)
+  g.life = life;
+  /** Which scene this is: what was begun in one (a walk to be finished, a thing to be taken up) is not done in the next. */
+  let scenes = 0;
+  /** Whether Nephi has answered his father: what they say to him about the camp is another thing after it. */
+  let answered = false;
+  /**
+   * The camp as Nephi finds it when he comes back to the tent of his father (3:1): each of them at what is his to do,
+   * over and over, whether he is by or not. What they do is the story's; where they do it is the text's. Their
+   * father "dwelt in a tent" (2:15) by a river, and spoke to his sons at the water (2:9–10). Laman and Lemuel "did
+   * murmur against their father" (2:11–12). Sam believed Nephi's words (2:17).
+   */
+  function campLife() {
+    answered = false;
+    const [lehi, sariah, laman, lemuel, sam] = ['lehi', 'sariah', 'laman', 'lemuel', 'sam'].map(who);
+    const { jars, byJars, water, rest, seats } = CAMP;
+    const over = (dv) => bank(dv, -5);
+    // Their father: down to the river, where he stands a while; back to the cloth at the door of his tent, where he
+    // sits; and stands before it, looking down the valley. He has a thing to tell Nephi (3:2): when Nephi comes near
+    // he leaves off, gets up, and stands turned to him.
+    lehi.place(...beforeTent, yawTo(beforeTent, bank(2)));
+    life.live(
+      lehi,
+      [
+        { stay: 10, face: L(4, -40) },
+        { go: [bank(2)], pace: 1.1 },
+        { stay: 12, face: over(2), look: true },
+        { go: [L(-2.6, 0.2)], pace: 1.1 },
+        { stay: 16, face: over(0), sit: true },
+        { go: [beforeTent], pace: 1.0 },
+      ],
+      // (until Nephi has heard him and answered, what there is to say to him is the story's: a1)
+      { from: 1, notice: { waits: true, near: 10, as: 'your father' } },
+    );
+    // Their mother: to the river with a jar, where she kneels at the water; back with it to the jars by the tent; and
+    // sits there a little, looking up the valley.
+    sariah.place(...jars, yawTo(jars, water));
+    g.props.carry('waterjar', sariah, JAR);
+    life.live(
+      sariah,
+      [
+        { go: [water], pace: 1.25 },
+        { put: 'waterjar' },
+        { stay: 6, face: over(9), kneel: true },
+        { take: 'waterjar', hold: JAR },
+        { go: [jars], pace: 1.15 },
+        { put: 'waterjar', at: byJars },
+        { stay: 5, face: byJars },
+        { go: [rest], pace: 1.1 },
+        { stay: 14, face: L(6, 30), sit: true },
+        { go: [jars], pace: 1.1 },
+        { stay: 1.5, face: byJars },
+        { take: 'waterjar', hold: JAR },
+      ],
+      { notice: { say: () => (answered ? 'besafe' : 'asking'), as: 'your mother', answers: () => (answered ? ['besafe', 'longroad'] : ['asking', 'river']) } },
+    );
+    // Laman and Lemuel, by their own tents ("thy brothers murmur", 3:5): they sit together, go down to the water one
+    // after the other, and come back.
+    laman.sit = lemuel.sit = 1;
+    laman.place(...seats.laman, yawTo(seats.laman, seats.lemuel));
+    lemuel.place(...seats.lemuel, yawTo(seats.lemuel, seats.laman));
+    life.live(
+      laman,
+      [
+        { stay: 18, face: seats.lemuel, sit: true },
+        { go: [bank(-18)], pace: 1.35 },
+        { stay: 10, face: over(-18) },
+        { go: [seats.laman], pace: 1.3 },
+      ],
+      { notice: { say: () => 'leftall', as: 'Laman', answers: () => ['leftall', 'visionary'] } },
+    );
+    life.live(
+      lemuel,
+      [
+        { stay: 21, face: seats.laman, sit: true },
+        { go: [bank(-15.6)], pace: 1.3 },
+        { stay: 8, face: () => at(laman), look: true },
+        { go: [seats.lemuel], pace: 1.3 },
+      ],
+      { notice: { say: () => 'greatcity', as: 'Lemuel', answers: () => ['greatcity', 'inheritance'] } },
+    );
+    // Sam, apart from them, up the valley, where Nephi comes down it: he looks for him, and comes a few steps to him.
+    const lookout = L(3, 22);
+    sam.place(...lookout, yawTo(lookout, L(9, 36)));
+    life.live(
+      sam,
+      [
+        { stay: 8, face: L(9, 36), look: true },
+        { go: [bank(17)], pace: 1.4 },
+        { stay: 9, face: over(17) },
+        { go: [L(-6.4, 12.4)], pace: 1.4 },
+        { stay: 9, face: L(-12, 15.5), look: true },
+        { go: [lookout], pace: 1.4 },
+      ],
+      { notice: { say: () => 'believe', near: 7, comes: true, as: 'Sam', answers: () => ['believe', 'answered'] } },
+    );
+  }
+  /**
+   * "And I, Nephi, and my brethren took our journey in the wilderness" (3:9): his brothers leave what they were about
+   * and fall in with Nephi, one after another. Sam first; Laman last.
+   */
+  function makeReady(c) {
+    const mine = scenes;
+    const order = { sam: [0, [2.4, 1.1]], lemuel: [0.9, [4.6, 1.6]], laman: [2.2, [3.6, -1.4]] };
+    for (const [name, [after, gap]] of Object.entries(order)) {
+      const n = who(name);
+      (async () => {
+        if (after) await c.wait(after);
+        if (scenes !== mine) return;
+        n.face(null).follow(g.player, ...gap).maxSpeed = undefined;
+      })();
+    }
+  }
+
+  /**
+   * In this beat Nephi may speak to whoever he is by (E), and what they say as they go is said as any line said as
+   * they go. Each beat that has people in it says so, since a beat that does not open a scene has the last one's.
+   */
+  function alive(c) {
+    life.voice = (key) => bark(c, key);
+    life.free = null;
+    c.also(() => life.offer());
+  }
+  /**
+   * His brothers as they go with him: each looks to him, and answers him when he speaks to him. `say` is for each
+   * of them ({ laman: [...], ... }) the names of what he answers in this part of the way.
+   */
+  function withMe(say, more = {}) {
+    for (const [name, answers] of Object.entries(say)) life.with(who(name), { as: NAMES[name], answers: () => answers, ...more });
+  }
+  const BROTHERS = ['laman', 'lemuel', 'sam'];
+  /** They leave off what they were doing, and come to stand about Nephi, turned to him (for what is to be said). */
+  async function gather(c, names = BROTHERS) {
+    life.hold(...names.map(who));
+    // (on his side toward them, where they already are)
+    const mid = [0, 1].map((k) => BROTHERS.map(who).filter((n) => n.visible).reduce((t, n, _, all) => t + at(n)[k] / all.length, 0));
+    const [fx, fz] = unit(me(), mid);
+    const spots = { laman: [2.6, -1.6], lemuel: [3.2, 0.6], sam: [2.4, 2.2] };
+    await c.hold(
+      Promise.race([
+        Promise.all(
+          names.map((name) => {
+            const n = who(name);
+            const [out, side] = spots[name];
+            const p = [g.player.x + fx * out + fz * side, g.player.z + fz * out - fx * side];
+            // (one already near enough only turns)
+            if (Math.hypot(p[0] - n.x, p[1] - n.z) < 1.2) return n.face(...me());
+            n.face(null);
+            return n.walk([p], 1.9).then(() => n.face(...me()));
+          }),
+        ),
+        c.wait(6),
+      ]),
+    );
+    for (const name of names) who(name).face(...me());
   }
 
   // the places in the land of Jerusalem, in the world's (x, z)
@@ -263,6 +434,10 @@ export function story(g) {
   const shoulder = (point, options) => g.shoulder(point, options);
   const nearest = (names) => names.map(who).sort((a, b) => Math.hypot(a.x - g.player.x, a.z - g.player.z) - Math.hypot(b.x - g.player.x, b.z - g.player.z))[0];
   function reset({ hour, stand, face, clothes = 'nephi', town = false, lemuel = false }) {
+    scenes++;
+    // (no one is about the camp's business any more, nor sitting or on his knees where it left him)
+    life.clear();
+    for (const name of ['lehi', 'sariah', 'laman', 'lemuel', 'sam']) Object.assign(who(name), { sit: 0, kneel: 0 });
     g.cast.clear();
     g.props.reset();
     // (the tents of the valley of Lemuel are there only in the valley; and from it nothing of Jerusalem is seen)
@@ -282,13 +457,38 @@ export function story(g) {
     g.door(false);
     g.props.show('plates', table, { up: IN_CITY.tableTop });
     // people in the streets by day; by night very few (`town: 'night'`), or none
-    if (town === true) g.town.day();
-    else g.town.night(town === 'night');
+    if (town === true) g.town.day(life);
+    else g.town.night(life, town === 'night');
     g.standAt(stand[0], stand[1], yawTo(stand, face));
   }
   /** Their property, in their arms: Laman has the gold, Lemuel the silver, Nephi the precious things. */
   const bearers = { gold: () => who('laman'), silver: () => who('lemuel'), precious: () => g.player };
   const bear = (name) => g.props.carry(name, bearers[name](), { out: 0.34, up: 1.0, size: 0.6, wide: name === 'gold' ? 0.27 : 0.3 });
+  /**
+   * One of his brothers takes up what Nephi has found for him (the gold Laman, the silver Lemuel): he goes to it,
+   * goes down on his knees for it, and stands with it in his arms, turned to Nephi. Resolves when he has it.
+   */
+  async function takeUp(c, name, answers) {
+    const mine = scenes;
+    const n = bearers[name]();
+    const spot = riches[name].at;
+    life.hold(n);
+    n.yields = null;
+    const d = Math.hypot(spot[0] - n.x, spot[1] - n.z) || 1;
+    n.face(null);
+    if (d > 0.9) await Promise.race([n.walk([lerp(at(n), spot, 1 - 0.7 / d)], 1.8), c.wait(5)]);
+    if (scenes !== mine) return;
+    n.stop().face(...spot);
+    await c.wait(0.3);
+    n.kneel = 1;
+    await c.wait(0.8);
+    n.kneel = 0;
+    await c.wait(0.35);
+    if (scenes !== mine) return;
+    bear(name);
+    life.with(n, { as: NAMES[name === 'gold' ? 'laman' : 'lemuel'], answers: () => answers });
+    n.face(...me());
+  }
   /** Laban where he fell, with the wine he had drunk (4:7). */
   function fallenLaban() {
     const laban = who('laban').place(...fallen, 1.2).lie(true);
@@ -338,52 +538,99 @@ export function story(g) {
       scene: true,
       setup() {
         reset({ hour: 15.4, stand: L(9, 36), face: L(2, 0), lemuel: true });
-        parents(L(9, 36));
-        // (his brothers, by their own tents: "thy brothers murmur", 3:5)
-        brothersAt(brothersTents, beforeTent);
+        // (his father and his mother about his father's tent, and his brothers by their own, each at his own day)
+        campLife();
       },
       async run(c) {
         await c.fade(0, 2);
         g.narration?.warm(SPOKEN.dream.voice);
         await c.chapter('Act One', 'Up to Jerusalem', 'The valley of Lemuel · 1 Nephi 3');
-        const lehi = who('lehi');
-        const laman = who('laman');
-        for (const name of ['lehi', 'sariah']) who(name).face(...me());
+        const [lehi, sariah, laman, lemuel, sam] = ['lehi', 'sariah', 'laman', 'lemuel', 'sam'].map(who);
+        // (what they say about the camp to one who comes near is said as any line said as they go)
+        life.voice = (key) => bark(c, key);
+        // (and he may speak to any of them himself, whoever he is by)
+        c.also(() => life.offer());
         c.objective('Go to your father, at his tent.', 'Your father’s tent');
-        await c.act(...at(lehi), 3.4, 'Speak with your father');
+        // (his father is where his day has him: at his tent, or down by the river)
+        await c.act(lehi, 3.4, 'Speak with your father');
         c.objective(null);
+        // They leave what they were doing. Their mother comes to his side to hear it; Laman and Lemuel get up, and
+        // look to their father.
+        life.hold(lehi, sariah, laman, lemuel);
+        lehi.face(...me());
+        for (const n of [laman, lemuel]) n.face(...at(lehi));
+        {
+          // (beside him, on the side she is already on, and a little behind him)
+          const [fx, fz] = unit(me(), at(lehi));
+          const side = Math.sign((sariah.x - lehi.x) * fz - (sariah.z - lehi.z) * fx) || 1;
+          sariah.walk([[lehi.x + fz * side * 2.2 + fx * 0.6, lehi.z - fx * side * 2.2 + fz * 0.6]], 1.5).then(() => life.state(sariah) === 'held' && sariah.face(...me()));
+        }
         const toLehi = () => shoulder(at(lehi), { back: 3.6, up: 2.1, look: 1.4 });
         toLehi();
         await say(c, 'dream');
         await say(c, 'plates');
-        // "thy brothers murmur, saying it is a hard thing" (3:5): Laman, come a few steps from their tents; and their
-        // father answers him
-        // (seen from beside their father's tent, since their father stands between him and Nephi)
-        const comes = lerp(at(laman), beforeTent, 0.35);
+        // "thy brothers murmur, saying it is a hard thing" (3:5): Laman, come a few steps toward their father from
+        // where he was; and their father answers him
+        // (seen from beside the line between them, since their father stands between him and Nephi)
+        const father = at(lehi);
+        const comes = lerp(at(laman), father, Math.min(0.35, 7 / (Math.hypot(father[0] - laman.x, father[1] - laman.z) || 1)));
         laman.walk([comes], 1.7).then(() => laman.face(...at(lehi)));
-        const near = lerp(comes, beforeTent, 0.55);
-        const [du, dv] = [comes[0] - beforeTent[0], comes[1] - beforeTent[1]];
+        const [du, dv] = [comes[0] - father[0], comes[1] - father[1]];
         const far = Math.hypot(du, dv) || 1;
+        const near = lerp(comes, father, Math.min(0.55, 5.7 / far));
         g.view({ from: [near[0] + (dv / far) * 2.4, near[1] - (du / far) * 2.4, 1.7], to: [...comes, 1.35] });
         await say(c, 'hard');
         toLehi();
         await say(c, 'commandment');
         // "I will go and do": he answers, and the word is his to say
         g.view(null);
-        await c.act(...at(lehi), 9, 'Answer your father', { mark: false });
+        await c.act(lehi, 9, 'Answer your father', { mark: false });
         toLehi();
         await fill(c, 'do');
         // his father was exceedingly glad, for he knew that he had been blessed of the Lord (3:8)
         await say(c, 'blessed');
         g.view(null);
+        // He has his errand. Sam, who believed him, comes to him at once. Laman and Lemuel go back to what they were
+        // about; so do their father and their mother, when he has gone from them. And while he is still by them, or
+        // if he comes by them again before he leaves the camp, they have a word for him: "go, my son" (3:6); and his
+        // mother's, who mourned for them while they were gone (5:1–2).
+        answered = true;
+        withMe({ sam: ['believe', 'answered'] });
+        // (he comes at a good pace, and does not run across the camp to him)
+        sam.follow(g.player, 2.4, 1.1).maxSpeed = 3.4;
+        // (his mother first, at once; his father when he has stood there a while and not gone)
+        life.notice(lehi, { say: () => 'favored', after: 9, near: 5.5, answers: () => ['favored', 'notmurmured'] });
+        life.notice(sariah, { say: () => 'besafe', after: 2.5, near: 5.5 });
+        life.resume(lehi, sariah, laman, lemuel);
         c.objective('Go to your brethren, by their tents.', 'Your brethren');
-        await c.act(...at(who('sam')), 4.5, 'Call your brethren to the journey');
+        // (Laman, the eldest, wherever he is: by their tents, or down at the water)
+        await c.act(laman, 4.5, 'Call your brethren to the journey');
+        life.hold(laman, lemuel);
+        for (const n of [laman, lemuel]) n.face(...me());
         await say(c, 'tents');
-        followMe();
+        // and after Nephi, one after another (as they go, he may speak with them still)
+        withMe({ laman: ['leftall', 'visionary'], lemuel: ['greatcity', 'inheritance'] });
+        makeReady(c);
         c.objective('Take your journey in the wilderness: go down the valley.', 'Down the valley');
-        // (as they go: Lemuel murmurs still, and Sam is with him)
+        // (as they make ready and go: Lemuel murmurs still, and Sam is with him)
+        // (and while that is said, no one about the camp says anything over it)
+        let talking = true;
+        life.free = () => !talking;
         const going = talk(c, ['allthatway', 'withyou'], { first: 2 });
-        await c.reach(...downValley, 7);
+        going.then(() => (talking = false));
+        // Only the four of them go (3:9). Their father and their mother stay at the camp (5:1–6): when their sons are
+        // on their way down the valley they leave off what they were doing, and stand looking after them.
+        let gone = false;
+        await c.reach(...downValley, 7, {
+          unless() {
+            if (!gone && from(downValley) < 42) {
+              gone = true;
+              life.hush();
+              life.watch(lehi, sariah);
+            }
+            return false;
+          },
+        });
         await going;
         c.objective(null);
         await c.fade(1, 1.6);
@@ -396,17 +643,36 @@ export function story(g) {
       scene: true,
       setup() {
         reset({ hour: 15.4, stand: camp, face: gateOut, town: true });
-        // (his brethren a little ahead of him on the way, looking to the city)
+        // (his brethren a little ahead of him on the way, where they have stopped)
         brothersAt(onTheWay, gateOut);
       },
       async run(c) {
         g.narration?.warm(SPOKEN.lots.voice);
+        alive(c);
+        // "when we had gone up to the land of Jerusalem, I and my brethren did consult one with another" (3:10).
+        // While Nephi comes up to them they are each at something: Laman sits a little apart, looking at the
+        // city; Sam goes a little up the way to see it better; Lemuel walks about, and looks back the way they came.
+        const [laman, lemuel, sam] = BROTHERS.map(who);
+        const city = gateOut;
+        // (Laman a few steps apart from the other two, so that it is to him Nephi goes to cast the lots)
+        const away = unit(lerp(at(lemuel), at(sam), 0.5), at(laman));
+        const seat = [laman.x + away[0] * 3.5, laman.z + away[1] * 3.5];
+        const ahead = lerp(at(sam), city, 9 / (from(city) || 1));
+        const behind = [lemuel.x + 3.5, lemuel.z - 3];
+        life.live(laman, [{ go: [seat], pace: 1 }, { stay: 40, face: city, sit: true }], { notice: { say: () => 'whogoes', near: 7, as: 'Laman' } });
+        life.live(sam, [{ go: [ahead], pace: 1.2 }, { stay: 9, face: city, look: true }, { go: [at(sam)], pace: 1.2 }, { stay: 7, face: () => me() }], {
+          notice: { as: 'Sam', answers: () => ['thereitis', 'withyou'], passes: true },
+        });
+        life.live(lemuel, [{ stay: 6, face: city }, { go: [behind], pace: 1.1 }, { stay: 6, face: camp, look: true }, { go: [at(lemuel)], pace: 1.1 }], {
+          notice: { as: 'Lemuel', answers: () => ['stillstands', 'greatcity'], passes: true },
+        });
         await c.fade(0, 1.6);
         await c.chapter('Act One', 'The Land of Jerusalem', '1 Nephi 3:9', 2.6);
         c.objective('Go to your brethren, and cast lots with them.', 'Cast lots');
-        await c.act(...at(who('sam')), 4.5, 'Cast lots with your brethren');
+        // (by Laman, the eldest, where he sits)
+        await c.act(laman, 2.4, 'Cast lots with your brethren');
         c.objective(null);
-        for (const name of ['laman', 'lemuel', 'sam']) who(name).face(...me());
+        await gather(c);
         await say(c, 'lots');
         // "and the lot fell upon Laman" (3:11)
         await c.hold(c.wait(0.9));
@@ -414,6 +680,7 @@ export function story(g) {
         await say(c, 'lot');
         c.objective('Go up to the gate of Jerusalem with your brethren.', 'Gate of Jerusalem');
         // the lot is Laman's: he goes before, Lemuel with him, and Sam beside Nephi
+        withMe({ laman: ['lot', 'whogoes'], lemuel: ['notmine', 'stillstands'], sam: ['withyou', 'thereitis'] });
         lamanLeads([me(), gateOut]);
         await c.reach(...gateOut, 9);
       },
@@ -426,22 +693,37 @@ export function story(g) {
         brothersAt(P(GATE[0] - 18, -3), gateIn);
       },
       async run(c) {
-        const laman = who('laman');
-        for (const n of ['sam', 'lemuel']) who(n).stop().face(...gateIn);
+        alive(c);
+        const [laman, lemuel, sam] = BROTHERS.map(who);
+        life.end(laman, lemuel, sam);
+        for (const n of [sam, lemuel]) n.stop().face(...gateIn);
         // the lot fell upon Laman: he goes in alone, and they wait without the gate. He says what he goes in to do as
         // he goes, so that it is known why they stand there.
         c.objective('Wait without the gate, while Laman goes in unto Laban.', 'Without the gate');
         const going = bark(c, 'wait');
-        await c.hold(Promise.all([laman.walk([P(GATE[0] - 6, -1), gateIn, C(-58, 0.5)], 2.0), going]));
-        laman.show(false);
+        const inside = laman.walk([P(GATE[0] - 6, -1), gateIn, C(-58, 0.5)], 2.0).then(() => laman.show(false));
+        // They wait, and Nephi with them, as long as it takes him: Sam by the gate, watching for him to come out;
+        // Lemuel walking up and down, and back to sit by their things.
+        const watchFor = P(GATE[0] - 9, 3);
+        const sits = P(GATE[0] - 19, -4.5);
+        life.live(sam, [{ go: [watchFor], pace: 1.2 }, { stay: 12, face: gateIn, look: true }, { stay: 6, face: () => me() }], { notice: { as: 'Sam', answers: () => ['lethimspeak', 'withyou'], passes: true } });
+        life.live(lemuel, [{ go: [P(GATE[0] - 23, -1)], pace: 1.1 }, { stay: 4, face: P(150, 0), look: true }, { go: [sits], pace: 1.1 }, { stay: 14, face: gateIn, sit: true }], {
+          notice: { as: 'Lemuel', answers: () => ['notmine', 'stillstands'], passes: true },
+        });
+        await Promise.all([inside, going]);
+        // (a while: or less, if he goes in at the gate after him)
+        const waited = c.time;
+        await c.until(() => c.time - waited > 14 || from(gateIn) < 8 || g.auto);
         // what Laban said to him, in the scripture's words (3:13): he is not seen, and neither is Laban
-        await c.hold(c.wait(1.8));
         c.objective(null);
+        life.hold(sam, lemuel);
         await part(c, '3:13-said');
         // and comes back out, fast: "Laman fled out of his presence, and told the things which Laban had done" (3:14)
         laman.place(...C(-55, 0), yawTo(C(-55, 0), gateIn));
         await c.hold(laman.walk([gateIn, P(GATE[0] - 8, 0), [g.player.x + 2.5, g.player.z + 1]], 5));
         laman.face(...me());
+        // (and the other two come to hear it)
+        await gather(c, ['lemuel', 'sam']);
         await say(c, 'robber');
         // "my brethren were about to return unto my father in the wilderness" (3:14)
         await say(c, 'finished');
@@ -467,6 +749,7 @@ export function story(g) {
         for (const [name, r] of Object.entries(riches)) g.props.show(name, r.at, { up: r.up });
       },
       async run(c) {
+        alive(c);
         await c.fade(0, 1.5);
         g.narration?.warm(SPOKEN.gather.voice);
         await c.chapter('Act Two', 'Our Gold and Our Silver', '1 Nephi 3');
@@ -474,14 +757,27 @@ export function story(g) {
         followMe();
         c.objective("Go into your father's house, by its door.", 'Your father’s house');
         await c.reach(...lehiDoorIn, 1.7, { via: [H(0, 14), lehiYard, lehiDoorOut] });
-        // his brothers come in after him by the door, and stand about the room
+        // His brothers come in after him by the door, and go about the room of their father's house, which they had
+        // left (2:4): Laman to the gold, where it lies, and to the table; Lemuel to the silver, and about the east
+        // wall; Sam about the table, and to the door, to look out.
         const brothers = ['laman', 'lemuel', 'sam'];
+        const mine = scenes;
+        const rounds = {
+          laman: [[{ stay: 7, face: riches.gold.at, look: true }, { go: [H(-2.6, -9.2)], pace: 0.9 }, { stay: 6, face: H(0, -10.85) }, { go: [inLehi.laman], pace: 0.9 }], ['leftall']],
+          lemuel: [[{ stay: 6, face: riches.silver.at }, { go: [H(3.2, -8.6)], pace: 0.9 }, { stay: 6, look: true }, { go: [inLehi.lemuel], pace: 0.9 }], ['ourhouse', 'inheritance']],
+          sam: [[{ stay: 6, face: H(0, -10.85) }, { go: [H(-1, -7.4)], pace: 0.9 }, { stay: 7, face: lehiDoorOut, look: true }, { go: [inLehi.sam], pace: 0.9 }], ['asweleft', 'believe']],
+        };
         for (const name of brothers) {
           const n = who(name);
           // (one already in the doorway does not go back out to come in)
           const way = Math.hypot(n.x - lehiDoorIn[0], n.z - lehiDoorIn[1]) < 2.3 ? [] : [lehiDoorOut];
-          n.walk([...way, lehiDoorIn, inLehi[name]], 2.1).then(() => n.face(...H(0, -9)));
+          n.walk([...way, lehiDoorIn, inLehi[name]], 2.1).then(() => {
+            if (scenes !== mine || life.state(n)) return;
+            const [steps, answers] = rounds[name];
+            life.live(n, steps, { notice: { as: NAMES[name], answers: () => answers, passes: true } });
+          });
         }
+        const pickups = [];
         // The riches may be gathered in any order. Each is taken up and carried as it is gathered: the gold by Laman,
         // the silver by Lemuel, the precious things by Nephi. What is still to gather is listed, and marked.
         const left = new Set(Object.keys(riches));
@@ -498,7 +794,9 @@ export function story(g) {
           });
           c.prompt(null);
           left.delete(near);
-          bear(near);
+          // (what is his he takes up himself: the precious things Nephi, the gold Laman, the silver Lemuel)
+          if (near === 'precious') bear(near);
+          else pickups.push(takeUp(c, near, near === 'gold' ? ['givelaban', 'leftall'] : ['willtake', 'ourhouse']));
           g.music.pluck();
           c.toast(riches[near].taken, '', 3);
         }
@@ -506,7 +804,10 @@ export function story(g) {
         c.objective('Gather your gold, and your silver, and your precious things.', 'Gold and silver', Object.values(riches).map((r) => ({ label: r.name, done: true })));
         await c.wait(1.2);
         c.objective(null);
+        // (each has in his arms what is his)
+        await Promise.all(pickups);
         // they carry it out before him, and wait for him in the court
+        life.end(...brothers.map(who));
         const out = Promise.all(brothers.map((name, i) => who(name).stop().walk([lehiDoorIn, lehiDoorOut, H((i - 1) * 2.4, 3.5 + i)], 2.3)));
         await say(c, 'givelaban');
         await say(c, 'upagain');
@@ -515,6 +816,7 @@ export function story(g) {
         // (they keep to the way he came out by: through the court's gate, not its wall)
         out.then(() => {
           for (const name of brothers) who(name).face(null);
+          withMe({ laman: ['givelaban', 'visionary'], lemuel: ['willtake', 'inheritance'], sam: ['forrecords', 'asweleft'] });
           followMe({ whole: true });
         });
         // (Laman, on the road up to the city, with the walls in sight again)
@@ -533,6 +835,8 @@ export function story(g) {
       },
       async run(c) {
         c.objective(null);
+        alive(c);
+        life.end(...BROTHERS.map(who));
         const laban = who('laban');
         const s1 = who('servant1');
         const s2 = who('servant2');
@@ -620,7 +924,7 @@ export function story(g) {
               // (a few strides in coming to their pace)
               for (const s of after) s.maxSpeed = pace(s, left) * (0.72 + 0.28 * Math.min(1, (c.time - out) / 3));
               if (leg === 'city') {
-                g.town.watch();
+                g.town.watch(life);
                 // out of the gate: the city is behind him, and they are not
                 if (from(past) < 13) {
                   leg = 'wild';
@@ -694,7 +998,7 @@ export function story(g) {
             brothersAt(C(18.4, 22), labanGate);
             stage();
             for (const name of Object.keys(riches)) bear(name);
-            g.town.day();
+            g.town.day(life);
           }
           await c.fade(0, 0.8);
         }
@@ -731,10 +1035,48 @@ export function story(g) {
         const face = me();
         // (his brothers are within, at the back of it)
         for (const n of ['sam', 'laman', 'lemuel']) who(n).place(...inRock[n], 0).face(...face);
+        // (a rod lies on the floor of the rock, towards its mouth)
+        const rodAt = P(ROCK[0] + 1.6, ROCK[1] - 2.4);
+        g.props.show('rod', rodAt, { turn: 0.5 });
         // their property is in the hands of Laban (3:26), and Laman and Lemuel are angry with Nephi, and with their
         // father (3:28)
         await say(c, 'gone');
         await say(c, 'yourdoing');
+        // "and also was Lemuel, for he hearkened unto the words of Laman" (3:28): Laman turns to him, and has him
+        // bring the rod; Lemuel goes for it, takes it up, and puts it into his hand
+        {
+          const laman = who('laman');
+          const lemuel = who('lemuel');
+          laman.face(...at(lemuel));
+          lemuel.face(...at(laman));
+          await say(c, 'rod');
+          const fetch = (async () => {
+            const d = Math.hypot(rodAt[0] - lemuel.x, rodAt[1] - lemuel.z) || 1;
+            lemuel.face(null);
+            await lemuel.walk([lerp(at(lemuel), rodAt, 1 - 0.6 / d)], 1.6);
+            lemuel.face(...rodAt);
+            await c.wait(0.3);
+            lemuel.kneel = 1;
+            await c.wait(0.7);
+            g.props.carry('rod', lemuel, { out: 0.32, up: 0.95, wide: 0.12 });
+            lemuel.kneel = 0;
+            await c.wait(0.4);
+            const to = lerp(at(lemuel), at(laman), 1 - 1.1 / (Math.hypot(laman.x - lemuel.x, laman.z - lemuel.z) || 1));
+            lemuel.face(null);
+            await lemuel.walk([to], 1.5);
+            lemuel.face(...at(laman));
+            await c.wait(0.4);
+            g.props.carry('rod', laman, { out: 0.32, up: 0.95, wide: 0.12 });
+            await c.wait(0.3);
+            laman.face(...me());
+            lemuel.face(...me());
+          })();
+          // (seen from beside Nephi, toward the two of them)
+          shoulder(lerp(at(laman), rodAt, 0.5), { back: 3.4, up: 1.9, look: 1.1 });
+          await c.hold(Promise.race([fetch, c.wait(12)]));
+          await c.hold(c.wait(0.8));
+          g.view(null);
+        }
         // (that they smote their younger brothers with a rod is not shown, and is not told: the screen dims, and what
         // the angel asks them says what it was)
         g.ui.fade(0.55, 0.8);
@@ -749,6 +1091,8 @@ export function story(g) {
         angel.open = 0.3;
         g.ui.fade(0, 0.6);
         for (const n of ['laman', 'lemuel', 'sam']) who(n).face(...stands);
+        // (the rod falls from Laman's hand)
+        g.props.show('rod', [who('laman').x + 0.5, who('laman').z + 0.4], { turn: 2.1 });
         // a low view from among the brothers at the back of the rock, out at him in its mouth, with the light round him
         g.view({ from: [...P(ROCK[0] - 1.7, ROCK[1] + 1.3), 1.1], to: [...stands, 1.5] });
         let bright = 0;
@@ -785,9 +1129,20 @@ export function story(g) {
         // "Laman and Lemuel again began to murmur" (3:31)
         await say(c, 'howcan');
         await say(c, 'fifty');
+        // They go apart from him, each with his own anger or his own wonder: Laman to the back of the rock, his back
+        // to them; Lemuel to its mouth, where he sits looking out at the way they came; Sam stays by Nephi.
+        alive(c);
+        const [laman, lemuel, sam] = BROTHERS.map(who);
+        const back = P(ROCK[0] - 4.4, ROCK[1] + 0.6);
+        const sill = P(CAVE.mouth[0] - 0.7, CAVE.mouth[1] - 1.8);
+        const samBy = P(ROCK[0] + 0.6, ROCK[1] + 1.8);
+        life.live(laman, [{ go: [back], pace: 1.1 }, { stay: 60, face: P(ROCK[0] - 9, ROCK[1] + 1) }]);
+        life.live(lemuel, [{ go: [sill], pace: 1.1 }, { stay: 60, face: P(CAVE.mouth[0] + 12, CAVE.mouth[1] - 3), sit: true }], { notice: { as: 'Lemuel', answers: () => ['gone'] } });
+        life.live(sam, [{ go: [samBy], pace: 1 }, { stay: 6, face: () => me() }, { stay: 6, face: () => me(), look: true }], { notice: { as: 'Sam', answers: () => ['angelspoke'] } });
         c.objective('Speak to your brethren.', 'Your brethren');
-        await c.act(...at(who('laman')), 4.5, 'Speak to your brethren');
+        await c.act(laman, 2.2, 'Speak to Laman, and your brethren');
         c.objective(null);
+        await gather(c);
         await fill(c, 'mightier');
         await say(c, 'moses');
         // "they were yet wroth, and did still continue to murmur; nevertheless they did follow me" (4:4)
@@ -813,6 +1168,13 @@ export function story(g) {
         await say(c, 'hide');
         await fill(c, 'spirit');
         await c.thought('No one marks the way tonight: a light goes before you. Follow it. When you lose it, stand still a moment, and look.');
+        // They hide (4:5): Laman and Lemuel low against the ground, Sam standing, who looks after Nephi as he goes, and
+        // says so.
+        alive(c);
+        const [laman, lemuel, sam] = BROTHERS.map(who);
+        life.live(laman, [{ stay: 90, face: gateOut, sit: true }], { notice: { as: 'Laman', answers: () => ['alone'] } });
+        life.live(lemuel, [{ stay: 90, face: gateOut, sit: true }], { notice: { as: 'Lemuel', answers: () => ['belong'] } });
+        life.live(sam, [], { notice: { as: 'Sam', say: () => 'gowithlord', near: 9, answers: () => ['gowithlord'] } }).watch(sam);
         g.guidance.lead([hide, gateOut, gateIn, C(-20, 0), C(19.5, 0), C(19.5, 14), fallen]);
         c.objective(LED, 'The light of the Spirit');
         c.lead(null);
@@ -967,6 +1329,9 @@ export function story(g) {
         g.music.pluck();
         // "And I also bade him that he should follow me" (4:25)
         await say(c, 'followme');
+        // "he spake unto me many times concerning the elders of the Jews, as I went forth unto my brethren" (4:27)
+        alive(c);
+        life.with(zoram, { as: 'Zoram', answers: () => ['brethrenchurch', 'eldersagain', 'elders'], every: 13, near: 6 });
         zoram.follow(g.player, 2.4, 1.2);
         c.objective('Go forth unto your brethren, who are without the walls.', 'Without the walls');
         await c.reach(...hide, 15, { via: [doorIn, doorOut, C(19.5, 1), C(-20, 0), gateIn, gateOut] });
@@ -985,6 +1350,7 @@ export function story(g) {
       async run(c) {
         c.objective(null);
         const zoram = who('zoram');
+        life.end(zoram, ...BROTHERS.map(who));
         // they take him for Laban, and run
         const flee = (name, du, dv) => who(name).walk([P(GATE[0] - 13 + du, 36 + dv)], 4.2);
         flee('laman', -14, 16);
@@ -1067,24 +1433,46 @@ export function story(g) {
       async run(c) {
         // they are come down again to the valley of Lemuel, and stand before the tent of their father
         brothersAt(L(9, -9.5), beforeTent);
-        who('zoram').place(...L(11.5, -5), 0).face(...beforeTent);
+        // (Zoram a little apart: a stranger to the place, who looks about him)
+        who('zoram').place(...L(11.5, -5), 0).face(...beforeTent).idle = 'look';
         // (the plates of brass, in his arms still)
         g.props.carry('plates', g.player);
-        // their father and their mother, before the tent: "their joy was full, and my mother was comforted" (5:7)
-        parents(me());
+        // Their mother sits by the tent, who "truly had mourned because of us" (5:1); their father stands before it,
+        // looking down the valley, who knew that the Lord would bring his sons down again (5:5).
         const lehi = who('lehi');
-        shoulder(at(lehi), { back: 4.2, up: 2.3, look: 1.4 });
+        const sariah = who('sariah');
+        const downTheValley = L(4, -40);
+        sariah.sit = 1;
+        sariah.place(...bySariah, yawTo(bySariah, downTheValley));
+        lehi.place(...beforeTent, yawTo(beforeTent, downTheValley));
         // the one tune of the story: a lyre, for their joy
         g.music.theme();
         g.narration?.warm(SPOKEN.perished.voice);
-        await c.fade(0, 2);
+        // She sees them, and is on her feet and coming to her sons before their father has well turned ("my mother,
+        // Sariah, was exceedingly glad", 5:1); and he comes after her ("he was filled with joy"). They come to them
+        // where they stand: "their joy was full, and my mother was comforted" (5:7).
+        const [fx, fz] = unit(me(), beforeTent);
+        const before = (out, side) => [g.player.x + fx * out + fz * side, g.player.z + fz * out - fx * side];
+        // (each to the side of him they are already on, so that neither crosses before the other)
+        const hers = Math.sign((sariah.x - g.player.x) * fz - (sariah.z - g.player.z) * fx) || 1;
+        const meeting = (async () => {
+          await c.wait(0.7);
+          sariah.sit = 0;
+          lehi.face(...me());
+          await c.wait(0.9);
+          await Promise.all([sariah.walk([before(2.2, 0.9 * hers)], 2.7), c.wait(0.8).then(() => lehi.walk([before(3.3, -1.1 * hers)], 1.5))]);
+          for (const n of [sariah, lehi]) n.face(...me());
+        })();
+        // (seen over Nephi's shoulder, toward the tent they come from; and then the two of them, come to him)
+        shoulder(beforeTent, { back: 4.2, up: 2.3, look: 1.4 });
+        await c.hold(Promise.all([c.fade(0, 2), meeting]));
+        shoulder(lerp(at(lehi), at(sariah), 0.5), { back: 4.2, up: 2.3, look: 1.4 });
         // their mother had supposed them perished (5:2); their father had not (5:5)
         await say(c, 'perished');
         await say(c, 'knew');
         await part(c, '5:8-said');
-        // he lays the plates on the cloth before the tent, before his father (5:10)
-        g.props.carry('plates', null);
-        g.props.show('plates', L(IN_LEMUEL.tent[0] + 5.6, -0.5), { up: 0.08 });
+        // he gives the plates into his father's hands: "my father, Lehi, took the records" (5:10)
+        g.props.carry('plates', lehi);
         g.music.pluck();
         await say(c, 'brass');
         await part(c, '3:7-said');
@@ -1097,3 +1485,8 @@ export function story(g) {
 }
 
 const lerp = ([x0, z0], [x1, z1], t) => [x0 + (x1 - x0) * t, z0 + (z1 - z0) * t];
+/** Which way it is from one point to another: [x, z], a metre long. */
+const unit = ([x0, z0], [x1, z1]) => {
+  const d = Math.hypot(x1 - x0, z1 - z0) || 1;
+  return [(x1 - x0) / d, (z1 - z0) / d];
+};
